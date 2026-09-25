@@ -3,8 +3,12 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
+    function signedIn() {
+      return request.auth != null;
+    }
+
     function googleUser() {
-      return request.auth != null
+      return signedIn()
         && request.auth.token.firebase.sign_in_provider == "google.com";
     }
 
@@ -69,10 +73,13 @@ service cloud.firestore {
     }
 
     match /gameRooms/{roomId} {
-      allow read, create, update, delete: if googleUser();
+      // A página de jogos já exige autenticação. Aqui aceitamos qualquer
+      // sessão Firebase autenticada para evitar falso permission-denied
+      // causado pelo provedor do token.
+      allow read, create, update, delete: if signedIn();
 
       match /strokes/{strokeId} {
-        allow read, create, delete: if googleUser();
+        allow read, create, delete: if signedIn();
         allow update: if false;
       }
     }
