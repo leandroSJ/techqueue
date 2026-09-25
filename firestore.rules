@@ -3,91 +3,24 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    function signedIn() {
-      return request.auth != null;
-    }
-
-    function hasProfile() {
-      return signedIn()
-        && exists(/databases/$(database)/documents/users/$(request.auth.uid));
-    }
-
-    function profile() {
-      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
-    }
-
-    function allowedUser() {
-      return hasProfile() && profile().enabled == true;
-    }
-
-    function isAdmin() {
-      return allowedUser() && profile().role == "admin";
-    }
-
-    // Bahia = UTC-3. Janela 18:00–23:59 BRT corresponde a 21:00–02:59 UTC.
-    function after18Bahia() {
-      return request.time.hours() >= 21 || request.time.hours() < 3;
-    }
-
-    match /users/{userId} {
-      // Cada usuário autenticado pode ler apenas o próprio perfil.
-      // Isso permite que o app carregue users/{request.auth.uid}
-      // antes de validar enabled/role para o restante do sistema.
-      allow read: if signedIn() && userId == request.auth.uid;
-
-      // Perfis são cadastrados manualmente no Console Firebase/Admin SDK.
-      // O navegador não pode criar, promover ou alterar usuário.
-      allow write: if false;
+    function googleUser() {
+      return request.auth != null
+        && request.auth.token.firebase.sign_in_provider == "google.com";
     }
 
     match /days/{dayId} {
-      allow read: if allowedUser();
-
-      /*
-        MVP:
-        Técnicos aprovados podem atualizar o estado compartilhado do rodízio.
-        A autoria dos atendimentos é protegida separadamente abaixo.
-        Para blindagem total da transição da fila contra DevTools/API manual,
-        mova as transições do rodízio para Cloud Functions ou backend próprio.
-      */
-      allow create, update: if allowedUser();
-
-      allow delete: if isAdmin() && after18Bahia();
+      allow read, create, update: if googleUser();
 
       match /attendances/{attendanceId} {
-        allow read: if allowedUser();
+        allow read: if googleUser();
 
-        // Ninguém pode registrar "atendi" em nome de outro técnico.
-        allow create: if allowedUser()
-          && request.resource.data.technicianUid == request.auth.uid
-          && request.resource.data.technicianName == profile().name
-          && request.resource.data.clientName is string
-          && request.resource.data.clientName.size() > 0
-          && request.resource.data.status == "open"
-          && request.resource.data.startedAt == request.time
-          && get(/databases/$(database)/documents/days/$(dayId)).data.currentUid == request.auth.uid;
+        allow create: if googleUser()
+          && request.resource.data.technicianUid == request.auth.uid;
 
-        // Só o próprio técnico pode finalizar o próprio atendimento.
-        // Identidade, cliente e horário inicial ficam imutáveis.
-        allow update: if allowedUser()
+        allow update: if googleUser()
           && resource.data.technicianUid == request.auth.uid
-          && request.resource.data.technicianUid == resource.data.technicianUid
-          && request.resource.data.technicianName == resource.data.technicianName
-          && request.resource.data.clientName == resource.data.clientName
-          && request.resource.data.startedAt == resource.data.startedAt
-          && request.resource.data.startedAtMs == resource.data.startedAtMs
-          && resource.data.status == "open"
-          && request.resource.data.status == "finished"
-          && request.resource.data.problem is string
-          && request.resource.data.problem.size() > 0
-          && request.resource.data.solution is string
-          && request.resource.data.solution.size() > 0
-          && request.resource.data.finishedAt == request.time
-          && request.resource.data.diff(resource.data).affectedKeys()
-            .hasOnly(["status", "problem", "solution", "finishedAt"]);
-
-        // Somente administrador e apenas após 18:00 BRT pode limpar histórico.
-        allow delete: if isAdmin() && after18Bahia();
+          && request.resource.data.technicianUid
+             == resource.data.technicianUid;
       }
     }
   }
