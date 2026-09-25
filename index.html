@@ -964,6 +964,40 @@
 
     const TEAM_TIMEZONE = "America/Bahia";
 
+    const SOUND_CATALOG = [
+      { id: "msn", label: "MSN - nova mensagem", file: "./assets/sounds/new-message-msn.mp3", price: 0 },
+      { id: "dbz", label: "Kakaroto, você é uma besta", file: "./assets/sounds/dbz-pt-br-kakaroto-voce-e-uma-besta.mp3", price: 20 },
+      { id: "problema", label: "Tu sai de problema", file: "./assets/sounds/tu-sai-de-problema.mp3", price: 25 },
+      { id: "grosso", label: "Vai entrar o grosso", file: "./assets/sounds/luladrao-vai-entrar-o-grosso.mp3", price: 35 }
+    ];
+
+    const SHOP_ITEMS = [
+      ...SOUND_CATALOG.filter(item => item.price > 0).map(item => ({
+        id: "sound:" + item.id,
+        type: "sound",
+        soundId: item.id,
+        label: item.label,
+        description: "Libera este áudio no botão Chamar atenção.",
+        price: item.price
+      })),
+      {
+        id: "message_pack",
+        type: "feature",
+        label: "Mensagem personalizada",
+        description: "Libera uma mensagem curta junto com o alerta.",
+        price: 20
+      },
+      {
+        id: "reaction_pack",
+        type: "feature",
+        label: "Pacote de reações",
+        description: "Libera reações rápidas para enviar junto com o alerta.",
+        price: 15
+      }
+    ];
+
+    const REACTIONS = ["", "👍", "😂", "👀", "🔥", "😴", "🤡"];
+
     function bahiaParts(date = new Date()) {
       const parts = new Intl.DateTimeFormat("en-CA", {
         timeZone: TEAM_TIMEZONE,
@@ -1086,6 +1120,8 @@
         adminRow.classList.toggle("hidden", profile.role !== "admin");
 
         setViews(true);
+        await ensureUserProfile();
+        subscribeUserProfile();
         await joinTodayIfAllowed();
         subscribeToday();
 
@@ -1095,15 +1131,49 @@
       }
     }
 
+    async function ensureUserProfile() {
+      const ref = doc(db, "profiles", authUser.uid);
+      const snap = await getDoc(ref);
+
+      if (!snap.exists()) {
+        await setDoc(ref, {
+          name: profile.name,
+          email: profile.email,
+          xpBalance: 0,
+          unlockedItems: ["sound:msn"],
+          createdAt: serverTimestamp(),
+          updatedAt: serverTimestamp()
+        });
+      } else {
+        await setDoc(ref, {
+          name: profile.name,
+          email: profile.email,
+          updatedAt: serverTimestamp()
+        }, { merge: true });
+      }
+    }
+
+    function subscribeUserProfile() {
+      if (unsubProfile) unsubProfile();
+      const ref = doc(db, "profiles", authUser.uid);
+      unsubProfile = onSnapshot(ref, snap => {
+        userProfileDoc = snap.exists() ? { id: snap.id, ...snap.data() } : null;
+        renderWalletAndShop();
+      });
+    }
+
     function clearSubscriptions() {
       if (unsubDay) unsubDay();
       if (unsubHistory) unsubHistory();
       if (unsubNudges) unsubNudges();
       if (unsubQueuedClients) unsubQueuedClients();
+      if (unsubProfile) unsubProfile();
       unsubDay = null;
       unsubHistory = null;
       unsubNudges = null;
       unsubQueuedClients = null;
+      unsubProfile = null;
+      userProfileDoc = null;
       nudgesReady = false;
     }
 
