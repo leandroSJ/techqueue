@@ -1187,17 +1187,29 @@
         await setDoc(ref, {
           name: profile.name,
           email: profile.email,
-          xpBalance: 0,
-          unlockedItems: ["sound:msn"],
+          xpBalance: 35,
+          starterXpGranted: true,
+          audioCredits: {},
+          unlockedItems: [],
           createdAt: serverTimestamp(),
           updatedAt: serverTimestamp()
         });
       } else {
-        await setDoc(ref, {
+        const data = snap.data();
+        const patch = {
           name: profile.name,
           email: profile.email,
           updatedAt: serverTimestamp()
-        }, { merge: true });
+        };
+
+        if (data.starterXpGranted !== true) {
+          patch.xpBalance = Number(data.xpBalance || 0) + 35;
+          patch.starterXpGranted = true;
+        }
+
+        if (!data.audioCredits) patch.audioCredits = {};
+
+        await setDoc(ref, patch, { merge: true });
       }
     }
 
@@ -1211,7 +1223,11 @@
     }
 
     function unlockedItems() {
-      return new Set(userProfileDoc?.unlockedItems || ["sound:msn"]);
+      return new Set(userProfileDoc?.unlockedItems || []);
+    }
+
+    function audioCredits() {
+      return { ...(userProfileDoc?.audioCredits || {}) };
     }
 
     function renderWalletAndShop() {
@@ -1220,18 +1236,24 @@
       shopBalance.textContent = `Saldo: ${balance} XP`;
 
       const unlocked = unlockedItems();
+      const credits = audioCredits();
+
       shopItems.innerHTML = SHOP_ITEMS.map(item => {
-        const owned = unlocked.has(item.id);
+        const isSound = item.type === "sound";
+        const owned = !isSound && unlocked.has(item.id);
+        const creditCount = isSound ? Number(credits[item.soundId] || 0) : 0;
+
         return `
           <div class="shop-item">
             <div>
               <strong>${escapeHtml(item.label)}</strong>
               <span>${escapeHtml(item.description)}</span>
+              ${isSound && creditCount > 0 ? `<span class="shop-owned">Créditos disponíveis: ${creditCount}</span>` : ""}
             </div>
             <div>
               ${owned
                 ? '<span class="shop-owned">Liberado</span>'
-                : `<button class="btn btn-secondary" type="button" data-buy-item="${item.id}" ${balance < item.price ? "disabled" : ""}>${item.price} XP</button>`
+                : `<button class="btn btn-secondary" type="button" data-buy-item="${item.id}" ${balance < item.price ? "disabled" : ""}>${isSound ? "Comprar 1 uso" : "Comprar"} · ${item.price} XP</button>`
               }
             </div>
           </div>
@@ -1261,17 +1283,27 @@
 
           const data = snap.data();
           const balance = Number(data.xpBalance || 0);
-          const unlocked = new Set(data.unlockedItems || ["sound:msn"]);
+          const unlocked = new Set(data.unlockedItems || []);
+          const credits = { ...(data.audioCredits || {}) };
 
-          if (unlocked.has(item.id)) return;
           if (balance < item.price) throw new Error("XP insuficiente.");
 
-          unlocked.add(item.id);
-          tx.update(ref, {
-            xpBalance: balance - item.price,
-            unlockedItems: [...unlocked],
-            updatedAt: serverTimestamp()
-          });
+          if (item.type === "sound") {
+            credits[item.soundId] = Number(credits[item.soundId] || 0) + 1;
+            tx.update(ref, {
+              xpBalance: balance - item.price,
+              audioCredits: credits,
+              updatedAt: serverTimestamp()
+            });
+          } else {
+            if (unlocked.has(item.id)) return;
+            unlocked.add(item.id);
+            tx.update(ref, {
+              xpBalance: balance - item.price,
+              unlockedItems: [...unlocked],
+              updatedAt: serverTimestamp()
+            });
+          }
         });
       } catch (err) {
         console.error(err);
@@ -1579,8 +1611,9 @@
       };
 
       const unlocked = unlockedItems();
+      const credits = audioCredits();
       const unlockedSounds = SOUND_CATALOG.filter(sound =>
-        sound.id === "msn" || unlocked.has("sound:" + sound.id)
+        sound.id === "msn" || Number(credits[sound.id] || 0) > 0
       );
 
       nudgeSound.innerHTML = unlockedSounds
