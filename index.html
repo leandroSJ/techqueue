@@ -361,6 +361,29 @@
       margin-left:6px
     }
 
+    .shop-balance{
+      padding:12px 14px;
+      border-radius:10px;
+      background:var(--primary-container);
+      color:var(--on-primary-container);
+      margin:12px 0 16px;
+      font-weight:500
+    }
+    .shop-grid{display:grid;gap:10px}
+    .shop-item{
+      display:grid;
+      grid-template-columns:1fr auto;
+      gap:12px;
+      align-items:center;
+      border:1px solid var(--border);
+      border-radius:10px;
+      padding:12px
+    }
+    .shop-item strong{display:block;font-weight:500}
+    .shop-item span{display:block;color:var(--muted);font-size:.8rem;margin-top:3px}
+    .shop-price{font-weight:500;white-space:nowrap}
+    .shop-owned{color:var(--success);font-size:.8rem;font-weight:500}
+
     .grid{
       display:grid;
       grid-template-columns:.9fr 1.1fr;
@@ -640,6 +663,8 @@
           <span id="loggedShift">-</span>
         </div>
         <div class="header-actions">
+          <button id="shopBtn" class="btn btn-secondary" type="button">Lojinha <span id="walletXp">0 XP</span></button>
+          <a class="btn btn-secondary" href="./games.html" style="text-decoration:none;display:inline-flex;align-items:center">Sala da Descompressão</a>
           <button class="theme-btn" type="button" data-theme-toggle>Modo escuro</button>
           <button id="logoutBtn" class="btn btn-secondary">Sair</button>
         </div>
@@ -720,6 +745,37 @@
 
   <div id="nudgeToast" class="nudge-toast hidden" role="status" aria-live="polite"></div>
 
+  <dialog id="shopDialog">
+    <div class="dialog-body">
+      <h2>Lojinha do TechQueue</h2>
+      <p>Use o XP dos atendimentos para liberar sons e extras de zoeira. Compras ficam vinculadas à sua conta Google.</p>
+      <div id="shopBalance" class="shop-balance">Saldo: 0 XP</div>
+      <div id="shopItems" class="shop-grid"></div>
+      <div class="dialog-actions">
+        <button type="button" class="btn btn-secondary" data-close="shopDialog">Fechar</button>
+      </div>
+    </div>
+  </dialog>
+
+  <dialog id="nudgeDialog">
+    <form id="nudgeForm" class="dialog-body">
+      <h2>Chamar atenção</h2>
+      <p id="nudgeTargetText">Escolha como chamar a atenção.</p>
+      <div class="field">
+        <label for="nudgeSound">Som</label>
+        <select id="nudgeSound" class="status-select"></select>
+      </div>
+      <div id="customMessageField" class="field hidden">
+        <label for="nudgeMessage">Mensagem</label>
+        <input id="nudgeMessage" maxlength="90" placeholder="Ex.: Ô meu patrão, olha aqui" />
+      </div>
+      <div class="dialog-actions">
+        <button type="button" class="btn btn-secondary" data-close="nudgeDialog">Cancelar</button>
+        <button type="submit" class="btn btn-primary">Enviar</button>
+      </div>
+    </form>
+  </dialog>
+
   <dialog id="takeDialog">
     <form id="takeForm" class="dialog-body">
       <h2>Atendi agora</h2>
@@ -792,7 +848,7 @@
     } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-auth.js";
     import {
       getFirestore, doc, getDoc, setDoc, collection, onSnapshot, serverTimestamp,
-      runTransaction, getDocs, writeBatch, addDoc
+      runTransaction, getDocs, writeBatch, addDoc, increment
     } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-firestore.js";
 
     /*
@@ -860,6 +916,17 @@
     const openStarted = document.querySelector("#openStarted");
     const adminRow = document.querySelector("#adminRow");
     const resetDayBtn = document.querySelector("#resetDayBtn");
+    const shopBtn = document.querySelector("#shopBtn");
+    const walletXp = document.querySelector("#walletXp");
+    const shopDialog = document.querySelector("#shopDialog");
+    const shopBalance = document.querySelector("#shopBalance");
+    const shopItems = document.querySelector("#shopItems");
+    const nudgeDialog = document.querySelector("#nudgeDialog");
+    const nudgeForm = document.querySelector("#nudgeForm");
+    const nudgeSound = document.querySelector("#nudgeSound");
+    const nudgeMessage = document.querySelector("#nudgeMessage");
+    const nudgeTargetText = document.querySelector("#nudgeTargetText");
+    const customMessageField = document.querySelector("#customMessageField");
     const podium = document.querySelector("#podium");
     const shameWall = document.querySelector("#shameWall");
     const statusSelect = document.querySelector("#statusSelect");
@@ -884,6 +951,9 @@
     let unsubQueuedClients = null;
     let nudgesReady = false;
     let openAttendance = null;
+    let userProfileDoc = null;
+    let unsubProfile = null;
+    let pendingNudgeTarget = null;
 
     if (isConfigured) {
       app = initializeApp(firebaseConfig);
