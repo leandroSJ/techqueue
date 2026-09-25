@@ -1276,9 +1276,10 @@
           subscribeUserProfile();
         } catch (walletErr) {
           console.error("Falha ao iniciar carteira/lojinha:", walletErr);
-          userProfileDoc = { xpBalance: 0, unlockedItems: ["sound:msn"] };
+          userProfileDoc = { xpBalance: 0, unlockedItems: [], audioCredits: {} };
           renderWalletAndShop();
           walletXp.textContent = "XP indisponível";
+          shopBalance.textContent = "Saldo indisponível — verifique as regras do Firestore.";
         }
 
       } catch (err) {
@@ -1288,6 +1289,8 @@
     }
 
     async function ensureUserProfile() {
+      const STARTER_XP = 25;
+      const STARTER_XP_VERSION = 2;
       const ref = doc(db, "profiles", authUser.uid);
       const snap = await getDoc(ref);
 
@@ -1295,30 +1298,51 @@
         await setDoc(ref, {
           name: profile.name,
           email: profile.email,
-          xpBalance: 35,
+          xpBalance: STARTER_XP,
           starterXpGranted: true,
+          starterXpVersion: STARTER_XP_VERSION,
           audioCredits: {},
           unlockedItems: [],
           createdAt: serverTimestamp(),
           updatedAt: serverTimestamp()
         });
-      } else {
-        const data = snap.data();
-        const patch = {
-          name: profile.name,
-          email: profile.email,
-          updatedAt: serverTimestamp()
-        };
+        return;
+      }
 
-        if (data.starterXpGranted !== true) {
-          patch.xpBalance = Number(data.xpBalance || 0) + 35;
-          patch.starterXpGranted = true;
+      const data = snap.data();
+      const credits = { ...(data.audioCredits || {}) };
+      const unlocked = Array.isArray(data.unlockedItems) ? data.unlockedItems : [];
+      const hasPurchasedInventory =
+        Object.values(credits).some(value => Number(value || 0) > 0) ||
+        unlocked.length > 0;
+
+      const patch = {
+        name: profile.name,
+        email: profile.email,
+        audioCredits: credits,
+        updatedAt: serverTimestamp()
+      };
+
+      if (Number(data.starterXpVersion || 0) < STARTER_XP_VERSION) {
+        const currentBalance = Number(data.xpBalance || 0);
+
+        // Corrige os perfis criados durante a fase em que o saldo inicial
+        // ainda estava configurado incorretamente como 35 XP.
+        if (currentBalance === 35 && data.starterXpGranted === true && !hasPurchasedInventory) {
+          patch.xpBalance = STARTER_XP;
+        } else if (currentBalance === 0 && !hasPurchasedInventory) {
+          // Perfis que ficaram zerados por falha da inicialização recebem
+          // agora os 25 XP iniciais definidos para todos os usuários.
+          patch.xpBalance = STARTER_XP;
+        } else if (data.starterXpGranted !== true) {
+          patch.xpBalance = currentBalance + STARTER_XP;
         }
 
-        if (!data.audioCredits) patch.audioCredits = {};
-
-        await setDoc(ref, patch, { merge: true });
+        patch.starterXpGranted = true;
+        patch.starterXpVersion = STARTER_XP_VERSION;
       }
+
+      await setDoc(ref, patch, { merge: true });
     }
 
     function subscribeUserProfile() {
