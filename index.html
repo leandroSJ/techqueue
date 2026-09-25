@@ -418,6 +418,13 @@
 
     .open-ticket h3{margin:0 0 4px;font-weight:500}
     .open-ticket p{margin:0 0 12px;color:var(--muted)}
+    .open-ticket-actions{display:flex;gap:10px;flex-wrap:wrap}
+    .queued-client{
+      display:grid;grid-template-columns:1fr auto;gap:12px;align-items:center;
+      padding:12px 13px;border:1px solid var(--border);border-radius:10px;background:var(--surface)
+    }
+    .queued-client strong{display:block;font-weight:500}
+    .queued-client span{display:block;color:var(--muted);font-size:.8rem;margin-top:3px}
 
     .history-item{
       border:1px solid var(--border);
@@ -445,6 +452,7 @@
 
     .history-state.done{background:var(--success-bg);color:var(--success)}
     .history-state.open{background:var(--warning-bg);color:var(--warning)}
+    .history-state.queued{background:var(--primary-container);color:var(--on-primary-container)}
 
     .complexity-options{display:grid;gap:8px}
     .complexity-option{
@@ -604,7 +612,10 @@
           <div class="eyebrow">Seu atendimento em andamento</div>
           <h3 id="openClient">-</h3>
           <p id="openStarted">-</p>
-          <button id="finishBtn" class="btn btn-primary">Finalizei o atendimento</button>
+          <div class="open-ticket-actions">
+            <button id="finishBtn" class="btn btn-primary">Finalizei o atendimento</button>
+            <button id="queueClientBtn" class="btn btn-secondary">Enviar para fila</button>
+          </div>
         </div>
 
         <div class="card" style="margin-bottom:20px">
@@ -619,6 +630,11 @@
               <option value="bathroom">Segura aí na moral, vou no banheiro</option>
             </select>
           </div>
+        </div>
+
+        <div class="card" style="margin-bottom:20px">
+          <h2>Clientes encaminhados</h2>
+          <div id="queuedClientsList" class="queue-list"></div>
         </div>
 
         <div class="card">
@@ -769,9 +785,11 @@
     const nextName = document.querySelector("#nextName");
     const queueText = document.querySelector("#queueText");
     const queueList = document.querySelector("#queueList");
+    const queuedClientsList = document.querySelector("#queuedClientsList");
     const historyEl = document.querySelector("#history");
     const takeBtn = document.querySelector("#takeBtn");
     const finishBtn = document.querySelector("#finishBtn");
+    const queueClientBtn = document.querySelector("#queueClientBtn");
     const myOpenTicket = document.querySelector("#myOpenTicket");
     const openClient = document.querySelector("#openClient");
     const openStarted = document.querySelector("#openStarted");
@@ -792,9 +810,11 @@
     let profile = null;
     let dayState = null;
     let todayAttendances = [];
+    let queuedClients = [];
     let unsubDay = null;
     let unsubHistory = null;
     let unsubNudges = null;
+    let unsubQueuedClients = null;
     let nudgesReady = false;
     let openAttendance = null;
 
@@ -942,9 +962,11 @@
       if (unsubDay) unsubDay();
       if (unsubHistory) unsubHistory();
       if (unsubNudges) unsubNudges();
+      if (unsubQueuedClients) unsubQueuedClients();
       unsubDay = null;
       unsubHistory = null;
       unsubNudges = null;
+      unsubQueuedClients = null;
       nudgesReady = false;
     }
 
@@ -1020,6 +1042,7 @@
       const dayRef = doc(db, "days", now.dateId);
       const attendanceCol = collection(db, "days", now.dateId, "attendances");
       const nudgesCol = collection(db, "days", now.dateId, "nudges");
+      const queuedClientsCol = collection(db, "days", now.dateId, "queuedClients");
 
       unsubDay = onSnapshot(dayRef, async snap => {
         dayState = snap.exists() ? snap.data() : null;
@@ -1031,6 +1054,13 @@
         todayAttendances = snap.docs.map(d => ({ id: d.id, ...d.data() }))
           .sort((a,b) => (b.startedAtMs || 0) - (a.startedAtMs || 0));
         renderHistory();
+      });
+
+      unsubQueuedClients = onSnapshot(queuedClientsCol, snap => {
+        queuedClients = snap.docs
+          .map(d => ({ id: d.id, ...d.data() }))
+          .sort((a,b) => (a.createdAtMs || 0) - (b.createdAtMs || 0));
+        renderQueuedClients();
       });
 
       unsubNudges = onSnapshot(nudgesCol, snap => {
@@ -1219,6 +1249,104 @@
       } catch (_) {}
     }
 
+    function renderQueuedClients() {
+      if (!queuedClientsList) return;
+
+      if (!queuedClients.length) {
+        queuedClientsList.innerHTML = '<div class="empty">Nenhum cliente encaminhado no momento.</div>';
+        return;
+      }
+
+      const canAssume =
+        dayState?.currentUid === authUser?.uid &&
+        memberOf(authUser?.uid)?.status === "available" &&
+        !openAttendance;
+
+      queuedClientsList.innerHTML = queuedClients.map(item => `
+        <div class="queued-client">
+          <div>
+            <strong>${escapeHtml(item.clientName)}</strong>
+            <span>Enviado por ${escapeHtml(item.fromName || "Técnico")} às ${formatTimestamp(item.createdAt)}</span>
+          </div>
+          <button
+            class="btn btn-secondary"
+            type="button"
+            data-assume-client="${item.id}"
+            ${canAssume ? "" : "disabled"}
+          >Assumir</button>
+        </div>
+      `).join("");
+    }
+
+    queuedClientsList.addEventListener("click", async event => {
+      const button = event.target.closest("[data-assume-client]");
+      if (!button) return;
+      await assumeQueuedClient(button.dataset.assumeClient);
+    });
+
+    async function assumeQueuedClient(queueId) {
+      if (!authUser || !dayState) return;
+
+      const now = bahiaParts();
+      const dayRef = doc(db, "days", now.dateId);
+      const queuedRef = doc(db, "days", now.dateId, "queuedClients", queueId);
+      const attendanceRef = doc(collection(db, "days", now.dateId, "attendances"));
+
+      try {
+        await runTransaction(db, async tx => {
+          const daySnap = await tx.get(dayRef);
+          const queuedSnap = await tx.get(queuedRef);
+
+          if (!daySnap.exists() || !queuedSnap.exists()) {
+            throw new Error("Este cliente não está mais na fila.");
+          }
+
+          const state = daySnap.data();
+          const item = queuedSnap.data();
+          const member = state.members?.[authUser.uid];
+
+          if (state.currentUid !== authUser.uid || member?.status !== "available") {
+            throw new Error("Somente o próximo técnico disponível pode assumir este cliente.");
+          }
+
+          const queue = (state.queue || []).filter(uid => uid !== authUser.uid);
+          const members = { ...state.members };
+          members[authUser.uid] = {
+            ...member,
+            status: "busy",
+            currentAttendanceId: attendanceRef.id
+          };
+
+          tx.set(attendanceRef, {
+            technicianUid: authUser.uid,
+            technicianName: profile.name,
+            clientName: item.clientName,
+            status: "open",
+            startedAt: serverTimestamp(),
+            startedAtMs: Date.now(),
+            problem: "",
+            solution: "",
+            source: "forwarded",
+            forwardedByUid: item.fromUid || null,
+            forwardedByName: item.fromName || "",
+            finishedAt: null
+          });
+
+          tx.delete(queuedRef);
+
+          tx.update(dayRef, {
+            queue,
+            members,
+            currentUid: queue[0] || null,
+            updatedAt: serverTimestamp()
+          });
+        });
+      } catch (err) {
+        console.error(err);
+        alert(err.message || "Não foi possível assumir o cliente.");
+      }
+    }
+
     function renderHistory() {
       if (!historyEl) return;
       if (!todayAttendances.length) {
@@ -1228,6 +1356,9 @@
 
       historyEl.innerHTML = todayAttendances.map(a => {
         const done = a.status === "finished";
+        const queued = a.status === "queued";
+        const stateLabel = done ? "Concluído" : queued ? "Enviado para fila" : "Em atendimento";
+        const stateClass = done ? "done" : queued ? "queued" : "open";
         return `
           <article class="history-item">
             <div class="history-title-row">
@@ -1235,11 +1366,15 @@
                 ${escapeHtml(a.clientName)} — ${escapeHtml(a.technicianName)}
                 ${done ? complexityBadge(a.complexity) : ""}
               </div>
-              <span class="history-state ${done ? "done" : "open"}">${done ? "Concluído" : "Em atendimento"}</span>
+              <span class="history-state ${stateClass}">${stateLabel}</span>
             </div>
             <div class="history-meta">
               Início ${formatTimestamp(a.startedAt)}
-              ${done ? ` • fim ${formatTimestamp(a.finishedAt)}` : " • em atendimento"}
+              ${done
+                ? ` • fim ${formatTimestamp(a.finishedAt)}`
+                : queued
+                  ? ` • enviado para fila ${formatTimestamp(a.queuedAt)}`
+                  : " • em atendimento"}
             </div>
             ${done ? `
               <div class="history-details">
@@ -1355,6 +1490,70 @@
       } catch (err) {
         console.error(err);
         alert(err.message || "Não foi possível registrar o atendimento.");
+      }
+    });
+
+    queueClientBtn.addEventListener("click", async () => {
+      if (!openAttendance || !authUser) return;
+
+      const ok = confirm(`Enviar ${openAttendance.clientName} para a fila e voltar a ficar disponível?`);
+      if (!ok) return;
+
+      const now = bahiaParts();
+      const dayRef = doc(db, "days", now.dateId);
+      const attendanceRef = doc(db, "days", now.dateId, "attendances", openAttendance.id);
+      const queuedRef = doc(collection(db, "days", now.dateId, "queuedClients"));
+
+      try {
+        await runTransaction(db, async tx => {
+          const [daySnap, attSnap] = await Promise.all([
+            tx.get(dayRef),
+            tx.get(attendanceRef)
+          ]);
+
+          if (!daySnap.exists() || !attSnap.exists()) throw new Error("Atendimento não encontrado.");
+
+          const state = daySnap.data();
+          const attendance = attSnap.data();
+
+          if (attendance.technicianUid !== authUser.uid || attendance.status !== "open") {
+            throw new Error("Este atendimento não pode mais ser encaminhado.");
+          }
+
+          const members = { ...state.members };
+          const member = members[authUser.uid];
+          members[authUser.uid] = {
+            ...member,
+            status: "available",
+            currentAttendanceId: null
+          };
+
+          const queue = [...(state.queue || [])];
+          if (!queue.includes(authUser.uid)) queue.push(authUser.uid);
+
+          tx.update(attendanceRef, {
+            status: "queued",
+            queuedAt: serverTimestamp()
+          });
+
+          tx.set(queuedRef, {
+            clientName: attendance.clientName,
+            fromUid: authUser.uid,
+            fromName: profile.name,
+            createdAt: serverTimestamp(),
+            createdAtMs: Date.now()
+          });
+
+          tx.update(dayRef, {
+            members,
+            queue,
+            currentUid: state.currentUid || queue[0] || null,
+            updatedAt: serverTimestamp()
+          });
+        });
+      } catch (err) {
+        console.error(err);
+        alert(err.message || "Não foi possível enviar o cliente para a fila.");
       }
     });
 
