@@ -782,6 +782,16 @@
           <option value="🤡">🤡</option>
         </select>
       </div>
+      <div id="stickerField" class="field hidden">
+        <label for="nudgeSticker">Figurinha</label>
+        <select id="nudgeSticker" class="status-select">
+          <option value="">Sem figurinha</option>
+          <option value="BORA">BORA</option>
+          <option value="CALMA AÍ">CALMA AÍ</option>
+          <option value="ACORDA">ACORDA</option>
+          <option value="LÁ ELE">LÁ ELE</option>
+        </select>
+      </div>
       <div class="dialog-actions">
         <button type="button" class="btn btn-secondary" data-close="nudgeDialog">Cancelar</button>
         <button type="submit" class="btn btn-primary">Enviar</button>
@@ -942,6 +952,8 @@
     const customMessageField = document.querySelector("#customMessageField");
     const reactionField = document.querySelector("#reactionField");
     const nudgeReaction = document.querySelector("#nudgeReaction");
+    const stickerField = document.querySelector("#stickerField");
+    const nudgeSticker = document.querySelector("#nudgeSticker");
     const podium = document.querySelector("#podium");
     const shameWall = document.querySelector("#shameWall");
     const statusSelect = document.querySelector("#statusSelect");
@@ -1011,6 +1023,13 @@
         label: "Pacote de reações",
         description: "Libera reações rápidas para enviar junto com o alerta.",
         price: 15
+      },
+      {
+        id: "sticker_pack",
+        type: "feature",
+        label: "Pacote de figurinhas",
+        description: "Libera figurinhas de texto para mandar junto com o alerta.",
+        price: 30
       }
     ];
 
@@ -1550,8 +1569,10 @@
 
       customMessageField.classList.toggle("hidden", !unlocked.has("message_pack"));
       reactionField.classList.toggle("hidden", !unlocked.has("reaction_pack"));
+      stickerField.classList.toggle("hidden", !unlocked.has("sticker_pack"));
       nudgeMessage.value = "";
       nudgeReaction.value = "";
+      nudgeSticker.value = "";
       nudgeTargetText.textContent = `Chamar a atenção de ${pendingNudgeTarget.name}.`;
       nudgeDialog.showModal();
     });
@@ -1572,6 +1593,7 @@
           sound: nudgeSound.value || "msn",
           message: customMessageField.classList.contains("hidden") ? "" : nudgeMessage.value.trim(),
           reaction: reactionField.classList.contains("hidden") ? "" : nudgeReaction.value,
+          sticker: stickerField.classList.contains("hidden") ? "" : nudgeSticker.value,
           createdAt: serverTimestamp(),
           createdAtMs: Date.now()
         });
@@ -1595,7 +1617,7 @@
       void document.body.offsetWidth;
       document.body.classList.add("nudged");
 
-      const extras = [nudge.reaction, nudge.message].filter(Boolean).join(" ");
+      const extras = [nudge.reaction, nudge.sticker ? "[" + nudge.sticker + "]" : "", nudge.message].filter(Boolean).join(" ");
       nudgeToast.textContent = extras
         ? `${fromName}: ${extras}`
         : `${fromName} está chamando sua atenção.`;
