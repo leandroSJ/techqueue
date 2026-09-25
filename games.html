@@ -80,6 +80,7 @@
 
     <main id="appView" class="hidden">
       <section id="lobbyView">
+        <div id="gameError" class="error" style="margin:0 0 14px"></div>
         <div class="games-grid">
           <div class="card game-card"><h3>Jogo da Velha</h3><p>Partida rápida para 2 pessoas.</p><button class="btn primary" data-create-game="tictactoe">Criar sala</button></div>
           <div class="card game-card"><h3>Desenhe e Adivinhe</h3><p>Um desenha e os outros tentam descobrir.</p><button class="btn primary" data-create-game="draw">Criar sala</button></div>
@@ -160,6 +161,7 @@
     const roomCode = document.querySelector("#roomCode");
     const playersEl = document.querySelector("#players");
     const gameRoot = document.querySelector("#gameRoot");
+    const gameError = document.querySelector("#gameError");
     const restartBtn = document.querySelector("#restartBtn");
     const leaveBtn = document.querySelector("#leaveBtn");
     const googleBtn = document.querySelector("#googleBtn");
@@ -219,9 +221,16 @@
     function subscribeRooms(){
       if(unsubRooms) unsubRooms();
       unsubRooms = onSnapshot(collection(db,"gameRooms"), snap=>{
+        gameError.textContent = "";
         rooms = snap.docs.map(d=>({id:d.id,...d.data()}))
           .sort((a,b)=>(b.createdAtMs||0)-(a.createdAtMs||0));
         renderRooms();
+      }, err=>{
+        console.error("Erro ao carregar salas:",err);
+        gameError.textContent = err?.code === "permission-denied"
+          ? "O Firebase bloqueou o acesso às salas. Publique as regras mais recentes do Firestore."
+          : "Não foi possível carregar as salas agora.";
+        roomsList.innerHTML = '<div class="muted">Falha ao carregar salas.</div>';
       });
     }
 
@@ -244,9 +253,18 @@
 
     document.addEventListener("click", async event=>{
       const create = event.target.closest("[data-create-game]");
-      if(create){ await createRoom(create.dataset.createGame); return; }
       const join = event.target.closest("[data-join-room]");
-      if(join){ await joinRoom(join.dataset.joinRoom); return; }
+
+      try{
+        gameError.textContent = "";
+        if(create){ await createRoom(create.dataset.createGame); return; }
+        if(join){ await joinRoom(join.dataset.joinRoom); return; }
+      }catch(err){
+        console.error("Erro na sala de jogos:",err);
+        gameError.textContent = err?.code === "permission-denied"
+          ? "O Firebase bloqueou a criação/entrada na sala. Publique as regras mais recentes do Firestore."
+          : (err?.message || "Não foi possível abrir esta sala.");
+      }
     });
 
     async function createRoom(game){
@@ -303,6 +321,11 @@
         if(!snap.exists()){backToLobby();return;}
         currentRoom={id:snap.id,...snap.data()};
         renderRoom();
+      },err=>{
+        console.error("Erro ao sincronizar sala:",err);
+        gameRoot.innerHTML = err?.code === "permission-denied"
+          ? '<div class="error">O Firebase bloqueou esta sala. Atualize as regras do Firestore.</div>'
+          : '<div class="error">Não foi possível sincronizar esta sala.</div>';
       });
     }
 
