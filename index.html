@@ -1157,10 +1157,21 @@
         adminRow.classList.toggle("hidden", profile.role !== "admin");
 
         setViews(true);
-        await ensureUserProfile();
-        subscribeUserProfile();
+
+        // A fila é o recurso principal: ela deve continuar funcionando mesmo
+        // se a carteira/lojinha ainda não tiver permissão no Firestore.
         await joinTodayIfAllowed();
         subscribeToday();
+
+        try {
+          await ensureUserProfile();
+          subscribeUserProfile();
+        } catch (walletErr) {
+          console.error("Falha ao iniciar carteira/lojinha:", walletErr);
+          userProfileDoc = { xpBalance: 0, unlockedItems: ["sound:msn"] };
+          renderWalletAndShop();
+          walletXp.textContent = "XP indisponível";
+        }
 
       } catch (err) {
         console.error(err);
