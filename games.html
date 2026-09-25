@@ -48,7 +48,7 @@
     .tile span{padding:10px 8px;text-align:center}.tile span+span{border-left:1px solid var(--border)}button.tile{padding:0}.tile.playable{outline:2px solid var(--primary)}
     .checkers{display:grid;grid-template-columns:repeat(8,minmax(34px,56px));justify-content:center;border:1px solid var(--border);width:max-content;margin:0 auto}
     .square{aspect-ratio:1;border:0;border-radius:0;padding:0;display:grid;place-items:center;background:#ede7d9}.square.dark{background:#7b6855}.piece{width:72%;height:72%;border-radius:50%;border:3px solid rgba(255,255,255,.55)}
-    .piece.red{background:#c5221f}.piece.black{background:#202124}.piece.king::after{content:"K";color:#fff;font-size:.75rem;font-weight:600}.square.selected{outline:3px solid #f9ab00;outline-offset:-3px}
+    .piece.red{background:#c5221f}.piece.black{background:#202124}.piece.king::after{content:"K";color:#fff;font-size:.75rem;font-weight:600}.square.selected{outline:3px solid #f9ab00;outline-offset:-3px}.square.capture-required{box-shadow:inset 0 0 0 3px #34a853}.square.legal-target{box-shadow:inset 0 0 0 3px #4285f4}
     .login{min-height:70vh;display:grid;place-items:center}.login .card{width:min(420px,100%);text-align:center}.game-result{text-align:center;font-size:1.1rem;font-weight:500;margin:14px 0}
     @media(max-width:950px){.games-grid{grid-template-columns:repeat(2,1fr)}.two-col{grid-template-columns:1fr}}
     @media(max-width:560px){.games-grid{grid-template-columns:1fr}.ttt{grid-template-columns:repeat(3,78px)}.ttt button{width:78px;height:78px}.draw-canvas{height:280px}}
@@ -329,7 +329,13 @@
         return{word:randomWord(),drawerUid:drawer,guesses:[],winnerUid:null,winnerName:null,round:Number(previous?.round||0)+1,strokes:[]};
       }
       if(game==="domino")return initDomino(order);
-      if(game==="checkers")return{board:initCheckersBoard(),turnUid:order[0]||null,winnerUid:null};
+      if(game==="checkers")return{
+        board:initCheckersBoard(),
+        turnUid:order[0]||null,
+        winnerUid:null,
+        scores:Object.fromEntries(order.map(uid=>[uid,0])),
+        mustContinueFrom:null
+      };
       return{};
     }
 
@@ -602,27 +608,244 @@
       });
     }
 
-    function initCheckersBoard(){const b=Array(64).fill(null);for(let r=0;r<3;r++)for(let c=0;c<8;c++)if((r+c)%2===1)b[r*8+c]="r";for(let r=5;r<8;r++)for(let c=0;c<8;c++)if((r+c)%2===1)b[r*8+c]="b";return b}
+    function initCheckersBoard(){
+      const board=Array(64).fill(null);
+      for(let r=0;r<3;r++)for(let col=0;col<8;col++)if((r+col)%2===1)board[r*8+col]="r";
+      for(let r=5;r<8;r++)for(let col=0;col<8;col++)if((r+col)%2===1)board[r*8+col]="b";
+      return board;
+    }
+
+    function insideBoard(r,c){return r>=0&&r<8&&c>=0&&c<8}
+    function checkerColor(piece){return piece?piece.toLowerCase():null}
+    function isKing(piece){return !!piece&&piece===piece.toUpperCase()}
+
+    function captureMovesForPiece(board,from,color){
+      const piece=board[from];
+      if(!piece||checkerColor(piece)!==color)return[];
+
+      const r=Math.floor(from/8),c=from%8;
+      const dirs=[[-1,-1],[-1,1],[1,-1],[1,1]];
+      const moves=[];
+
+      if(isKing(piece)){
+        for(const[dr,dc]of dirs){
+          let rr=r+dr,cc=c+dc,captured=null;
+
+          while(insideBoard(rr,cc)){
+            const idx=rr*8+cc;
+            const target=board[idx];
+
+            if(!target){
+              if(captured!==null)moves.push({from,to:idx,captured});
+              rr+=dr;cc+=dc;
+              continue;
+            }
+
+            if(checkerColor(target)===color)break;
+            if(captured!==null)break;
+
+            captured=idx;
+            rr+=dr;cc+=dc;
+          }
+        }
+        return moves;
+      }
+
+      for(const[dr,dc]of dirs){
+        const mr=r+dr,mc=c+dc,tr=r+dr*2,tc=c+dc*2;
+        if(!insideBoard(tr,tc)||!insideBoard(mr,mc))continue;
+
+        const mid=mr*8+mc,to=tr*8+tc;
+        if(board[mid]&&checkerColor(board[mid])!==color&&!board[to]){
+          moves.push({from,to,captured:mid});
+        }
+      }
+      return moves;
+    }
+
+    function simpleMovesForPiece(board,from,color){
+      const piece=board[from];
+      if(!piece||checkerColor(piece)!==color)return[];
+
+      const r=Math.floor(from/8),c=from%8;
+      const moves=[];
+
+      if(isKing(piece)){
+        for(const[dr,dc]of[[-1,-1],[-1,1],[1,-1],[1,1]]){
+          let rr=r+dr,cc=c+dc;
+          while(insideBoard(rr,cc)){
+            const to=rr*8+cc;
+            if(board[to])break;
+            moves.push({from,to,captured:null});
+            rr+=dr;cc+=dc;
+          }
+        }
+        return moves;
+      }
+
+      const forward=color==="r"?1:-1;
+      for(const dc of[-1,1]){
+        const tr=r+forward,tc=c+dc;
+        if(!insideBoard(tr,tc))continue;
+        const to=tr*8+tc;
+        if(!board[to])moves.push({from,to,captured:null});
+      }
+      return moves;
+    }
+
+    function allCaptureMoves(board,color){
+      const moves=[];
+      for(let i=0;i<64;i++){
+        if(checkerColor(board[i])===color)moves.push(...captureMovesForPiece(board,i,color));
+      }
+      return moves;
+    }
+
+    function legalCheckerMoves(board,color,mustContinueFrom=null){
+      if(mustContinueFrom!==null){
+        return captureMovesForPiece(board,mustContinueFrom,color);
+      }
+      const captures=allCaptureMoves(board,color);
+      if(captures.length)return captures;
+
+      const moves=[];
+      for(let i=0;i<64;i++){
+        if(checkerColor(board[i])===color)moves.push(...simpleMovesForPiece(board,i,color));
+      }
+      return moves;
+    }
+
     function renderCheckers(){
-      const s=currentRoom.state||{},order=currentRoom.playerOrder||[],myColor=user.uid===order[0]?"r":"b",winner=s.winnerUid?currentRoom.players?.[s.winnerUid]:null;
-      gameRoot.innerHTML=`<div class="turn">${winner?`${escapeHtml(winner)} venceu.`:`Vez de ${escapeHtml(currentRoom.players?.[s.turnUid]||"jogador")} · suas peças: ${myColor==="r"?"vermelhas":"pretas"}`}</div><div class="checkers">${(s.board||[]).map((p,i)=>{const r=Math.floor(i/8),cc=i%8,dark=(r+cc)%2===1,cls=p?(p.toLowerCase()==="r"?"red":"black"):"";return`<button class="square ${dark?"dark":""} ${selectedChecker===i?"selected":""}" data-square="${i}">${p?`<span class="piece ${cls} ${p===p.toUpperCase()?"king":""}"></span>`:""}</button>`}).join("")}</div>`;
+      const s=currentRoom.state||{};
+      const order=currentRoom.playerOrder||[];
+      const myColor=user.uid===order[0]?"r":"b";
+      const turnColor=s.turnUid===order[0]?"r":"b";
+      const winner=s.winnerUid?currentRoom.players?.[s.winnerUid]:null;
+      const scores=s.scores||{};
+      const legal=s.turnUid?legalCheckerMoves(s.board||[],turnColor,s.mustContinueFrom??null):[];
+      const mandatory=legal.some(move=>move.captured!==null);
+      const allowedFrom=new Set(legal.map(move=>move.from));
+      const legalTargets=new Set(selectedChecker===null?[]:legal.filter(move=>move.from===selectedChecker).map(move=>move.to));
+
+      if(s.mustContinueFrom!==null&&s.turnUid===user.uid){
+        selectedChecker=s.mustContinueFrom;
+      }
+
+      gameRoot.innerHTML=`
+        <div class="turn">
+          ${winner
+            ? `${escapeHtml(winner)} venceu.`
+            : `Vez de ${escapeHtml(currentRoom.players?.[s.turnUid]||"jogador")} · suas peças: ${myColor==="r"?"vermelhas":"pretas"}${mandatory?" · captura obrigatória":""}`}
+        </div>
+        <div class="players">
+          ${order.map(uid=>`<span class="player-chip">${escapeHtml(currentRoom.players?.[uid]||"Jogador")}: ${Number(scores[uid]||0)} peça${Number(scores[uid]||0)===1?"":"s"} eliminada${Number(scores[uid]||0)===1?"":"s"}</span>`).join("")}
+        </div>
+        <p class="muted small" style="text-align:center">
+          Peças com captura obrigatória ficam marcadas. A dama pode percorrer toda a diagonal livre.
+        </p>
+        <div class="checkers">
+          ${(s.board||[]).map((piece,index)=>{
+            const r=Math.floor(index/8),col=index%8,dark=(r+col)%2===1;
+            const cls=piece?(checkerColor(piece)==="r"?"red":"black"):"";
+            const captureClass=s.turnUid===user.uid&&mandatory&&allowedFrom.has(index)?"capture-required":"";
+            const targetClass=legalTargets.has(index)?"legal-target":"";
+            return`<button class="square ${dark?"dark":""} ${selectedChecker===index?"selected":""} ${captureClass} ${targetClass}" data-square="${index}">${piece?`<span class="piece ${cls} ${isKing(piece)?"king":""}"></span>`:""}</button>`;
+          }).join("")}
+        </div>
+      `;
     }
+
     async function handleCheckerClick(index){
-      const s=currentRoom.state||{},order=currentRoom.playerOrder||[];if(s.turnUid!==user.uid||s.winnerUid)return;const my=user.uid===order[0]?"r":"b",piece=s.board?.[index];
-      if(selectedChecker===null){if(piece&&piece.toLowerCase()===my){selectedChecker=index;renderCheckers()}return}
-      if(piece&&piece.toLowerCase()===my){selectedChecker=index;renderCheckers();return}
-      const from=selectedChecker;selectedChecker=null;await moveChecker(from,index);
+      const s=currentRoom.state||{};
+      const order=currentRoom.playerOrder||[];
+      if(s.turnUid!==user.uid||s.winnerUid)return;
+
+      const myColor=user.uid===order[0]?"r":"b";
+      const board=s.board||[];
+      const legal=legalCheckerMoves(board,myColor,s.mustContinueFrom??null);
+      const allowedFrom=new Set(legal.map(move=>move.from));
+      const piece=board[index];
+
+      if(s.mustContinueFrom!==null){
+        selectedChecker=s.mustContinueFrom;
+      }
+
+      if(selectedChecker===null){
+        if(piece&&checkerColor(piece)===myColor&&allowedFrom.has(index)){
+          selectedChecker=index;
+          renderCheckers();
+        }
+        return;
+      }
+
+      if(piece&&checkerColor(piece)===myColor&&s.mustContinueFrom===null&&allowedFrom.has(index)){
+        selectedChecker=index;
+        renderCheckers();
+        return;
+      }
+
+      const from=selectedChecker;
+      await moveChecker(from,index);
+      selectedChecker=null;
     }
+
     async function moveChecker(from,to){
       await mutateRoom(currentRoomId,room=>{
-        const s=structuredClone(room.state),order=room.playerOrder||[],board=s.board||[];if(s.turnUid!==user.uid||board[to])return room;
-        const piece=board[from];if(!piece)return room;const my=user.uid===order[0]?"r":"b";if(piece.toLowerCase()!==my)return room;
-        const fr=Math.floor(from/8),fc=from%8,tr=Math.floor(to/8),tc=to%8,dr=tr-fr,dc=tc-fc,king=piece===piece.toUpperCase(),forward=my==="r"?1:-1;let valid=false,captureIndex=null;
-        if(Math.abs(dc)===1&&Math.abs(dr)===1&&(king||dr===forward))valid=true;
-        if(Math.abs(dc)===2&&Math.abs(dr)===2&&(king||dr===2*forward)){const mr=(fr+tr)/2,mc=(fc+tc)/2,mid=mr*8+mc,enemy=board[mid];if(enemy&&enemy.toLowerCase()!==my){valid=true;captureIndex=mid}}
-        if(!valid)return room;board[to]=piece;board[from]=null;if(captureIndex!==null)board[captureIndex]=null;if((my==="r"&&tr===7)||(my==="b"&&tr===0))board[to]=piece.toUpperCase();
-        const opponent=order.find(uid=>uid!==user.uid)||user.uid,opponentColor=my==="r"?"b":"r",winner=!board.some(p=>p&&p.toLowerCase()===opponentColor)?user.uid:null;
-        s.board=board;s.winnerUid=winner;s.turnUid=winner?null:opponent;room.state=s;room.status=winner?"finished":"playing";return room;
+        const s=structuredClone(room.state);
+        const order=room.playerOrder||[];
+        const board=[...(s.board||[])];
+
+        if(s.turnUid!==user.uid||s.winnerUid||board[to])return room;
+
+        const myColor=user.uid===order[0]?"r":"b";
+        const piece=board[from];
+        if(!piece||checkerColor(piece)!==myColor)return room;
+
+        const legal=legalCheckerMoves(board,myColor,s.mustContinueFrom??null);
+        const move=legal.find(candidate=>candidate.from===from&&candidate.to===to);
+        if(!move)return room;
+
+        board[to]=piece;
+        board[from]=null;
+
+        const scores={...(s.scores||{})};
+        if(move.captured!==null){
+          board[move.captured]=null;
+          scores[user.uid]=Number(scores[user.uid]||0)+1;
+        }
+
+        const targetRow=Math.floor(to/8);
+        if((myColor==="r"&&targetRow===7)||(myColor==="b"&&targetRow===0)){
+          board[to]=piece.toUpperCase();
+        }
+
+        const opponent=order.find(uid=>uid!==user.uid)||user.uid;
+        const opponentColor=myColor==="r"?"b":"r";
+
+        let mustContinueFrom=null;
+        let nextTurn=opponent;
+
+        if(move.captured!==null){
+          const moreCaptures=captureMovesForPiece(board,to,myColor);
+          if(moreCaptures.length){
+            mustContinueFrom=to;
+            nextTurn=user.uid;
+          }
+        }
+
+        const opponentPieces=board.some(p=>checkerColor(p)===opponentColor);
+        const opponentMoves=opponentPieces?legalCheckerMoves(board,opponentColor,null):[];
+        const winner=!opponentPieces||(!mustContinueFrom&&nextTurn===opponent&&opponentMoves.length===0)?user.uid:null;
+
+        s.board=board;
+        s.scores=scores;
+        s.mustContinueFrom=winner?null:mustContinueFrom;
+        s.winnerUid=winner;
+        s.turnUid=winner?null:nextTurn;
+
+        room.state=s;
+        room.status=winner?"finished":"playing";
+        return room;
       });
     }
 
