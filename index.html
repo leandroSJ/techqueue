@@ -1089,6 +1089,8 @@
     let pendingNudgeTarget = null;
     let alertsActivated = false;
     let attentionFlashTimer = null;
+    let activeDayId = null;
+    let dayRolloverTimer = null;
     let attentionFlashState = false;
     const normalDocumentTitle = document.title;
     const alertPlayer = new Audio();
@@ -1446,6 +1448,9 @@
       userProfileDoc = null;
       nudgesReady = false;
       eventsReady = false;
+      activeDayId = null;
+      if (dayRolloverTimer) clearInterval(dayRolloverTimer);
+      dayRolloverTimer = null;
     }
 
     async function joinToday() {
@@ -1499,6 +1504,15 @@
 
     function subscribeToday() {
       const now = bahiaParts();
+      activeDayId = now.dateId;
+
+      if (dayRolloverTimer) clearInterval(dayRolloverTimer);
+      dayRolloverTimer = setInterval(() => {
+        if (bahiaParts().dateId !== activeDayId) {
+          location.reload();
+        }
+      }, 60000);
+
       const dayRef = doc(db, "days", now.dateId);
       const attendanceCol = collection(db, "days", now.dateId, "attendances");
       const nudgesCol = collection(db, "days", now.dateId, "nudges");
