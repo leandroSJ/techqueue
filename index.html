@@ -416,6 +416,28 @@
     .history-state.done{background:var(--success-bg);color:var(--success)}
     .history-state.open{background:var(--warning-bg);color:var(--warning)}
 
+    .complexity-options{display:grid;gap:8px}
+    .complexity-option{
+      display:flex;align-items:flex-start;gap:10px;
+      border:1px solid var(--border);border-radius:10px;padding:11px 12px;
+      background:var(--surface);cursor:pointer
+    }
+    .complexity-option input{width:auto;margin-top:3px}
+    .complexity-copy{display:grid;gap:2px}
+    .complexity-copy strong{font-size:.88rem;font-weight:500}
+    .complexity-copy span{font-size:.8rem;color:var(--muted);line-height:1.35}
+    .complexity-dot{width:10px;height:10px;border-radius:50%;margin-top:4px;flex:0 0 10px}
+    .complexity-standard .complexity-dot{background:#1e8e3e}
+    .complexity-moderate .complexity-dot{background:#f9ab00}
+    .complexity-critical .complexity-dot{background:#d93025}
+    .complexity-badge{
+      display:inline-flex;align-items:center;gap:6px;border-radius:999px;
+      padding:4px 8px;font-size:.7rem;font-weight:500;margin-left:6px
+    }
+    .complexity-badge.standard{background:#e6f4ea;color:#137333}
+    .complexity-badge.moderate{background:#fef7e0;color:#8a4f00}
+    .complexity-badge.critical{background:#fce8e6;color:#b3261e}
+
     .history-meta{color:var(--muted);font-size:.78rem;margin-top:4px}
 
     .history-details{
@@ -599,6 +621,37 @@
         <label for="solution">Solução</label>
         <textarea id="solution" required placeholder="Ex.: Reiniciado serviço pdv_server"></textarea>
       </div>
+
+      <div class="field">
+        <label>Nível de complexidade</label>
+        <div class="complexity-options">
+          <label class="complexity-option complexity-standard">
+            <input type="radio" name="complexity" value="standard" checked />
+            <span class="complexity-dot"></span>
+            <span class="complexity-copy">
+              <strong>Padrão</strong>
+              <span>Atendimento rápido e recorrente, como PDV, TEF ou ajuste simples.</span>
+            </span>
+          </label>
+          <label class="complexity-option complexity-moderate">
+            <input type="radio" name="complexity" value="moderate" />
+            <span class="complexity-dot"></span>
+            <span class="complexity-copy">
+              <strong>Moderado</strong>
+              <span>Exigiu mais tempo ou análise, mas dentro de situações conhecidas.</span>
+            </span>
+          </label>
+          <label class="complexity-option complexity-critical">
+            <input type="radio" name="complexity" value="critical" />
+            <span class="complexity-dot"></span>
+            <span class="complexity-copy">
+              <strong>Alta complexidade</strong>
+              <span>Problema crítico, complexo ou com risco de parar a operação do cliente.</span>
+            </span>
+          </label>
+        </div>
+      </div>
+
       <div class="dialog-actions">
         <button type="button" class="btn btn-secondary" data-close="finishDialog">Cancelar</button>
         <button type="submit" class="btn btn-primary">Finalizar</button>
@@ -1047,7 +1100,10 @@
         return `
           <article class="history-item">
             <div class="history-title-row">
-              <div class="history-title">${escapeHtml(a.clientName)} — ${escapeHtml(a.technicianName)}</div>
+              <div class="history-title">
+                ${escapeHtml(a.clientName)} — ${escapeHtml(a.technicianName)}
+                ${done ? complexityBadge(a.complexity) : ""}
+              </div>
               <span class="history-state ${done ? "done" : "open"}">${done ? "Concluído" : "Em atendimento"}</span>
             </div>
             <div class="history-meta">
@@ -1129,6 +1185,8 @@
     finishBtn.addEventListener("click", () => {
       problemInput.value = "";
       solutionInput.value = "";
+      const defaultComplexity = finishForm.querySelector('input[name="complexity"][value="standard"]');
+      if (defaultComplexity) defaultComplexity.checked = true;
       finishDialog.showModal();
       setTimeout(() => problemInput.focus(), 30);
     });
@@ -1139,6 +1197,7 @@
 
       const problem = problemInput.value.trim();
       const solution = solutionInput.value.trim();
+      const complexity = finishForm.querySelector('input[name="complexity"]:checked')?.value || "standard";
       if (!problem || !solution) return;
 
       const now = bahiaParts();
@@ -1174,6 +1233,7 @@
             status: "finished",
             problem,
             solution,
+            complexity,
             finishedAt: serverTimestamp()
           });
 
@@ -1270,6 +1330,16 @@
     document.querySelectorAll("[data-close]").forEach(btn => {
       btn.addEventListener("click", () => document.getElementById(btn.dataset.close).close());
     });
+
+    function complexityBadge(value) {
+      const map = {
+        standard: ["standard", "Padrão"],
+        moderate: ["moderate", "Moderado"],
+        critical: ["critical", "Alta complexidade"]
+      };
+      const item = map[value] || map.standard;
+      return `<span class="complexity-badge ${item[0]}">${item[1]}</span>`;
+    }
 
     function escapeHtml(value) {
       return String(value ?? "")
