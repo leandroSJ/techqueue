@@ -480,13 +480,45 @@
 
     function setupCanvas(canDraw){
       const canvas=document.querySelector("#drawCanvas");if(!canvas)return;const ctx=canvas.getContext("2d");ctx.lineWidth=3;ctx.lineCap="round";ctx.strokeStyle="#202124";ctx.clearRect(0,0,canvas.width,canvas.height);
-      for(const stroke of currentRoom.state?.strokes||[])drawStroke(ctx,stroke.points||[]);
+      for(const stroke of currentRoom.state?.strokes||[])drawStroke(ctx,decodeStroke(stroke.path||""));
       if(!canDraw)return;
       const point=e=>{const r=canvas.getBoundingClientRect(),src=e.touches?.[0]||e;return{x:(src.clientX-r.left)*(canvas.width/r.width),y:(src.clientY-r.top)*(canvas.height/r.height)}};
       const start=e=>{drawing=true;activeStroke=[point(e)];e.preventDefault()};
       const move=e=>{if(!drawing)return;activeStroke.push(point(e));drawStroke(ctx,activeStroke.slice(-2));e.preventDefault()};
-      const end=async e=>{if(!drawing)return;drawing=false;e?.preventDefault();const stroke=activeStroke;activeStroke=[];if(stroke.length<2)return;await mutateRoom(currentRoomId,room=>{const strokes=[...(room.state?.strokes||[]),{points:stroke,by:user.uid,at:Date.now()}].slice(-160);room.state={...room.state,strokes};return room})};
+      const end=async e=>{
+        if(!drawing)return;
+        drawing=false;
+        e?.preventDefault();
+
+        const rawStroke=activeStroke;
+        activeStroke=[];
+        if(rawStroke.length<2)return;
+
+        const compact=rawStroke.filter((_,index)=>index%3===0);
+        const last=rawStroke[rawStroke.length-1];
+        if(compact[compact.length-1]!==last)compact.push(last);
+
+        await mutateRoom(currentRoomId,room=>{
+          const strokes=[...(room.state?.strokes||[]),{
+            path:encodeStroke(compact),
+            by:user.uid,
+            at:Date.now()
+          }].slice(-70);
+          room.state={...room.state,strokes};
+          return room;
+        });
+      };
       canvas.onpointerdown=start;canvas.onpointermove=move;canvas.onpointerup=end;canvas.onpointerleave=end;
+    }
+    function encodeStroke(points){
+      return points.map(point=>`${Math.round(point.x)},${Math.round(point.y)}`).join(";");
+    }
+    function decodeStroke(path){
+      if(!path)return[];
+      return path.split(";").map(pair=>{
+        const[x,y]=pair.split(",").map(Number);
+        return{x,y};
+      }).filter(point=>Number.isFinite(point.x)&&Number.isFinite(point.y));
     }
     function drawStroke(ctx,pts){if(pts.length<2)return;ctx.beginPath();ctx.moveTo(pts[0].x,pts[0].y);for(let i=1;i<pts.length;i++)ctx.lineTo(pts[i].x,pts[i].y);ctx.stroke()}
     async function submitGuess(e){
