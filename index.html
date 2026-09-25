@@ -744,6 +744,7 @@
   </main>
 
   <div id="nudgeToast" class="nudge-toast hidden" role="status" aria-live="polite"></div>
+  <div id="eventToast" class="nudge-toast hidden" style="bottom:76px" role="status" aria-live="polite"></div>
 
   <dialog id="shopDialog">
     <div class="dialog-body">
@@ -945,6 +946,7 @@
     const shameWall = document.querySelector("#shameWall");
     const statusSelect = document.querySelector("#statusSelect");
     const nudgeToast = document.querySelector("#nudgeToast");
+    const eventToast = document.querySelector("#eventToast");
     const takeDialog = document.querySelector("#takeDialog");
     const finishDialog = document.querySelector("#finishDialog");
     const takeForm = document.querySelector("#takeForm");
@@ -962,8 +964,10 @@
     let unsubDay = null;
     let unsubHistory = null;
     let unsubNudges = null;
+    let unsubEvents = null;
     let unsubQueuedClients = null;
     let nudgesReady = false;
+    let eventsReady = false;
     let openAttendance = null;
     let userProfileDoc = null;
     let unsubProfile = null;
@@ -1249,15 +1253,18 @@
       if (unsubDay) unsubDay();
       if (unsubHistory) unsubHistory();
       if (unsubNudges) unsubNudges();
+      if (unsubEvents) unsubEvents();
       if (unsubQueuedClients) unsubQueuedClients();
       if (unsubProfile) unsubProfile();
       unsubDay = null;
       unsubHistory = null;
       unsubNudges = null;
+      unsubEvents = null;
       unsubQueuedClients = null;
       unsubProfile = null;
       userProfileDoc = null;
       nudgesReady = false;
+      eventsReady = false;
     }
 
     async function joinTodayIfAllowed() {
@@ -1334,6 +1341,7 @@
       const dayRef = doc(db, "days", now.dateId);
       const attendanceCol = collection(db, "days", now.dateId, "attendances");
       const nudgesCol = collection(db, "days", now.dateId, "nudges");
+      const eventsCol = collection(db, "days", now.dateId, "events");
       const queuedClientsCol = collection(db, "days", now.dateId, "queuedClients");
 
       unsubDay = onSnapshot(dayRef, async snap => {
@@ -1354,6 +1362,24 @@
           .map(d => ({ id: d.id, ...d.data() }))
           .sort((a,b) => (a.createdAtMs || 0) - (b.createdAtMs || 0));
         renderQueuedClients();
+      });
+
+      unsubEvents = onSnapshot(eventsCol, snap => {
+        if (!eventsReady) {
+          eventsReady = true;
+          return;
+        }
+
+        for (const change of snap.docChanges()) {
+          if (change.type !== "added") continue;
+          const event = change.doc.data();
+
+          if (event.type === "turn_pass" && event.fromUid !== authUser?.uid) {
+            eventToast.textContent = `${event.fromName || "Alguém"} passou a vez. Agora é a vez de ${event.nextName || "outro técnico"}.`;
+            eventToast.classList.remove("hidden");
+            setTimeout(() => eventToast.classList.add("hidden"), 4000);
+          }
+        }
       });
 
       unsubNudges = onSnapshot(nudgesCol, snap => {
@@ -1866,7 +1892,9 @@
     passTurnBtn.addEventListener("click", async () => {
       if (!authUser || !dayState) return;
 
-      const dayRef = doc(db, "days", bahiaParts().dateId);
+      const dayId = bahiaParts().dateId;
+      const dayRef = doc(db, "days", dayId);
+      const eventRef = doc(collection(db, "days", dayId, "events"));
 
       try {
         await runTransaction(db, async tx => {
@@ -1891,11 +1919,24 @@
           const passed = new Set(state.passedSinceLastAttendance || []);
           passed.add(authUser.uid);
 
+          const nextUid = nextQueue[0] || null;
+          const nextName = nextUid ? (state.members?.[nextUid]?.name || "outro técnico") : "ninguém";
+
           tx.update(dayRef, {
             queue: nextQueue,
-            currentUid: nextQueue[0] || null,
+            currentUid: nextUid,
             passedSinceLastAttendance: [...passed],
             updatedAt: serverTimestamp()
+          });
+
+          tx.set(eventRef, {
+            type: "turn_pass",
+            fromUid: authUser.uid,
+            fromName: profile.name,
+            nextUid,
+            nextName,
+            createdAt: serverTimestamp(),
+            createdAtMs: Date.now()
           });
         });
       } catch (err) {
