@@ -310,6 +310,57 @@
 
     .hero-actions{display:flex;gap:10px;flex-wrap:wrap}
 
+    .ranking-card{margin-top:20px}
+    .ranking-note{
+      margin:-5px 0 16px;
+      color:var(--muted);
+      font-size:.82rem;
+      line-height:1.45
+    }
+    .podium{
+      display:grid;
+      grid-template-columns:repeat(3,1fr);
+      gap:10px;
+      margin-bottom:14px
+    }
+    .podium-place{
+      border:1px solid var(--border);
+      border-radius:12px;
+      padding:14px;
+      background:var(--surface-container);
+      text-align:center
+    }
+    .podium-place strong{display:block;font-size:.94rem;margin:5px 0 3px}
+    .podium-position{font-size:.75rem;color:var(--muted);font-weight:500}
+    .podium-score{font-size:.8rem;color:var(--muted)}
+    .shame-wall{
+      border-top:1px solid var(--border);
+      padding-top:12px
+    }
+    .shame-wall-title{
+      font-size:.82rem;
+      font-weight:500;
+      margin-bottom:8px
+    }
+    .rank-row{
+      display:flex;
+      justify-content:space-between;
+      gap:12px;
+      padding:7px 0;
+      font-size:.84rem
+    }
+    .xp-badge{
+      display:inline-flex;
+      align-items:center;
+      border-radius:999px;
+      padding:3px 7px;
+      background:var(--primary-container);
+      color:var(--on-primary-container);
+      font-size:.7rem;
+      font-weight:500;
+      margin-left:6px
+    }
+
     .grid{
       display:grid;
       grid-template-columns:.9fr 1.1fr;
@@ -603,6 +654,7 @@
       <div id="queueText" class="queue-text">Aguardando início do expediente</div>
       <div class="hero-actions">
         <button id="takeBtn" class="btn btn-primary" disabled>Atendi agora</button>
+        <button id="passTurnBtn" class="btn btn-secondary" disabled>Passar a vez</button>
       </div>
     </section>
 
@@ -628,6 +680,7 @@
               <option value="available">Disponível</option>
               <option value="lunch">Almoço</option>
               <option value="bathroom">Segura aí na moral, vou no banheiro</option>
+              <option value="away">Vou ali e já volto</option>
             </select>
           </div>
         </div>
@@ -649,8 +702,19 @@
       </div>
     </section>
 
+    <section class="card ranking-card">
+      <h2>Ranking de atendimentos</h2>
+      <p class="ranking-note">
+        Este ranking conta somente atendimentos registrados via chat no TechQueue.
+        Ele não mede produtividade nem significa que um técnico trabalhou mais que outro:
+        existem demandas, análises e atividades que não passam pelo chat.
+      </p>
+      <div id="podium" class="podium"></div>
+      <div id="shameWall" class="shame-wall"></div>
+    </section>
+
     <div id="adminRow" class="admin-row hidden">
-      <button id="resetDayBtn" class="btn btn-danger">Limpar histórico após 18:00</button>
+      <button id="resetDayBtn" class="btn btn-danger">Limpar histórico</button>
     </div>
   </main>
 
@@ -788,6 +852,7 @@
     const queuedClientsList = document.querySelector("#queuedClientsList");
     const historyEl = document.querySelector("#history");
     const takeBtn = document.querySelector("#takeBtn");
+    const passTurnBtn = document.querySelector("#passTurnBtn");
     const finishBtn = document.querySelector("#finishBtn");
     const queueClientBtn = document.querySelector("#queueClientBtn");
     const myOpenTicket = document.querySelector("#myOpenTicket");
@@ -795,6 +860,8 @@
     const openStarted = document.querySelector("#openStarted");
     const adminRow = document.querySelector("#adminRow");
     const resetDayBtn = document.querySelector("#resetDayBtn");
+    const podium = document.querySelector("#podium");
+    const shameWall = document.querySelector("#shameWall");
     const statusSelect = document.querySelector("#statusSelect");
     const nudgeToast = document.querySelector("#nudgeToast");
     const takeDialog = document.querySelector("#takeDialog");
