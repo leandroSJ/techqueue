@@ -1,0 +1,852 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="color-scheme" content="dark" />
+  <title>TechQueue</title>
+  <style>
+    :root{
+      --bg:#08111f;--panel:#0f1b2d;--panel2:#15243a;--border:#263954;
+      --text:#f8fafc;--muted:#94a3b8;--green:#36d67e;--green2:#21b568;
+      --yellow:#f6bd3b;--red:#ff6376;--blue:#62a7ff;--purple:#b794f6;
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0;min-height:100vh;font-family:Inter,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+      color:var(--text);background:
+      radial-gradient(circle at 15% -10%,rgba(54,214,126,.15),transparent 32rem),
+      radial-gradient(circle at 100% 0,rgba(98,167,255,.10),transparent 28rem),var(--bg)
+    }
+    button,input,textarea{font:inherit}
+    button{cursor:pointer}
+    .hidden{display:none!important}
+    .shell{width:min(1120px,calc(100% - 28px));margin:auto;padding:26px 0 50px}
+    .login-wrap{min-height:100vh;display:grid;place-items:center;padding:24px}
+    .login-card{
+      width:min(420px,100%);background:rgba(15,27,45,.96);border:1px solid var(--border);
+      border-radius:24px;padding:28px;box-shadow:0 30px 80px rgba(0,0,0,.35)
+    }
+    .logo{font-size:1.65rem;font-weight:900;margin-bottom:4px}
+    .subtitle{color:var(--muted);margin:0 0 24px}
+    .field{display:grid;gap:7px;margin-bottom:15px}
+    label{font-weight:700;font-size:.9rem}
+    input,textarea{
+      width:100%;border:1px solid var(--border);background:#0a1525;color:var(--text);
+      border-radius:12px;padding:12px 13px;outline:none
+    }
+    textarea{min-height:120px;resize:vertical}
+    input:focus,textarea:focus{border-color:var(--blue);box-shadow:0 0 0 3px rgba(98,167,255,.12)}
+    .btn{
+      border:0;border-radius:12px;padding:12px 16px;font-weight:850;
+      transition:.15s transform,.15s opacity
+    }
+    .btn:hover{transform:translateY(-1px)}
+    .btn:disabled{cursor:not-allowed;opacity:.42;transform:none}
+    .btn-primary{background:var(--green);color:#052f1a}
+    .btn-secondary{background:var(--panel2);color:var(--text);border:1px solid var(--border)}
+    .btn-danger{background:rgba(255,99,118,.14);color:#ff9eaa;border:1px solid rgba(255,99,118,.3)}
+    .btn-full{width:100%}
+    .error{color:#ff9eaa;font-size:.9rem;margin-top:12px;min-height:20px}
+    header{display:flex;align-items:center;justify-content:space-between;gap:18px;margin-bottom:20px}
+    .brand h1{margin:0;font-size:1.6rem}
+    .brand p{margin:4px 0 0;color:var(--muted)}
+    .userbox{display:flex;gap:12px;align-items:center}
+    .avatar{
+      width:42px;height:42px;border-radius:50%;display:grid;place-items:center;
+      background:rgba(54,214,126,.12);border:1px solid rgba(54,214,126,.32);font-weight:900
+    }
+    .user-meta strong,.user-meta span{display:block}
+    .user-meta span{color:var(--muted);font-size:.82rem}
+    .notice{
+      padding:12px 14px;border:1px solid var(--border);background:rgba(21,36,58,.72);
+      border-radius:14px;color:#dbe7f6;margin-bottom:18px
+    }
+    .hero{
+      border:1px solid rgba(54,214,126,.28);background:
+      linear-gradient(135deg,rgba(54,214,126,.14),rgba(15,27,45,.9));
+      border-radius:24px;padding:28px;text-align:center;margin-bottom:20px
+    }
+    .eyebrow{text-transform:uppercase;letter-spacing:.12em;color:var(--muted);font-weight:900;font-size:.76rem}
+    .next-name{font-size:clamp(2.2rem,7vw,4.7rem);font-weight:950;margin:6px 0}
+    .queue-text{color:var(--muted);margin-bottom:20px}
+    .hero-actions{display:flex;gap:10px;justify-content:center;flex-wrap:wrap}
+    .grid{display:grid;grid-template-columns:.9fr 1.1fr;gap:20px}
+    .card{background:rgba(15,27,45,.94);border:1px solid var(--border);border-radius:20px;padding:20px}
+    .card h2{font-size:1.05rem;margin:0 0 15px}
+    .queue-list,.history{display:grid;gap:10px}
+    .person{
+      display:grid;grid-template-columns:1fr auto;gap:10px;align-items:center;padding:13px 14px;
+      border-radius:14px;border:1px solid var(--border);background:rgba(21,36,58,.62)
+    }
+    .person.current{border-color:rgba(54,214,126,.58);box-shadow:inset 0 0 0 1px rgba(54,214,126,.12)}
+    .person-name{font-weight:850}
+    .person-sub{color:var(--muted);font-size:.82rem;margin-top:2px}
+    .badge{border-radius:999px;padding:5px 9px;font-size:.75rem;font-weight:850}
+    .available{background:rgba(54,214,126,.12);color:#7ef0ae}
+    .busy{background:rgba(246,189,59,.12);color:#ffd46f}
+    .offline{background:rgba(148,163,184,.12);color:#bac5d3}
+    .open-ticket{
+      border:1px solid rgba(246,189,59,.3);background:rgba(246,189,59,.07);
+      border-radius:16px;padding:16px;margin-bottom:18px
+    }
+    .open-ticket h3{margin:0 0 4px}
+    .open-ticket p{margin:0 0 12px;color:var(--muted)}
+    .history-item{border-left:3px solid var(--border);padding:8px 0 8px 13px}
+    .history-item.open{border-left-color:var(--yellow)}
+    .history-item.done{border-left-color:var(--green)}
+    .history-title{font-weight:850}
+    .history-meta{color:var(--muted);font-size:.79rem;margin-top:3px}
+    .history-details{margin-top:8px;color:#dce6f2;font-size:.9rem;line-height:1.45}
+    .empty{color:var(--muted);padding:10px 0}
+    .admin-row{display:flex;justify-content:flex-end;margin-top:18px}
+    dialog{
+      width:min(520px,calc(100% - 24px));border:1px solid var(--border);border-radius:20px;
+      background:var(--panel);color:var(--text);padding:0;box-shadow:0 30px 100px rgba(0,0,0,.55)
+    }
+    dialog::backdrop{background:rgba(2,8,18,.76);backdrop-filter:blur(4px)}
+    .dialog-body{padding:22px}
+    .dialog-body h2{margin:0 0 6px}
+    .dialog-body>p{margin:0 0 18px;color:var(--muted)}
+    .dialog-actions{display:flex;justify-content:flex-end;gap:10px;margin-top:18px}
+    .config-warning{
+      border:1px solid rgba(246,189,59,.35);background:rgba(246,189,59,.08);
+      padding:13px;border-radius:12px;color:#ffe09b;margin-bottom:16px;font-size:.9rem
+    }
+    @media(max-width:800px){
+      .grid{grid-template-columns:1fr}
+      header{align-items:flex-start;flex-direction:column}
+      .userbox{width:100%;justify-content:space-between}
+      .hero{padding:23px 15px}
+    }
+  </style>
+</head>
+<body>
+
+  <section id="loginView" class="login-wrap">
+    <div class="login-card">
+      <div class="logo">⚡ TechQueue</div>
+      <p class="subtitle">Acesso interno da equipe de suporte</p>
+
+      <div id="configWarning" class="config-warning hidden">
+        Firebase ainda não configurado. Preencha <strong>firebaseConfig</strong> no final do index.html antes de publicar.
+      </div>
+
+      <form id="loginForm">
+        <div class="field">
+          <label for="email">E-mail</label>
+          <input id="email" type="email" autocomplete="username" required />
+        </div>
+        <div class="field">
+          <label for="password">Senha</label>
+          <input id="password" type="password" autocomplete="current-password" required />
+        </div>
+        <button class="btn btn-primary btn-full" type="submit">Entrar</button>
+        <div id="loginError" class="error"></div>
+      </form>
+    </div>
+  </section>
+
+  <main id="appView" class="shell hidden">
+    <header>
+      <div class="brand">
+        <h1>⚡ TechQueue</h1>
+        <p>Rodízio interno de atendimento</p>
+      </div>
+      <div class="userbox">
+        <div class="avatar" id="avatar">?</div>
+        <div class="user-meta">
+          <strong id="loggedName">-</strong>
+          <span id="loggedShift">-</span>
+        </div>
+        <button id="logoutBtn" class="btn btn-secondary">Sair</button>
+      </div>
+    </header>
+
+    <div id="systemNotice" class="notice">Carregando expediente...</div>
+
+    <section class="hero">
+      <div class="eyebrow">Próximo atendimento</div>
+      <div id="nextName" class="next-name">—</div>
+      <div id="queueText" class="queue-text">Aguardando início do expediente</div>
+      <div class="hero-actions">
+        <button id="takeBtn" class="btn btn-primary" disabled>✅ Atendi agora</button>
+      </div>
+    </section>
+
+    <section class="grid">
+      <div>
+        <div id="myOpenTicket" class="open-ticket hidden">
+          <div class="eyebrow">Seu atendimento em andamento</div>
+          <h3 id="openClient">-</h3>
+          <p id="openStarted">-</p>
+          <button id="finishBtn" class="btn btn-primary">🏁 Finalizei o atendimento</button>
+        </div>
+
+        <div class="card">
+          <h2>Fila da equipe</h2>
+          <div id="queueList" class="queue-list"></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>Histórico de hoje</h2>
+        <div id="history" class="history"></div>
+      </div>
+    </section>
+
+    <div id="adminRow" class="admin-row hidden">
+      <button id="resetDayBtn" class="btn btn-danger">Limpar histórico após 18:00</button>
+    </div>
+  </main>
+
+  <dialog id="takeDialog">
+    <form id="takeForm" class="dialog-body">
+      <h2>Atendi agora</h2>
+      <p>Informe apenas o nome do cliente que você assumiu.</p>
+      <div class="field">
+        <label for="clientName">Cliente</label>
+        <input id="clientName" required autofocus placeholder="Ex.: Casa do Requeijão" />
+      </div>
+      <div class="dialog-actions">
+        <button type="button" class="btn btn-secondary" data-close="takeDialog">Cancelar</button>
+        <button type="submit" class="btn btn-primary">Confirmar atendimento</button>
+      </div>
+    </form>
+  </dialog>
+
+  <dialog id="finishDialog">
+    <form id="finishForm" class="dialog-body">
+      <h2>Finalizar atendimento</h2>
+      <p>Registre o problema e a solução de forma curta. Os campos aceitam texto livre.</p>
+      <div class="field">
+        <label for="problem">Problema</label>
+        <textarea id="problem" required placeholder="Ex.: PDV sem comunicação com servidor"></textarea>
+      </div>
+      <div class="field">
+        <label for="solution">Solução</label>
+        <textarea id="solution" required placeholder="Ex.: Reiniciado serviço pdv_server"></textarea>
+      </div>
+      <div class="dialog-actions">
+        <button type="button" class="btn btn-secondary" data-close="finishDialog">Cancelar</button>
+        <button type="submit" class="btn btn-primary">Finalizar</button>
+      </div>
+    </form>
+  </dialog>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-app.js";
+    import {
+      getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged
+    } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-auth.js";
+    import {
+      getFirestore, doc, getDoc, setDoc, collection, onSnapshot, serverTimestamp,
+      runTransaction, getDocs, writeBatch
+    } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-firestore.js";
+
+    /*
+      COLE AQUI a configuração gerada em:
+      Firebase Console > Project settings > Your apps > Web app
+
+      A apiKey do Firebase Web NÃO é uma senha do projeto.
+      A segurança real deste app fica no Firebase Authentication + Firestore Security Rules.
+    */
+    const firebaseConfig = {
+      apiKey: "AIzaSyDVHhF1LcLxqdb4xJDONkCoNhLS8HC7OxY",
+      authDomain: "filaarius.firebaseapp.com",
+      projectId: "filaarius",
+      storageBucket: "filaarius.firebasestorage.app",
+      messagingSenderId: "515606001825",
+      appId: "1:515606001825:web:977a8fddeb1d025ec758e0"
+    };
+
+    const isConfigured = !Object.values(firebaseConfig).some(v => v === "COLE_AQUI");
+    document.querySelector("#configWarning").classList.toggle("hidden", isConfigured);
+
+    const loginView = document.querySelector("#loginView");
+    const appView = document.querySelector("#appView");
+    const loginForm = document.querySelector("#loginForm");
+    const loginError = document.querySelector("#loginError");
+    const emailInput = document.querySelector("#email");
+    const passwordInput = document.querySelector("#password");
+    const logoutBtn = document.querySelector("#logoutBtn");
+    const loggedName = document.querySelector("#loggedName");
+    const loggedShift = document.querySelector("#loggedShift");
+    const avatar = document.querySelector("#avatar");
+    const systemNotice = document.querySelector("#systemNotice");
+    const nextName = document.querySelector("#nextName");
+    const queueText = document.querySelector("#queueText");
+    const queueList = document.querySelector("#queueList");
+    const historyEl = document.querySelector("#history");
+    const takeBtn = document.querySelector("#takeBtn");
+    const finishBtn = document.querySelector("#finishBtn");
+    const myOpenTicket = document.querySelector("#myOpenTicket");
+    const openClient = document.querySelector("#openClient");
+    const openStarted = document.querySelector("#openStarted");
+    const adminRow = document.querySelector("#adminRow");
+    const resetDayBtn = document.querySelector("#resetDayBtn");
+    const takeDialog = document.querySelector("#takeDialog");
+    const finishDialog = document.querySelector("#finishDialog");
+    const takeForm = document.querySelector("#takeForm");
+    const finishForm = document.querySelector("#finishForm");
+    const clientNameInput = document.querySelector("#clientName");
+    const problemInput = document.querySelector("#problem");
+    const solutionInput = document.querySelector("#solution");
+
+    let app, auth, db;
+    let authUser = null;
+    let profile = null;
+    let dayState = null;
+    let todayAttendances = [];
+    let unsubDay = null;
+    let unsubHistory = null;
+    let openAttendance = null;
+
+    if (isConfigured) {
+      app = initializeApp(firebaseConfig);
+      auth = getAuth(app);
+      db = getFirestore(app);
+      onAuthStateChanged(auth, handleAuthState);
+    }
+
+    const TEAM_TIMEZONE = "America/Bahia";
+
+    function bahiaParts(date = new Date()) {
+      const parts = new Intl.DateTimeFormat("en-CA", {
+        timeZone: TEAM_TIMEZONE,
+        year: "numeric", month: "2-digit", day: "2-digit",
+        hour: "2-digit", minute: "2-digit", hour12: false
+      }).formatToParts(date);
+      const map = Object.fromEntries(parts.map(p => [p.type, p.value]));
+      return {
+        dateId: `${map.year}-${map.month}-${map.day}`,
+        minutes: Number(map.hour) * 60 + Number(map.minute),
+        time: `${map.hour}:${map.minute}`
+      };
+    }
+
+    function formatTimestamp(ts) {
+      if (!ts?.toDate) return "agora";
+      return new Intl.DateTimeFormat("pt-BR", {
+        timeZone: TEAM_TIMEZONE,
+        hour: "2-digit", minute: "2-digit"
+      }).format(ts.toDate());
+    }
+
+    function memberOf(uid) {
+      return dayState?.members?.[uid] || null;
+    }
+
+    function profileShiftText() {
+      const min = Number(profile?.shiftStartMinutes ?? 0);
+      return `${String(Math.floor(min/60)).padStart(2,"0")}:${String(min%60).padStart(2,"0")}`;
+    }
+
+    function setViews(logged) {
+      loginView.classList.toggle("hidden", logged);
+      appView.classList.toggle("hidden", !logged);
+    }
+
+    loginForm.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      if (!isConfigured) {
+        loginError.textContent = "Configure o Firebase antes de usar o login.";
+        return;
+      }
+      loginError.textContent = "";
+      try {
+        await signInWithEmailAndPassword(auth, emailInput.value.trim(), passwordInput.value);
+        passwordInput.value = "";
+      } catch (err) {
+        console.error(err);
+        loginError.textContent = "E-mail ou senha inválidos.";
+      }
+    });
+
+    async function handleAuthState(user) {
+      clearSubscriptions();
+
+      if (!user) {
+        authUser = null; profile = null; dayState = null; openAttendance = null;
+        setViews(false);
+        return;
+      }
+
+      try {
+        const pRef = doc(db, "users", user.uid);
+        const pSnap = await getDoc(pRef);
+
+        if (!pSnap.exists() || pSnap.data().enabled !== true) {
+          await signOut(auth);
+          loginError.textContent = "Sua conta não está liberada para este sistema.";
+          return;
+        }
+
+        authUser = user;
+        profile = { uid: user.uid, ...pSnap.data() };
+
+        loggedName.textContent = profile.name;
+        loggedShift.textContent = `Entrada ${profileShiftText()}`;
+        avatar.textContent = (profile.name || "?").slice(0,1).toUpperCase();
+        adminRow.classList.toggle("hidden", profile.role !== "admin");
+
+        setViews(true);
+        await joinTodayIfAllowed();
+        subscribeToday();
+
+      } catch (err) {
+        console.error(err);
+        await signOut(auth);
+        loginError.textContent = "Não foi possível carregar seu usuário.";
+      }
+    }
+
+    function clearSubscriptions() {
+      if (unsubDay) unsubDay();
+      if (unsubHistory) unsubHistory();
+      unsubDay = null;
+      unsubHistory = null;
+    }
+
+    async function joinTodayIfAllowed() {
+      const now = bahiaParts();
+      const dayRef = doc(db, "days", now.dateId);
+
+      await runTransaction(db, async tx => {
+        const snap = await tx.get(dayRef);
+        const existing = snap.exists() ? snap.data() : null;
+        const initial = existing || {
+          dateId: now.dateId,
+          status: "open",
+          queue: [],
+          currentUid: null,
+          members: {},
+          startedBy: null,
+          openedAt: null
+        };
+
+        if (now.minutes >= 18 * 60) {
+          if (!existing) tx.set(dayRef, { ...initial, createdAt: serverTimestamp(), updatedAt: serverTimestamp() });
+          return;
+        }
+
+        if (now.minutes < Number(profile.shiftStartMinutes)) {
+          if (!existing) tx.set(dayRef, { ...initial, createdAt: serverTimestamp(), updatedAt: serverTimestamp() });
+          return;
+        }
+
+        if (!profile.isOpener && !initial.startedBy) {
+          if (!existing) tx.set(dayRef, { ...initial, createdAt: serverTimestamp(), updatedAt: serverTimestamp() });
+          return;
+        }
+
+        const members = { ...(initial.members || {}) };
+        const existingMember = members[authUser.uid];
+
+        if (existingMember?.status === "busy") return;
+
+        members[authUser.uid] = {
+          name: profile.name,
+          status: "available",
+          shiftStartMinutes: Number(profile.shiftStartMinutes),
+          joinedAtMs: existingMember?.joinedAtMs || Date.now(),
+          currentAttendanceId: null
+        };
+
+        let queue = [...(initial.queue || [])];
+        if (!queue.includes(authUser.uid)) queue.push(authUser.uid);
+
+        const payload = {
+          ...initial,
+          members,
+          queue,
+          currentUid: initial.currentUid || queue[0] || null,
+          updatedAt: serverTimestamp()
+        };
+
+        if (!initial.startedBy && profile.isOpener) {
+          payload.startedBy = authUser.uid;
+          payload.openedAt = serverTimestamp();
+        }
+
+        if (!existing) payload.createdAt = serverTimestamp();
+
+        tx.set(dayRef, payload);
+      });
+    }
+
+    function subscribeToday() {
+      const now = bahiaParts();
+      const dayRef = doc(db, "days", now.dateId);
+      const attendanceCol = collection(db, "days", now.dateId, "attendances");
+
+      unsubDay = onSnapshot(dayRef, async snap => {
+        dayState = snap.exists() ? snap.data() : null;
+        await loadMyOpenAttendance();
+        render();
+      });
+
+      unsubHistory = onSnapshot(attendanceCol, snap => {
+        todayAttendances = snap.docs.map(d => ({ id: d.id, ...d.data() }))
+          .sort((a,b) => (b.startedAtMs || 0) - (a.startedAtMs || 0));
+        renderHistory();
+      });
+    }
+
+    async function loadMyOpenAttendance() {
+      openAttendance = null;
+      const member = memberOf(authUser?.uid);
+      const attendanceId = member?.currentAttendanceId;
+      if (!attendanceId) return;
+
+      const ref = doc(db, "days", bahiaParts().dateId, "attendances", attendanceId);
+      const snap = await getDoc(ref);
+      if (snap.exists() && snap.data().status === "open") {
+        openAttendance = { id: snap.id, ...snap.data() };
+      }
+    }
+
+    function render() {
+      if (!profile || !dayState) return;
+
+      const now = bahiaParts();
+      const current = dayState.currentUid ? dayState.members?.[dayState.currentUid] : null;
+      const me = memberOf(authUser.uid);
+      const beforeShift = now.minutes < Number(profile.shiftStartMinutes);
+      const afterHours = now.minutes >= 18 * 60;
+
+      nextName.textContent = current?.name || "—";
+
+      if (afterHours) {
+        systemNotice.textContent = "Expediente encerrado. Novos atendimentos estão bloqueados após 18:00.";
+      } else if (!dayState.startedBy) {
+        systemNotice.textContent = profile.isOpener
+          ? "Você pode iniciar o expediente. Leandro ou Ronald sempre abrem a fila."
+          : "Aguardando Leandro ou Ronald iniciar o expediente.";
+      } else if (beforeShift) {
+        systemNotice.textContent = `Seu expediente entra no rodízio às ${profileShiftText()}.`;
+      } else if (me?.status === "busy") {
+        systemNotice.textContent = "Você está em atendimento. Finalize para voltar ao final da fila.";
+      } else if (dayState.currentUid === authUser.uid) {
+        systemNotice.textContent = "É a sua vez de assumir o próximo cliente.";
+      } else {
+        systemNotice.textContent = "A fila está sincronizada em tempo real.";
+      }
+
+      const names = (dayState.queue || [])
+        .map(uid => dayState.members?.[uid]?.name)
+        .filter(Boolean);
+      queueText.textContent = names.length ? names.join(" → ") : "Nenhum técnico disponível na fila";
+
+      takeBtn.disabled =
+        afterHours ||
+        !dayState.startedBy ||
+        dayState.currentUid !== authUser.uid ||
+        me?.status !== "available";
+
+      renderQueue();
+
+      if (openAttendance) {
+        myOpenTicket.classList.remove("hidden");
+        openClient.textContent = openAttendance.clientName;
+        openStarted.textContent = `Iniciado às ${formatTimestamp(openAttendance.startedAt)}`;
+      } else {
+        myOpenTicket.classList.add("hidden");
+      }
+
+      const canReset = profile.role === "admin" && now.minutes >= 18 * 60;
+      resetDayBtn.disabled = !canReset;
+      resetDayBtn.title = canReset ? "" : "Disponível somente para administrador após 18:00";
+    }
+
+    function renderQueue() {
+      const members = dayState?.members || {};
+      const queue = dayState?.queue || [];
+      const seen = new Set();
+      const ordered = [];
+
+      for (const uid of queue) {
+        if (members[uid]) {
+          ordered.push([uid, members[uid]]);
+          seen.add(uid);
+        }
+      }
+      for (const [uid, member] of Object.entries(members)) {
+        if (!seen.has(uid)) ordered.push([uid, member]);
+      }
+
+      if (!ordered.length) {
+        queueList.innerHTML = `<div class="empty">Ninguém entrou no expediente ainda.</div>`;
+        return;
+      }
+
+      queueList.innerHTML = ordered.map(([uid,m]) => {
+        const current = uid === dayState.currentUid;
+        const status = m.status || "offline";
+        const statusLabel = status === "available" ? "Disponível" : status === "busy" ? "Em atendimento" : "Fora da fila";
+        const shift = Number(m.shiftStartMinutes || 0);
+        const shiftText = `${String(Math.floor(shift/60)).padStart(2,"0")}:${String(shift%60).padStart(2,"0")}`;
+        return `
+          <div class="person ${current ? "current" : ""}">
+            <div>
+              <div class="person-name">${current ? "🎯 " : ""}${escapeHtml(m.name)}</div>
+              <div class="person-sub">Entrada ${shiftText}${uid === authUser.uid ? " • você" : ""}</div>
+            </div>
+            <span class="badge ${status}">${statusLabel}</span>
+          </div>
+        `;
+      }).join("");
+    }
+
+    function renderHistory() {
+      if (!historyEl) return;
+      if (!todayAttendances.length) {
+        historyEl.innerHTML = `<div class="empty">Nenhum atendimento registrado hoje.</div>`;
+        return;
+      }
+
+      historyEl.innerHTML = todayAttendances.map(a => {
+        const done = a.status === "finished";
+        return `
+          <article class="history-item ${done ? "done" : "open"}">
+            <div class="history-title">
+              ${done ? "✅" : "🟡"} ${escapeHtml(a.clientName)} — ${escapeHtml(a.technicianName)}
+            </div>
+            <div class="history-meta">
+              Início ${formatTimestamp(a.startedAt)}
+              ${done ? ` • fim ${formatTimestamp(a.finishedAt)}` : " • em atendimento"}
+            </div>
+            ${done ? `
+              <div class="history-details">
+                <strong>Problema:</strong> ${escapeHtml(a.problem || "-")}<br>
+                <strong>Solução:</strong> ${escapeHtml(a.solution || "-")}
+              </div>
+            ` : ""}
+          </article>
+        `;
+      }).join("");
+    }
+
+    takeBtn.addEventListener("click", () => {
+      clientNameInput.value = "";
+      takeDialog.showModal();
+      setTimeout(() => clientNameInput.focus(), 30);
+    });
+
+    takeForm.addEventListener("submit", async e => {
+      e.preventDefault();
+      const clientName = clientNameInput.value.trim();
+      if (!clientName) return;
+
+      const now = bahiaParts();
+      const dayRef = doc(db, "days", now.dateId);
+      const attendanceRef = doc(collection(db, "days", now.dateId, "attendances"));
+
+      try {
+        await runTransaction(db, async tx => {
+          const daySnap = await tx.get(dayRef);
+          if (!daySnap.exists()) throw new Error("Expediente não iniciado.");
+
+          const state = daySnap.data();
+          const member = state.members?.[authUser.uid];
+
+          if (state.currentUid !== authUser.uid) throw new Error("A vez já passou para outro técnico.");
+          if (member?.status !== "available") throw new Error("Você não está disponível na fila.");
+
+          const queue = (state.queue || []).filter(uid => uid !== authUser.uid);
+          const members = { ...state.members };
+          members[authUser.uid] = {
+            ...member,
+            status: "busy",
+            currentAttendanceId: attendanceRef.id
+          };
+
+          tx.set(attendanceRef, {
+            technicianUid: authUser.uid,
+            technicianName: profile.name,
+            clientName,
+            status: "open",
+            startedAt: serverTimestamp(),
+            startedAtMs: Date.now(),
+            problem: "",
+            solution: "",
+            finishedAt: null
+          });
+
+          tx.update(dayRef, {
+            queue,
+            members,
+            currentUid: queue[0] || null,
+            updatedAt: serverTimestamp()
+          });
+        });
+
+        takeDialog.close();
+      } catch (err) {
+        console.error(err);
+        alert(err.message || "Não foi possível registrar o atendimento.");
+      }
+    });
+
+    finishBtn.addEventListener("click", () => {
+      problemInput.value = "";
+      solutionInput.value = "";
+      finishDialog.showModal();
+      setTimeout(() => problemInput.focus(), 30);
+    });
+
+    finishForm.addEventListener("submit", async e => {
+      e.preventDefault();
+      if (!openAttendance) return;
+
+      const problem = problemInput.value.trim();
+      const solution = solutionInput.value.trim();
+      if (!problem || !solution) return;
+
+      const now = bahiaParts();
+      const dayRef = doc(db, "days", now.dateId);
+      const attendanceRef = doc(db, "days", now.dateId, "attendances", openAttendance.id);
+
+      try {
+        await runTransaction(db, async tx => {
+          const [daySnap, attSnap] = await Promise.all([
+            tx.get(dayRef),
+            tx.get(attendanceRef)
+          ]);
+
+          if (!daySnap.exists() || !attSnap.exists()) throw new Error("Atendimento não encontrado.");
+          const state = daySnap.data();
+          const attendance = attSnap.data();
+
+          if (attendance.technicianUid !== authUser.uid) throw new Error("Este atendimento pertence a outro técnico.");
+          if (attendance.status !== "open") throw new Error("Este atendimento já foi finalizado.");
+
+          const members = { ...state.members };
+          const member = members[authUser.uid];
+          members[authUser.uid] = {
+            ...member,
+            status: "available",
+            currentAttendanceId: null
+          };
+
+          let queue = [...(state.queue || [])];
+          if (!queue.includes(authUser.uid)) queue.push(authUser.uid);
+
+          tx.update(attendanceRef, {
+            status: "finished",
+            problem,
+            solution,
+            finishedAt: serverTimestamp()
+          });
+
+          tx.update(dayRef, {
+            members,
+            queue,
+            currentUid: state.currentUid || queue[0] || null,
+            updatedAt: serverTimestamp()
+          });
+        });
+
+        finishDialog.close();
+      } catch (err) {
+        console.error(err);
+        alert(err.message || "Não foi possível finalizar.");
+      }
+    });
+
+    logoutBtn.addEventListener("click", async () => {
+      const me = memberOf(authUser?.uid);
+      if (me?.status === "busy") {
+        alert("Finalize seu atendimento antes de sair.");
+        return;
+      }
+
+      try {
+        await leaveQueue();
+      } catch (err) {
+        console.error(err);
+      }
+      await signOut(auth);
+    });
+
+    async function leaveQueue() {
+      if (!authUser || !dayState) return;
+      const dayRef = doc(db, "days", bahiaParts().dateId);
+
+      await runTransaction(db, async tx => {
+        const snap = await tx.get(dayRef);
+        if (!snap.exists()) return;
+        const state = snap.data();
+        const member = state.members?.[authUser.uid];
+        if (!member || member.status === "busy") return;
+
+        const queue = (state.queue || []).filter(uid => uid !== authUser.uid);
+        const members = { ...state.members };
+        members[authUser.uid] = { ...member, status: "offline" };
+
+        tx.update(dayRef, {
+          queue,
+          members,
+          currentUid: state.currentUid === authUser.uid ? (queue[0] || null) : state.currentUid,
+          updatedAt: serverTimestamp()
+        });
+      });
+    }
+
+    resetDayBtn.addEventListener("click", async () => {
+      const now = bahiaParts();
+      if (profile?.role !== "admin" || now.minutes < 18 * 60) return;
+
+      const ok = confirm("Limpar todos os atendimentos do dia e zerar a fila? Esta ação não pode ser desfeita.");
+      if (!ok) return;
+
+      try {
+        const attendanceCol = collection(db, "days", now.dateId, "attendances");
+        const snap = await getDocs(attendanceCol);
+        const docs = snap.docs;
+
+        for (let i = 0; i < docs.length; i += 400) {
+          const batch = writeBatch(db);
+          docs.slice(i, i + 400).forEach(d => batch.delete(d.ref));
+          await batch.commit();
+        }
+
+        await setDoc(doc(db, "days", now.dateId), {
+          dateId: now.dateId,
+          status: "closed",
+          queue: [],
+          currentUid: null,
+          members: {},
+          startedBy: null,
+          openedAt: null,
+          clearedAt: serverTimestamp(),
+          updatedAt: serverTimestamp()
+        }, { merge: true });
+
+      } catch (err) {
+        console.error(err);
+        alert("Não foi possível limpar o dia.");
+      }
+    });
+
+    document.querySelectorAll("[data-close]").forEach(btn => {
+      btn.addEventListener("click", () => document.getElementById(btn.dataset.close).close());
+    });
+
+    function escapeHtml(value) {
+      return String(value ?? "")
+        .replaceAll("&","&amp;")
+        .replaceAll("<","&lt;")
+        .replaceAll(">","&gt;")
+        .replaceAll('"',"&quot;")
+        .replaceAll("'","&#039;");
+    }
+
+    // Quem entra às 09:00 com a página aberta passa a entrar automaticamente no rodízio.
+    setInterval(async () => {
+      if (!authUser || !profile) return;
+      try { await joinTodayIfAllowed(); } catch (err) { console.error(err); }
+    }, 30000);
+  </script>
+</body>
+</html>
