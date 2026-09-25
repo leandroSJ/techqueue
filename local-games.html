@@ -42,6 +42,41 @@
     .touch .wide{grid-column:span 3}
     @media(max-width:900px){.games{grid-template-columns:repeat(2,1fr)}}
     @media(max-width:640px){.games{grid-template-columns:1fr}.touch{display:grid}}
+
+    /* Responsividade dos jogos locais */
+    html,body{max-width:100%;overflow-x:hidden}
+    .game-btn{min-width:0}
+    .canvas-wrap{width:100%}
+    canvas{width:100%;height:auto;aspect-ratio:900/520}
+    .message-box{width:min(100%,430px)}
+
+    @media(max-width:760px){
+      .shell{width:calc(100% - 16px);padding-top:10px}
+      header{align-items:stretch;flex-direction:column}
+      header .actions{width:100%;display:grid;grid-template-columns:repeat(2,minmax(0,1fr))}
+      header .actions .btn{width:100%;text-align:center}
+      .card{padding:10px}
+      .hud{align-items:stretch;flex-direction:column}
+      .hud-left,.hud-right{width:100%}
+      .hud-left{display:grid;grid-template-columns:repeat(2,minmax(0,1fr))}
+      .hud-right .btn{width:100%}
+      .pill{text-align:center;min-width:0;overflow-wrap:anywhere}
+      .help{font-size:.86rem}
+      .message{padding:10px}
+      .touch{display:grid}
+    }
+
+    @media(max-width:520px){
+      .games{grid-template-columns:1fr}
+      header .actions{grid-template-columns:1fr}
+      .hud-left{grid-template-columns:1fr}
+      .touch{grid-template-columns:repeat(3,minmax(48px,64px));gap:8px}
+      .touch button{height:54px}
+      h1{font-size:1.2rem}
+      .sub{font-size:.82rem}
+      .message-box{padding:14px}
+    }
+
   </style>
 </head>
 <body>
