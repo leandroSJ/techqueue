@@ -44,8 +44,18 @@
     .canvas-wrap{display:grid;gap:10px}.draw-canvas{width:100%;height:360px;background:#fff;border:1px solid var(--border);border-radius:12px;touch-action:none}
     .guess-row{display:flex;gap:8px}.guess-row input{flex:1;border:1px solid var(--border);border-radius:8px;padding:10px;background:var(--surface);color:var(--text)}
     .guesses{display:grid;gap:5px;max-height:140px;overflow:auto;margin-top:10px}.guess{font-size:.84rem;padding:7px 9px;background:var(--surface-2);border-radius:8px}
-    .domino-board,.domino-hand{display:flex;gap:7px;flex-wrap:wrap;justify-content:center;margin:16px 0}.tile{display:inline-grid;grid-template-columns:1fr 1fr;min-width:56px;border:1px solid var(--border);border-radius:8px;overflow:hidden;background:var(--surface);color:var(--text)}
-    .tile span{padding:10px 8px;text-align:center}.tile span+span{border-left:1px solid var(--border)}button.tile{padding:0}.tile.playable{outline:2px solid var(--primary)}
+    .domino-board,.domino-hand{display:flex;gap:7px;flex-wrap:wrap;justify-content:center;align-items:center;margin:16px 0}
+    .tile{display:inline-grid;grid-template-columns:1fr 1fr;min-width:56px;min-height:42px;border:1px solid var(--border);border-radius:8px;overflow:hidden;background:var(--surface);color:var(--text)}
+    .tile span{padding:10px 8px;text-align:center;display:grid;place-items:center}
+    .tile span+span{border-left:1px solid var(--border)}
+    .tile.double{grid-template-columns:1fr;grid-template-rows:1fr 1fr;min-width:42px;min-height:72px}
+    .tile.double span{padding:7px 10px}
+    .tile.double span+span{border-left:0;border-top:1px solid var(--border)}
+    button.tile{padding:0}
+    .tile.playable{outline:2px solid var(--primary)}
+    .tile.selected{outline:3px solid #f9ab00}
+    .domino-side-choice{display:flex;justify-content:center;gap:10px;flex-wrap:wrap;margin:10px 0 16px}
+    .domino-side-choice .btn{min-width:150px}
     .checkers{display:grid;grid-template-columns:repeat(8,minmax(34px,56px));justify-content:center;border:1px solid var(--border);width:max-content;margin:0 auto}
     .square{aspect-ratio:1;border:0;border-radius:0;padding:0;display:grid;place-items:center;background:#ede7d9}.square.dark{background:#7b6855}.piece{width:72%;height:72%;border-radius:50%;border:3px solid rgba(255,255,255,.55)}
     .piece.red{background:#c5221f}.piece.black{background:#202124}.piece.king::after{content:"K";color:#fff;font-size:.75rem;font-weight:600}.square.selected{outline:3px solid #f9ab00;outline-offset:-3px}.square.capture-required{box-shadow:inset 0 0 0 3px #34a853}.square.legal-target{box-shadow:inset 0 0 0 3px #4285f4}
@@ -235,7 +245,7 @@
     const roomsList=document.querySelector("#roomsList"),roomTitle=document.querySelector("#roomTitle"),roomCode=document.querySelector("#roomCode"),playersEl=document.querySelector("#players"),gameRoot=document.querySelector("#gameRoot");
     const restartBtn=document.querySelector("#restartBtn"),leaveBtn=document.querySelector("#leaveBtn"),googleBtn=document.querySelector("#googleBtn"),loginError=document.querySelector("#loginError"),logoutBtn=document.querySelector("#logoutBtn"),themeBtn=document.querySelector("#themeBtn"),gameError=document.querySelector("#gameError"),gameToast=document.querySelector("#gameToast");
 
-    let user=null,dayState=null,rooms=[],currentRoomId=null,currentRoom=null,unsubDay=null,selectedChecker=null,drawing=false,activeStroke=[];
+    let user=null,dayState=null,rooms=[],currentRoomId=null,currentRoom=null,unsubDay=null,selectedChecker=null,selectedDominoIndex=null,drawing=false,activeStroke=[];
     let seenHangmanActionId=null;
     let gameToastTimer=null;
 
@@ -581,7 +591,15 @@
     gameRoot.addEventListener("click",async event=>{
       const ttt=event.target.closest("[data-ttt]");if(ttt){await playTicTacToe(Number(ttt.dataset.ttt));return}
       const letter=event.target.closest("[data-letter]");if(letter){await guessLetter(letter.dataset.letter);return}
-      const domino=event.target.closest("[data-domino-index]");if(domino){await playDomino(Number(domino.dataset.dominoIndex));return}
+      const dominoSide=event.target.closest("[data-domino-side]");
+      if(dominoSide){
+        const index=selectedDominoIndex;
+        selectedDominoIndex=null;
+        if(index!==null)await playDomino(index,dominoSide.dataset.dominoSide);
+        return;
+      }
+      const domino=event.target.closest("[data-domino-index]");
+      if(domino){await chooseDominoTile(Number(domino.dataset.dominoIndex));return}
       const sq=event.target.closest("[data-square]");if(sq){await handleCheckerClick(Number(sq.dataset.square));return}
     });
 
@@ -902,33 +920,114 @@
 
     function renderDomino(){
       const s=currentRoom.state||{};
+      const board=s.board||[];
       const hand=s.hands?.[user.uid]||[];
       const winner=s.winnerUid?currentRoom.players?.[s.winnerUid]:null;
       const turnName=s.turnUid?currentRoom.players?.[s.turnUid]:"";
+      const myTurn=s.turnUid===user.uid&&!s.winnerUid;
+
+      if(!myTurn)selectedDominoIndex=null;
+
+      const selectedTile=selectedDominoIndex!==null?hand[selectedDominoIndex]:null;
+      const selectedSides=selectedTile?dominoPlayableSides(selectedTile,board):[];
+
       gameRoot.innerHTML=`
         <div class="turn">${winner?`${escapeHtml(winner)} bateu.`:`Vez de ${escapeHtml(turnName||"jogador")}`}</div>
-        <div class="domino-board">${(s.board||[]).length?(s.board||[]).map(tileHtml).join(""):'<span class="muted">Mesa vazia</span>'}</div>
+
+        <div class="small muted" style="text-align:center">
+          Pontas da mesa:
+          ${board.length?`${board[0].a} na esquerda · ${board[board.length-1].b} na direita`:"mesa vazia"}
+        </div>
+
+        <div class="domino-board">
+          ${board.length?board.map(tileHtml).join(""):'<span class="muted">Mesa vazia</span>'}
+        </div>
+
         <div class="small muted" style="text-align:center">Seu jogo</div>
         <div class="domino-hand">
-          ${hand.map((t,i)=>`<button class="tile ${canPlayDomino(t,s.board||[])?"playable":""}" data-domino-index="${i}" ${s.turnUid!==user.uid||s.winnerUid?"disabled":""}>${tileInner(t)}</button>`).join("")}
+          ${hand.map((tile,index)=>{
+            const playable=dominoPlayableSides(tile,board).length>0;
+            const isSelected=selectedDominoIndex===index;
+            return`<button
+              class="tile ${tile.a===tile.b?"double":""} ${playable?"playable":""} ${isSelected?"selected":""}"
+              data-domino-index="${index}"
+              ${!myTurn?"disabled":""}
+            >${tileInner(tile)}</button>`;
+          }).join("")}
         </div>
-        <div style="text-align:center">
-          <button id="drawDominoBtn" class="btn" ${s.turnUid!==user.uid||s.winnerUid?"disabled":""}>${(s.boneyard||[]).length?"Comprar peça":"Passar"}</button>
+
+        ${selectedTile&&selectedSides.length>1?`
+          <div class="domino-side-choice">
+            <button class="btn primary" type="button" data-domino-side="left">
+              Colocar na esquerda (${board[0].a})
+            </button>
+            <button class="btn primary" type="button" data-domino-side="right">
+              Colocar na direita (${board[board.length-1].b})
+            </button>
+          </div>
+          <div class="small muted" style="text-align:center;margin-top:-8px">
+            Essa pedra encaixa nas duas pontas. Escolha onde jogar.
+          </div>
+        `:""}
+
+        <div style="text-align:center;margin-top:12px">
+          <button id="drawDominoBtn" class="btn" ${!myTurn?"disabled":""}>
+            ${(s.boneyard||[]).length?"Comprar peça":"Passar"}
+          </button>
         </div>
       `;
+
       document.querySelector("#drawDominoBtn")?.addEventListener("click",drawOrPassDomino);
     }
 
-    function tileInner(t){return`<span>${t.a}</span><span>${t.b}</span>`}
-    function tileHtml(t){return`<div class="tile">${tileInner(t)}</div>`}
-    function canPlayDomino(tile,board){
-      if(!board.length)return true;
-      const left=board[0].a;
-      const right=board[board.length-1].b;
-      return tile.a===left||tile.b===left||tile.a===right||tile.b===right;
+    function tileInner(tile){
+      return`<span>${tile.a}</span><span>${tile.b}</span>`;
     }
 
-    async function playDomino(index){
+    function tileHtml(tile){
+      return`<div class="tile ${tile.a===tile.b?"double":""}">${tileInner(tile)}</div>`;
+    }
+
+    function dominoPlayableSides(tile,board){
+      if(!tile)return[];
+      if(!board.length)return["right"];
+
+      const left=board[0].a;
+      const right=board[board.length-1].b;
+      const sides=[];
+
+      if(tile.a===left||tile.b===left)sides.push("left");
+      if(tile.a===right||tile.b===right)sides.push("right");
+
+      return sides;
+    }
+
+    function canPlayDomino(tile,board){
+      return dominoPlayableSides(tile,board).length>0;
+    }
+
+    async function chooseDominoTile(index){
+      const s=currentRoom?.state||{};
+      if(s.turnUid!==user.uid||s.winnerUid)return;
+
+      const hand=s.hands?.[user.uid]||[];
+      const tile=hand[index];
+      if(!tile)return;
+
+      const sides=dominoPlayableSides(tile,s.board||[]);
+      if(!sides.length)return;
+
+      if(sides.length===1){
+        selectedDominoIndex=null;
+        await playDomino(index,sides[0]);
+        return;
+      }
+
+      selectedDominoIndex=index;
+      renderDomino();
+    }
+
+    async function playDomino(index,side=null){
       await mutateRoom(currentRoomId,room=>{
         const s=structuredClone(room.state);
         const order=room.playerOrder||[];
@@ -939,24 +1038,30 @@
         if(!tile)return room;
 
         const board=[...(s.board||[])];
-        let placed=null;
+        const validSides=dominoPlayableSides(tile,board);
 
-        if(!board.length){
-          placed={side:"right",tile:{a:tile.a,b:tile.b}};
-        }else{
-          const left=board[0].a;
-          const right=board[board.length-1].b;
+        if(!validSides.length)return room;
+        if(!side)side=validSides[0];
+        if(!validSides.includes(side))return room;
 
-          if(tile.a===right)placed={side:"right",tile:{a:tile.a,b:tile.b}};
-          else if(tile.b===right)placed={side:"right",tile:{a:tile.b,b:tile.a}};
-          else if(tile.b===left)placed={side:"left",tile:{a:tile.a,b:tile.b}};
-          else if(tile.a===left)placed={side:"left",tile:{a:tile.b,b:tile.a}};
+        let placedTile={a:tile.a,b:tile.b};
+
+        if(board.length){
+          if(side==="right"){
+            const right=board[board.length-1].b;
+            if(tile.a===right)placedTile={a:tile.a,b:tile.b};
+            else if(tile.b===right)placedTile={a:tile.b,b:tile.a};
+            else return room;
+          }else{
+            const left=board[0].a;
+            if(tile.b===left)placedTile={a:tile.a,b:tile.b};
+            else if(tile.a===left)placedTile={a:tile.b,b:tile.a};
+            else return room;
+          }
         }
 
-        if(!placed)return room;
-
-        if(placed.side==="right")board.push(placed.tile);
-        else board.unshift(placed.tile);
+        if(side==="right")board.push(placedTile);
+        else board.unshift(placedTile);
 
         hand.splice(index,1);
         s.hands[user.uid]=hand;
@@ -970,9 +1075,13 @@
         room.status=winner?"finished":"playing";
         return room;
       });
+
+      selectedDominoIndex=null;
     }
 
     async function drawOrPassDomino(){
+      selectedDominoIndex=null;
+
       await mutateRoom(currentRoomId,room=>{
         const s=structuredClone(room.state);
         const order=room.playerOrder||[];
