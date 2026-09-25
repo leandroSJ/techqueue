@@ -1,0 +1,465 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>TechQueue - Jogos Locais</title>
+  <style>
+    :root{
+      color-scheme:light;
+      --bg:#f8fafd;--surface:#fff;--surface-2:#f0f4f9;--text:#1f1f1f;--muted:#5f6368;
+      --primary:#0b57d0;--on-primary:#fff;--border:#c4c7c5;--danger:#b3261e;--success:#137333;
+    }
+    html[data-theme="dark"]{
+      color-scheme:dark;--bg:#131314;--surface:#1e1f20;--surface-2:#252627;--text:#e3e3e3;--muted:#c4c7c5;
+      --primary:#a8c7fa;--on-primary:#062e6f;--border:#444746;--danger:#f2b8b5;--success:#81c995;
+    }
+    *{box-sizing:border-box}
+    body{margin:0;background:var(--bg);color:var(--text);font-family:Arial,sans-serif}
+    button,a{font:inherit}.hidden{display:none!important}
+    .shell{width:min(1180px,calc(100% - 24px));margin:0 auto;padding:18px 0 40px}
+    header{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;border-bottom:1px solid var(--border);padding-bottom:14px;margin-bottom:16px}
+    h1{margin:0;font-size:1.45rem}.sub{color:var(--muted);font-size:.9rem;margin-top:4px}
+    .actions{display:flex;gap:8px;flex-wrap:wrap}
+    .btn{border:1px solid var(--border);background:var(--surface);color:var(--primary);border-radius:20px;padding:9px 14px;text-decoration:none;cursor:pointer}
+    .btn.primary{background:var(--primary);color:var(--on-primary);border-color:transparent}
+    .games{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:16px}
+    .game-btn{padding:14px;border:1px solid var(--border);background:var(--surface);color:var(--text);border-radius:12px;text-align:left;cursor:pointer}
+    .game-btn.active{outline:2px solid var(--primary);background:var(--surface-2)}
+    .game-btn strong{display:block}.game-btn span{display:block;color:var(--muted);font-size:.78rem;margin-top:4px}
+    .card{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:14px}
+    .hud{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:10px}
+    .hud-left,.hud-right{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+    .pill{background:var(--surface-2);border-radius:999px;padding:6px 10px;font-size:.82rem}
+    .canvas-wrap{position:relative;overflow:hidden;border-radius:12px;border:1px solid var(--border);background:#1d1f20}
+    canvas{display:block;width:100%;height:auto;max-height:70vh;touch-action:none}
+    .message{position:absolute;inset:0;display:grid;place-items:center;background:rgba(0,0,0,.42);color:white;text-align:center;padding:20px}
+    .message-box{background:rgba(0,0,0,.75);padding:18px;border-radius:12px;max-width:430px}
+    .message-box h2{margin:0 0 8px}.message-box p{margin:0 0 12px}
+    .help{margin-top:10px;color:var(--muted);font-size:.82rem;line-height:1.45}
+    .touch{display:none;grid-template-columns:repeat(3,56px);gap:6px;justify-content:center;margin-top:12px}
+    .touch button{height:50px;border:1px solid var(--border);background:var(--surface);color:var(--text);border-radius:10px;font-size:1.1rem}
+    .touch .wide{grid-column:span 3}
+    @media(max-width:900px){.games{grid-template-columns:repeat(2,1fr)}}
+    @media(max-width:640px){.games{grid-template-columns:1fr}.touch{display:grid}}
+  </style>
+</head>
+<body>
+  <div class="shell">
+    <header>
+      <div>
+        <h1>Jogos Locais</h1>
+        <div class="sub">Roda direto no navegador. Sem Firebase durante a partida, então sem delay de rede.</div>
+      </div>
+      <div class="actions">
+        <a class="btn" href="./games.html">Jogos online</a>
+        <a class="btn" href="./index.html">TechQueue</a>
+        <button id="themeBtn" class="btn" type="button">Modo escuro</button>
+      </div>
+    </header>
+
+    <div class="games">
+      <button class="game-btn" data-game="parking"><strong>Estacione o Carro</strong><span>Setas/WASD · manobra e tempo</span></button>
+      <button class="game-btn" data-game="snake"><strong>Snake</strong><span>Clássico · recorde local</span></button>
+      <button class="game-btn" data-game="breakout"><strong>Arkanoid</strong><span>Quebre os blocos e não deixe a bola cair</span></button>
+      <button class="game-btn" data-game="bmx"><strong>BMX Trial</strong><span>Corra, pule e passe pelos obstáculos</span></button>
+    </div>
+
+    <section class="card">
+      <div class="hud">
+        <div class="hud-left">
+          <span id="gameTitle" class="pill">Jogo</span>
+          <span id="scoreText" class="pill">Pontuação: 0</span>
+          <span id="infoText" class="pill">Pronto</span>
+        </div>
+        <div class="hud-right">
+          <button id="restartBtn" class="btn primary" type="button">Reiniciar</button>
+        </div>
+      </div>
+
+      <div class="canvas-wrap">
+        <canvas id="gameCanvas" width="900" height="520"></canvas>
+        <div id="overlay" class="message hidden">
+          <div class="message-box">
+            <h2 id="overlayTitle"></h2>
+            <p id="overlayText"></p>
+            <button id="overlayBtn" class="btn primary" type="button">Jogar novamente</button>
+          </div>
+        </div>
+      </div>
+
+      <div id="helpText" class="help"></div>
+
+      <div class="touch" id="touchControls">
+        <button type="button" data-key="ArrowLeft">←</button>
+        <button type="button" data-key="ArrowUp">↑</button>
+        <button type="button" data-key="ArrowRight">→</button>
+        <button type="button" data-key="ArrowDown">↓</button>
+        <button type="button" class="wide" data-key="Space">AÇÃO / PULO</button>
+      </div>
+    </section>
+  </div>
+
+  <script>
+    (() => {
+      const canvas = document.querySelector("#gameCanvas");
+      const ctx = canvas.getContext("2d");
+      const gameTitle = document.querySelector("#gameTitle");
+      const scoreText = document.querySelector("#scoreText");
+      const infoText = document.querySelector("#infoText");
+      const helpText = document.querySelector("#helpText");
+      const restartBtn = document.querySelector("#restartBtn");
+      const overlay = document.querySelector("#overlay");
+      const overlayTitle = document.querySelector("#overlayTitle");
+      const overlayText = document.querySelector("#overlayText");
+      const overlayBtn = document.querySelector("#overlayBtn");
+      const themeBtn = document.querySelector("#themeBtn");
+      const keys = new Set();
+
+      let currentGame = null;
+      let raf = 0;
+      let interval = 0;
+      let cleanupGame = () => {};
+
+      function setTheme(theme){
+        document.documentElement.dataset.theme = theme;
+        localStorage.setItem("techqueue-theme", theme);
+        themeBtn.textContent = theme === "dark" ? "Modo claro" : "Modo escuro";
+      }
+      setTheme(localStorage.getItem("techqueue-theme") || "light");
+      themeBtn.addEventListener("click", () => setTheme(document.documentElement.dataset.theme === "dark" ? "light" : "dark"));
+
+      function stopLoops(){
+        if(raf) cancelAnimationFrame(raf);
+        if(interval) clearInterval(interval);
+        raf = 0;
+        interval = 0;
+        cleanupGame();
+        cleanupGame = () => {};
+        keys.clear();
+      }
+
+      function showOverlay(title,text){
+        overlayTitle.textContent = title;
+        overlayText.textContent = text;
+        overlay.classList.remove("hidden");
+      }
+      function hideOverlay(){ overlay.classList.add("hidden"); }
+
+      function saveBest(key,value,mode="max"){
+        const storageKey = "techqueue-local-" + key;
+        const old = Number(localStorage.getItem(storageKey) || 0);
+        const better = mode === "min" ? (old === 0 || value < old) : value > old;
+        if(better) localStorage.setItem(storageKey,String(value));
+        return Number(localStorage.getItem(storageKey) || value);
+      }
+
+      function chooseGame(name){
+        stopLoops();
+        hideOverlay();
+        currentGame = name;
+        document.querySelectorAll("[data-game]").forEach(btn => btn.classList.toggle("active", btn.dataset.game === name));
+        if(name === "parking") startParking();
+        if(name === "snake") startSnake();
+        if(name === "breakout") startBreakout();
+        if(name === "bmx") startBmx();
+        history.replaceState(null,"","?game=" + name);
+      }
+
+      document.querySelectorAll("[data-game]").forEach(btn => btn.addEventListener("click",()=>chooseGame(btn.dataset.game)));
+      restartBtn.addEventListener("click",()=>chooseGame(currentGame || "parking"));
+      overlayBtn.addEventListener("click",()=>chooseGame(currentGame || "parking"));
+
+      addEventListener("keydown", e => {
+        if(["ArrowUp","ArrowDown","ArrowLeft","ArrowRight","Space","KeyW","KeyA","KeyS","KeyD"].includes(e.code)) e.preventDefault();
+        keys.add(e.code);
+      });
+      addEventListener("keyup", e => keys.delete(e.code));
+
+      document.querySelectorAll("[data-key]").forEach(btn => {
+        const code = btn.dataset.key;
+        const on = e => { e.preventDefault(); keys.add(code); };
+        const off = e => { e.preventDefault(); keys.delete(code); };
+        btn.addEventListener("pointerdown",on);
+        btn.addEventListener("pointerup",off);
+        btn.addEventListener("pointercancel",off);
+        btn.addEventListener("pointerleave",off);
+      });
+
+      function keyDown(...codes){ return codes.some(code => keys.has(code)); }
+
+      function startParking(){
+        gameTitle.textContent = "Estacione o Carro";
+        helpText.textContent = "WASD ou setas: acelerar, ré e virar. Entre totalmente na vaga, pare o carro e alinhe-o para concluir a fase.";
+        const W=canvas.width,H=canvas.height;
+        const obstacles=[
+          {x:120,y:80,w:180,h:70},{x:350,y:70,w:120,h:90},{x:560,y:70,w:170,h:70},
+          {x:100,y:330,w:190,h:70},{x:390,y:350,w:160,h:60}
+        ];
+        const parking={x:705,y:340,w:115,h:62,angle:0};
+        const car={x:95,y:240,angle:0,speed:0,r:18};
+        let collisions=0;
+        const started=performance.now();
+        let ended=false;
+
+        function collides(x,y){
+          if(x<20||x>W-20||y<20||y>H-20) return true;
+          return obstacles.some(o => x+car.r>o.x && x-car.r<o.x+o.w && y+car.r>o.y && y-car.r<o.y+o.h);
+        }
+        function aligned(){
+          const a=Math.abs(Math.atan2(Math.sin(car.angle),Math.cos(car.angle)));
+          return Math.min(a,Math.abs(Math.PI-a)) < .28;
+        }
+        function parked(){
+          return car.x>parking.x+18 && car.x<parking.x+parking.w-18 &&
+                 car.y>parking.y+18 && car.y<parking.y+parking.h-18 &&
+                 Math.abs(car.speed)<.15 && aligned();
+        }
+        function draw(){
+          ctx.fillStyle="#202124";ctx.fillRect(0,0,W,H);
+          ctx.fillStyle="#3c4043";ctx.fillRect(25,25,W-50,H-50);
+
+          ctx.save();
+          ctx.strokeStyle="#fbbc04";ctx.lineWidth=4;ctx.setLineDash([12,8]);
+          ctx.strokeRect(parking.x,parking.y,parking.w,parking.h);
+          ctx.setLineDash([]);
+          ctx.fillStyle="#fff";ctx.font="16px Arial";ctx.fillText("VAGA",parking.x+34,parking.y+36);
+          ctx.restore();
+
+          for(const o of obstacles){
+            ctx.fillStyle="#5f6368";ctx.fillRect(o.x,o.y,o.w,o.h);
+            ctx.strokeStyle="#9aa0a6";ctx.strokeRect(o.x,o.y,o.w,o.h);
+          }
+
+          ctx.save();ctx.translate(car.x,car.y);ctx.rotate(car.angle);
+          ctx.fillStyle="#1a73e8";ctx.fillRect(-24,-13,48,26);
+          ctx.fillStyle="#d2e3fc";ctx.fillRect(-9,-10,18,20);
+          ctx.fillStyle="#202124";ctx.fillRect(-18,-16,10,4);ctx.fillRect(8,-16,10,4);ctx.fillRect(-18,12,10,4);ctx.fillRect(8,12,10,4);
+          ctx.restore();
+        }
+        function frame(){
+          if(ended)return;
+          const accelerating=keyDown("ArrowUp","KeyW"),reverse=keyDown("ArrowDown","KeyS");
+          if(accelerating) car.speed=Math.min(3.1,car.speed+.065);
+          else if(reverse) car.speed=Math.max(-2.1,car.speed-.06);
+          else car.speed*=.965;
+
+          if(Math.abs(car.speed)>.05){
+            const steer=keyDown("ArrowLeft","KeyA")?-1:keyDown("ArrowRight","KeyD")?1:0;
+            car.angle += steer * .042 * Math.sign(car.speed);
+          }
+
+          const nx=car.x+Math.cos(car.angle)*car.speed;
+          const ny=car.y+Math.sin(car.angle)*car.speed;
+          if(collides(nx,ny)){
+            car.speed*=-.25;
+            collisions++;
+          }else{car.x=nx;car.y=ny}
+
+          const elapsed=(performance.now()-started)/1000;
+          scoreText.textContent="Batidas: "+collisions;
+          infoText.textContent="Tempo: "+elapsed.toFixed(1)+"s";
+          draw();
+
+          if(parked()){
+            ended=true;
+            const finalTime=Number(elapsed.toFixed(2));
+            const score=Math.max(0,1000-Math.round(finalTime*8)-collisions*60);
+            const best=saveBest("parking-score",score);
+            scoreText.textContent="Pontuação: "+score;
+            showOverlay("Estacionado!","Tempo "+finalTime.toFixed(2)+"s · batidas "+collisions+" · recorde "+best+" pts");
+            return;
+          }
+          raf=requestAnimationFrame(frame);
+        }
+        frame();
+      }
+
+      function startSnake(){
+        gameTitle.textContent="Snake";
+        helpText.textContent="Use as setas ou WASD. Coma os pontos e não bata na parede nem em você mesmo.";
+        const cols=30,rows=17,cell=30;
+        canvas.width=cols*cell;canvas.height=rows*cell;
+        let snake=[{x:8,y:8},{x:7,y:8},{x:6,y:8}],dir={x:1,y:0},nextDir={x:1,y:0},food=randomFood(),score=0,ended=false;
+
+        function randomFood(){
+          let p;
+          do{p={x:Math.floor(Math.random()*cols),y:Math.floor(Math.random()*rows)}}while(snake?.some(s=>s.x===p.x&&s.y===p.y));
+          return p;
+        }
+        function setDirection(){
+          if(keyDown("ArrowUp","KeyW")&&dir.y!==1)nextDir={x:0,y:-1};
+          else if(keyDown("ArrowDown","KeyS")&&dir.y!==-1)nextDir={x:0,y:1};
+          else if(keyDown("ArrowLeft","KeyA")&&dir.x!==1)nextDir={x:-1,y:0};
+          else if(keyDown("ArrowRight","KeyD")&&dir.x!==-1)nextDir={x:1,y:0};
+        }
+        function tick(){
+          if(ended)return;
+          setDirection();dir=nextDir;
+          const head={x:snake[0].x+dir.x,y:snake[0].y+dir.y};
+          if(head.x<0||head.x>=cols||head.y<0||head.y>=rows||snake.some(s=>s.x===head.x&&s.y===head.y)){
+            ended=true;
+            const best=saveBest("snake",score);
+            showOverlay("Fim de jogo","Pontuação "+score+" · recorde "+best);
+            return;
+          }
+          snake.unshift(head);
+          if(head.x===food.x&&head.y===food.y){score+=10;food=randomFood()}else snake.pop();
+          scoreText.textContent="Pontuação: "+score;infoText.textContent="Tamanho: "+snake.length;
+          draw();
+        }
+        function draw(){
+          ctx.fillStyle="#202124";ctx.fillRect(0,0,canvas.width,canvas.height);
+          ctx.fillStyle="#34a853";for(const s of snake)ctx.fillRect(s.x*cell+2,s.y*cell+2,cell-4,cell-4);
+          ctx.fillStyle="#ea4335";ctx.beginPath();ctx.arc(food.x*cell+cell/2,food.y*cell+cell/2,cell*.34,0,Math.PI*2);ctx.fill();
+        }
+        draw();interval=setInterval(tick,105);
+      }
+
+      function startBreakout(){
+        gameTitle.textContent="Arkanoid";
+        helpText.textContent="Setas esquerda/direita ou A/D movem a barra. Quebre todos os blocos sem deixar a bola cair.";
+        canvas.width=900;canvas.height=520;
+        const paddle={x:390,y:485,w:120,h:14,speed:7};
+        const ball={x:450,y:380,vx:4.2,vy:-4.2,r:8};
+        const rows=5,cols=11,pad=7,bw=70,bh=22,startX=45,startY=55;
+        const bricks=[];
+        for(let r=0;r<rows;r++)for(let col=0;col<cols;col++)bricks.push({x:startX+col*(bw+pad),y:startY+r*(bh+pad),w:bw,h:bh,alive:true});
+        let score=0,lives=3,ended=false;
+
+        function resetBall(){ball.x=450;ball.y=390;ball.vx=(Math.random()>.5?1:-1)*4.2;ball.vy=-4.2}
+        function frame(){
+          if(ended)return;
+          if(keyDown("ArrowLeft","KeyA"))paddle.x=Math.max(0,paddle.x-paddle.speed);
+          if(keyDown("ArrowRight","KeyD"))paddle.x=Math.min(canvas.width-paddle.w,paddle.x+paddle.speed);
+
+          ball.x+=ball.vx;ball.y+=ball.vy;
+          if(ball.x<ball.r||ball.x>canvas.width-ball.r)ball.vx*=-1;
+          if(ball.y<ball.r)ball.vy*=-1;
+
+          if(ball.y+ball.r>=paddle.y&&ball.y-ball.r<=paddle.y+paddle.h&&ball.x>=paddle.x&&ball.x<=paddle.x+paddle.w&&ball.vy>0){
+            const hit=(ball.x-(paddle.x+paddle.w/2))/(paddle.w/2);
+            ball.vx=hit*6;ball.vy=-Math.abs(ball.vy);
+          }
+
+          for(const b of bricks){
+            if(!b.alive)continue;
+            if(ball.x+ball.r>b.x&&ball.x-ball.r<b.x+b.w&&ball.y+ball.r>b.y&&ball.y-ball.r<b.y+b.h){
+              b.alive=false;score+=10;ball.vy*=-1;break;
+            }
+          }
+
+          if(ball.y>canvas.height+20){
+            lives--;if(lives<=0){ended=true;const best=saveBest("breakout",score);showOverlay("Fim de jogo","Pontuação "+score+" · recorde "+best);return}else resetBall();
+          }
+
+          if(bricks.every(b=>!b.alive)){
+            ended=true;const best=saveBest("breakout",score);showOverlay("Você limpou a fase!","Pontuação "+score+" · recorde "+best);return;
+          }
+
+          scoreText.textContent="Pontuação: "+score;infoText.textContent="Vidas: "+lives;
+          draw();raf=requestAnimationFrame(frame);
+        }
+        function draw(){
+          ctx.fillStyle="#202124";ctx.fillRect(0,0,canvas.width,canvas.height);
+          for(const b of bricks){if(!b.alive)continue;ctx.fillStyle="#8ab4f8";ctx.fillRect(b.x,b.y,b.w,b.h)}
+          ctx.fillStyle="#f8f9fa";ctx.fillRect(paddle.x,paddle.y,paddle.w,paddle.h);
+          ctx.fillStyle="#fbbc04";ctx.beginPath();ctx.arc(ball.x,ball.y,ball.r,0,Math.PI*2);ctx.fill();
+        }
+        frame();
+      }
+
+      function startBmx(){
+        gameTitle.textContent="BMX Trial";
+        helpText.textContent="Seta ↑/W acelera, ↓/S freia, ←/→ inclinam no ar e Espaço pula quando estiver no chão. Chegue à bandeira sem cair.";
+        canvas.width=900;canvas.height=520;
+        const worldW=2500;
+        const player={x:100,y:360,vx:0,vy:0,angle:0,grounded:false,r:16};
+        const obstacles=[
+          {x:430,y:390,w:120,h:28},{x:730,y:350,w:80,h:68},{x:1030,y:400,w:180,h:24},
+          {x:1380,y:330,w:90,h:90},{x:1730,y:385,w:180,h:28},{x:2100,y:345,w:100,h:75}
+        ];
+        const finishX=2350;
+        let cameraX=0,score=0,crashed=false,started=performance.now();
+
+        function groundY(x){return 445 + Math.sin(x/160)*18}
+        function obstacleTopAt(x){
+          let top=Infinity;
+          for(const o of obstacles)if(x>=o.x&&x<=o.x+o.w)top=Math.min(top,o.y);
+          return top;
+        }
+        function floorAt(x){return Math.min(groundY(x),obstacleTopAt(x))}
+        function crash(reason){
+          if(crashed)return;crashed=true;
+          const best=saveBest("bmx",score);
+          showOverlay("Você caiu",reason+" · pontuação "+score+" · recorde "+best);
+        }
+        function frame(){
+          if(crashed)return;
+          const accel=keyDown("ArrowUp","KeyW"),brake=keyDown("ArrowDown","KeyS");
+          if(accel)player.vx=Math.min(7.2,player.vx+.08);
+          else player.vx*=.992;
+          if(brake)player.vx*=.96;
+
+          if(player.grounded&&keyDown("Space")){player.vy=-7.8;player.grounded=false}
+          if(!player.grounded){
+            if(keyDown("ArrowLeft","KeyA"))player.angle-=.045;
+            if(keyDown("ArrowRight","KeyD"))player.angle+=.045;
+          }else player.angle*=.85;
+
+          player.vy+=.32;
+          player.x+=player.vx;
+          player.y+=player.vy;
+
+          const floor=floorAt(player.x)-player.r;
+          if(player.y>=floor){
+            if(player.vy>7.5||Math.abs(player.angle)>1.2){crash("Pouso muito forte");return}
+            player.y=floor;player.vy=0;player.grounded=true;
+          }else player.grounded=false;
+
+          if(player.x<0){player.x=0;player.vx=0}
+          cameraX=Math.max(0,Math.min(worldW-canvas.width,player.x-260));
+          score=Math.max(score,Math.floor(player.x/5));
+          scoreText.textContent="Pontuação: "+score;
+          infoText.textContent="Distância: "+Math.floor(player.x)+"m";
+
+          if(player.x>=finishX){
+            crashed=true;
+            const elapsed=(performance.now()-started)/1000;
+            const finalScore=score+Math.max(0,500-Math.floor(elapsed*10));
+            const best=saveBest("bmx",finalScore);
+            showOverlay("Fase concluída!","Tempo "+elapsed.toFixed(1)+"s · pontuação "+finalScore+" · recorde "+best);
+            return;
+          }
+
+          draw();raf=requestAnimationFrame(frame);
+        }
+        function draw(){
+          ctx.fillStyle="#d2e3fc";ctx.fillRect(0,0,canvas.width,canvas.height);
+          ctx.save();ctx.translate(-cameraX,0);
+
+          ctx.beginPath();ctx.moveTo(0,groundY(0));
+          for(let x=0;x<=worldW;x+=20)ctx.lineTo(x,groundY(x));
+          ctx.lineTo(worldW,canvas.height);ctx.lineTo(0,canvas.height);ctx.closePath();
+          ctx.fillStyle="#5f6368";ctx.fill();
+
+          for(const o of obstacles){ctx.fillStyle="#795548";ctx.fillRect(o.x,o.y,o.w,o.h)}
+          ctx.fillStyle="#34a853";ctx.fillRect(finishX,280,8,165);ctx.fillStyle="#fff";ctx.fillRect(finishX+8,285,54,28);ctx.fillStyle="#202124";ctx.fillText("FIM",finishX+20,304);
+
+          ctx.save();ctx.translate(player.x,player.y);ctx.rotate(player.angle);
+          ctx.strokeStyle="#202124";ctx.lineWidth=4;
+          ctx.beginPath();ctx.arc(-18,12,14,0,Math.PI*2);ctx.arc(18,12,14,0,Math.PI*2);ctx.stroke();
+          ctx.beginPath();ctx.moveTo(-18,12);ctx.lineTo(0,-8);ctx.lineTo(18,12);ctx.lineTo(-18,12);ctx.stroke();
+          ctx.restore();
+
+          ctx.restore();
+        }
+        frame();
+      }
+
+      const requested = new URLSearchParams(location.search).get("game");
+      chooseGame(["parking","snake","breakout","bmx"].includes(requested) ? requested : "parking");
+    })();
+  </script>
+</body>
+</html>
