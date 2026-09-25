@@ -607,6 +607,64 @@
       .header-actions{width:100%;margin-left:0}
       .header-actions .btn,.header-actions .theme-btn{flex:1}
     }
+
+    /* Responsividade geral */
+    html,body{max-width:100%;overflow-x:hidden}
+    img,svg{max-width:100%}
+    button,input,select,textarea{max-width:100%}
+
+    @media(max-width:900px){
+      .shell{width:min(100% - 24px,1120px)}
+      .grid{grid-template-columns:1fr}
+      .status-control{grid-template-columns:1fr}
+      .podium{grid-template-columns:repeat(3,minmax(0,1fr))}
+      .shop-item{grid-template-columns:1fr}
+      .shop-item>div:last-child{justify-self:start}
+    }
+
+    @media(max-width:720px){
+      header{align-items:stretch;flex-direction:column}
+      .userbox{width:100%;display:grid;grid-template-columns:auto 1fr;align-items:center}
+      .header-actions{grid-column:1/-1;width:100%;margin-left:0;display:grid;grid-template-columns:repeat(2,minmax(0,1fr))}
+      .header-actions .btn,.header-actions .theme-btn{width:100%;justify-content:center;text-align:center;min-width:0}
+      .hero{padding:20px 16px}
+      .hero-actions,.open-ticket-actions,.dialog-actions{flex-wrap:wrap}
+      .person{grid-template-columns:minmax(0,1fr) auto}
+      .person-name{min-width:0;flex-wrap:wrap}
+      .person-actions{flex-wrap:wrap;justify-content:flex-end}
+      .queued-client{grid-template-columns:1fr}
+      .queued-client .btn{width:100%}
+      .history-title-row{align-items:flex-start;flex-direction:column}
+      .history-state{white-space:normal}
+      .rank-row{align-items:flex-start;flex-wrap:wrap}
+      .nudge-toast{left:12px;right:12px;bottom:12px;max-width:none}
+      #eventToast{bottom:72px!important}
+      dialog{width:calc(100% - 20px);max-height:calc(100dvh - 20px);overflow:auto}
+      .dialog-body{padding:18px}
+    }
+
+    @media(max-width:520px){
+      .shell{width:calc(100% - 16px);padding-top:10px}
+      .login-wrap{padding:10px}
+      .login-card{padding:18px}
+      .brand h1{font-size:1.25rem}
+      .userbox{grid-template-columns:36px minmax(0,1fr)}
+      .avatar{width:36px;height:36px}
+      .header-actions{grid-template-columns:1fr}
+      .hero-actions,.open-ticket-actions,.dialog-actions{display:grid;grid-template-columns:1fr;width:100%}
+      .hero-actions .btn,.open-ticket-actions .btn,.dialog-actions .btn{width:100%}
+      .podium{grid-template-columns:1fr}
+      .card{padding:16px}
+      .status-select,input,textarea{font-size:16px}
+      .person{grid-template-columns:1fr}
+      .person-actions{justify-content:flex-start}
+      .attention-btn{min-height:38px}
+      .complexity-badge{margin-left:0;margin-top:6px}
+      .history-details{overflow-wrap:anywhere}
+      .queue-text{overflow-wrap:anywhere}
+      .next-name{font-size:clamp(1.8rem,12vw,2.7rem);overflow-wrap:anywhere}
+    }
+
   </style>
 </head>
 <body>
