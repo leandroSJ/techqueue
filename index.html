@@ -1323,7 +1323,7 @@
         const members = { ...(initial.members || {}) };
         const existingMember = members[authUser.uid];
 
-        if (existingMember?.status === "busy") return;
+        if (["busy", "lunch", "bathroom", "away"].includes(existingMember?.status)) return;
 
         members[authUser.uid] = {
           name: profile.name,
