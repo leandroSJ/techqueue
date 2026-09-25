@@ -756,7 +756,7 @@
         </div>
         <div class="header-actions">
           <button id="shopBtn" class="btn btn-secondary" type="button">Lojinha <span id="walletXp">0 XP</span></button>
-          <a class="btn btn-secondary" href="./games.html" style="text-decoration:none;display:inline-flex;align-items:center">Sala da Descompressão</a>
+          <a class="btn btn-secondary" href="./games.html" target="_blank" rel="noopener" style="text-decoration:none;display:inline-flex;align-items:center">Sala da Descompressão</a>
           <button class="theme-btn" type="button" data-theme-toggle>Modo escuro</button>
           <button id="logoutBtn" class="btn btn-secondary">Sair</button>
         </div>
@@ -1265,6 +1265,7 @@
         adminRow.classList.toggle("hidden", profile.role !== "admin");
 
         setViews(true);
+        refreshAlertPermissionUI();
 
         // A fila é o recurso principal: ela deve continuar funcionando mesmo
         // se a carteira/lojinha ainda não tiver permissão no Firestore.
@@ -1762,6 +1763,125 @@
       nudgeDialog.showModal();
     });
 
+    function refreshAlertPermissionUI() {
+      if (!alertPermissionCard || !authUser) {
+        alertPermissionCard?.classList.add("hidden");
+        return;
+      }
+
+      const supportsNotifications = "Notification" in window;
+      const permission = supportsNotifications ? Notification.permission : "unsupported";
+
+      if (alertsActivated && permission === "granted") {
+        alertPermissionCard.classList.add("hidden");
+        return;
+      }
+
+      alertPermissionCard.classList.remove("hidden");
+
+      if (!supportsNotifications) {
+        alertPermissionText.textContent = "Este navegador não oferece notificações do sistema. Você ainda pode ativar o som dos alertas.";
+        enableAlertsBtn.textContent = "Ativar som";
+      } else if (permission === "denied") {
+        alertPermissionText.textContent = "As notificações estão bloqueadas nas configurações do navegador. O som ainda pode ser ativado nesta sessão.";
+        enableAlertsBtn.textContent = alertsActivated ? "Som ativado" : "Ativar som";
+        enableAlertsBtn.disabled = alertsActivated;
+      } else if (permission === "granted") {
+        alertPermissionText.textContent = "Notificações permitidas. Ative o som desta sessão para os chamados de atenção.";
+        enableAlertsBtn.textContent = "Ativar som";
+      } else {
+        alertPermissionText.textContent = "Permita notificações e som para receber chamadas mesmo quando esta aba estiver em segundo plano.";
+        enableAlertsBtn.textContent = "Ativar notificações e som";
+      }
+    }
+
+    async function activateAlerts() {
+      enableAlertsBtn.disabled = true;
+
+      try {
+        // Os dois pedidos são disparados pelo clique do usuário para respeitar
+        // as políticas de permissão e autoplay dos navegadores.
+        const notificationPromise =
+          "Notification" in window && Notification.permission === "default"
+            ? Notification.requestPermission()
+            : Promise.resolve("Notification" in window ? Notification.permission : "unsupported");
+
+        alertPlayer.src = SOUND_CATALOG[0].file;
+        alertPlayer.volume = 0;
+        const audioPromise = alertPlayer.play()
+          .then(() => {
+            alertPlayer.pause();
+            alertPlayer.currentTime = 0;
+            alertPlayer.volume = 0.9;
+            alertsActivated = true;
+          })
+          .catch(err => {
+            console.warn("Não foi possível liberar o áudio automaticamente:", err);
+            alertsActivated = true;
+          });
+
+        await Promise.allSettled([notificationPromise, audioPromise]);
+        localStorage.setItem("techqueue-alerts-activated", "1");
+      } finally {
+        enableAlertsBtn.disabled = false;
+        refreshAlertPermissionUI();
+      }
+    }
+
+    enableAlertsBtn?.addEventListener("click", activateAlerts);
+
+    function stopAttentionFlash() {
+      if (attentionFlashTimer) clearInterval(attentionFlashTimer);
+      attentionFlashTimer = null;
+      attentionFlashState = false;
+      document.title = normalDocumentTitle;
+      document.body.classList.remove("attention-flash");
+    }
+
+    function startAttentionFlash(fromName) {
+      stopAttentionFlash();
+      document.body.classList.add("attention-flash");
+
+      const attentionTitle = `ATENÇÃO - ${fromName} chamou você`;
+      document.title = attentionTitle;
+
+      attentionFlashTimer = setInterval(() => {
+        attentionFlashState = !attentionFlashState;
+        document.title = attentionFlashState ? attentionTitle : normalDocumentTitle;
+      }, 750);
+    }
+
+    window.addEventListener("focus", stopAttentionFlash);
+    document.addEventListener("visibilitychange", () => {
+      if (!document.hidden) stopAttentionFlash();
+    });
+
+    function showSystemNotification(nudge) {
+      if (!("Notification" in window) || Notification.permission !== "granted") return;
+
+      const fromName = nudge.fromName || "Outro técnico";
+      const extras = [nudge.reaction, nudge.sticker ? "[" + nudge.sticker + "]" : "", nudge.message]
+        .filter(Boolean)
+        .join(" ");
+
+      try {
+        const notification = new Notification("TechQueue - chamada de atenção", {
+          body: extras ? `${fromName}: ${extras}` : `${fromName} está chamando sua atenção.`,
+          tag: "techqueue-nudge",
+          renotify: true,
+          silent: true
+        });
+
+        notification.onclick = () => {
+          window.focus();
+          stopAttentionFlash();
+          notification.close();
+        };
+      } catch (err) {
+        console.warn("Falha ao mostrar notificação do sistema:", err);
+      }
+    }
+
     nudgeForm.addEventListener("submit", async event => {
       event.preventDefault();
       if (!pendingNudgeTarget || !authUser) return;
@@ -1837,10 +1957,21 @@
       nudgeToast.classList.remove("hidden");
       setTimeout(() => nudgeToast.classList.add("hidden"), 4500);
 
+      const isInBackground = document.hidden || !document.hasFocus();
+      if (isInBackground) {
+        startAttentionFlash(fromName);
+        showSystemNotification(nudge);
+        if (navigator.vibrate) {
+          try { navigator.vibrate([180, 80, 180]); } catch (_) {}
+        }
+      }
+
       const sound = SOUND_CATALOG.find(item => item.id === (nudge.sound || "msn")) || SOUND_CATALOG[0];
-      const audio = new Audio(sound.file);
-      audio.volume = 0.9;
-      audio.play().catch(() => playFallbackNudge());
+      alertPlayer.pause();
+      alertPlayer.src = sound.file;
+      alertPlayer.currentTime = 0;
+      alertPlayer.volume = 0.9;
+      alertPlayer.play().catch(() => playFallbackNudge());
     }
 
     function playFallbackNudge() {
