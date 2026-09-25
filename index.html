@@ -796,22 +796,31 @@
       }
 
       try {
-        const pRef = doc(db, "users", user.uid);
-        const pSnap = await getDoc(pRef);
-
-        if (!pSnap.exists() || pSnap.data().enabled !== true) {
-          await signOut(auth);
-          loginError.textContent = "Sua conta não está liberada para este sistema.";
-          return;
-        }
-
         authUser = user;
-        profile = { uid: user.uid, ...pSnap.data() };
+
+        const googleName = (user.displayName || user.email?.split("@")[0] || "Técnico").trim();
+        const firstName = googleName
+          .normalize("NFD")
+          .replace(/[\u0300-\u036f]/g, "")
+          .split(/\s+/)[0]
+          .toLowerCase();
+
+        const isOpener = firstName === "leandro" || firstName === "ronald";
+
+        profile = {
+          uid: user.uid,
+          name: googleName,
+          email: user.email || "",
+          enabled: true,
+          role: "tech",
+          isOpener,
+          shiftStartMinutes: isOpener ? 480 : 540
+        };
 
         loggedName.textContent = profile.name;
         loggedShift.textContent = `Entrada ${profileShiftText()}`;
         avatar.textContent = (profile.name || "?").slice(0,1).toUpperCase();
-        adminRow.classList.toggle("hidden", profile.role !== "admin");
+        adminRow.classList.add("hidden");
 
         setViews(true);
         await joinTodayIfAllowed();
@@ -819,8 +828,7 @@
 
       } catch (err) {
         console.error(err);
-        await signOut(auth);
-        loginError.textContent = "Não foi possível carregar seu usuário.";
+        loginError.textContent = "Não foi possível iniciar sua sessão.";
       }
     }
 
