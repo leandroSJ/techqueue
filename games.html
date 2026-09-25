@@ -80,13 +80,29 @@
     <main id="appView" class="hidden">
       <section id="lobbyView">
         <div id="gameError" class="error"></div>
-        <div class="games-grid">
-          <div class="card game-card"><h3>Jogo da Velha</h3><p>Partida rápida para 2 pessoas.</p><button class="btn primary" data-create-game="tictactoe">Criar sala</button></div>
-          <div class="card game-card"><h3>Desenhe e Adivinhe</h3><p>Um desenha e os outros tentam descobrir.</p><button class="btn primary" data-create-game="draw">Criar sala</button></div>
-          <div class="card game-card"><h3>Forca</h3><p>Descubram a palavra antes das tentativas acabarem.</p><button class="btn primary" data-create-game="hangman">Criar sala</button></div>
-          <div class="card game-card"><h3>Dominó</h3><p>Duelo clássico para 2 jogadores.</p><button class="btn primary" data-create-game="domino">Criar sala</button></div>
-          <div class="card game-card"><h3>Dama</h3><p>Tabuleiro para 2 jogadores.</p><button class="btn primary" data-create-game="checkers">Criar sala</button></div>
-        </div>
+
+        <section style="margin-bottom:22px">
+          <h2 style="margin:0 0 6px">Jogos online</h2>
+          <p class="muted" style="margin:0 0 12px">Partidas sincronizadas entre os usuários pelo Firestore.</p>
+          <div class="games-grid">
+            <div class="card game-card"><h3>Jogo da Velha</h3><p>Partida rápida para 2 pessoas.</p><button class="btn primary" data-create-game="tictactoe">Criar sala</button></div>
+            <div class="card game-card"><h3>Desenhe e Adivinhe</h3><p>Um desenha e os outros tentam descobrir.</p><button class="btn primary" data-create-game="draw">Criar sala</button></div>
+            <div class="card game-card"><h3>Forca</h3><p>Turnos, pontuação e palavra secreta.</p><button class="btn primary" data-create-game="hangman">Criar sala</button></div>
+            <div class="card game-card"><h3>Dominó</h3><p>Duelo clássico para 2 jogadores.</p><button class="btn primary" data-create-game="domino">Criar sala</button></div>
+            <div class="card game-card"><h3>Dama</h3><p>Captura obrigatória, pontuação e dama voadora.</p><button class="btn primary" data-create-game="checkers">Criar sala</button></div>
+          </div>
+        </section>
+
+        <section style="margin-bottom:22px">
+          <h2 style="margin:0 0 6px">Jogos locais</h2>
+          <p class="muted" style="margin:0 0 12px">Rodam direto no navegador, sem sincronização de rede durante a partida.</p>
+          <div class="games-grid" style="grid-template-columns:repeat(4,1fr)">
+            <div class="card game-card"><h3>Estacione o Carro</h3><p>Manobra, colisão, tempo e vaga.</p><a class="btn primary" href="./local-games.html?game=parking" style="text-decoration:none;text-align:center">Jogar</a></div>
+            <div class="card game-card"><h3>Snake</h3><p>Clássico com recorde local.</p><a class="btn primary" href="./local-games.html?game=snake" style="text-decoration:none;text-align:center">Jogar</a></div>
+            <div class="card game-card"><h3>Arkanoid</h3><p>Quebre os blocos sem deixar a bola cair.</p><a class="btn primary" href="./local-games.html?game=breakout" style="text-decoration:none;text-align:center">Jogar</a></div>
+            <div class="card game-card"><h3>BMX Trial</h3><p>Corra, pule e supere os obstáculos.</p><a class="btn primary" href="./local-games.html?game=bmx" style="text-decoration:none;text-align:center">Jogar</a></div>
+          </div>
+        </section>
 
         <div class="two-col">
           <section class="card">
@@ -95,8 +111,9 @@
           </section>
           <section class="card">
             <h2 style="margin-top:0">Como funciona</h2>
-            <p class="muted">As salas usam o mesmo documento diário do TechQueue. Isso evita depender de novas regras do Firestore para cada minigame.</p>
-            <p class="muted">Os jogos não dão XP e não alteram o ranking de atendimento.</p>
+            <p class="muted"><strong>Online:</strong> Jogo da Velha, Desenhe e Adivinhe, Forca, Dominó e Dama usam o Firestore para sincronizar os jogadores.</p>
+            <p class="muted"><strong>Local:</strong> Estacione o Carro, Snake, Arkanoid e BMX Trial rodam totalmente no navegador durante a partida, por isso não sofrem o delay do Firestore.</p>
+            <p class="muted">Os jogos não gastam XP e não alteram o ranking de atendimento.</p>
           </section>
         </div>
       </section>
