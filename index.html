@@ -1926,7 +1926,11 @@
 
       } catch (err) {
         console.error(err);
-        alert("Não foi possível limpar o dia.");
+        if (err?.code === "permission-denied") {
+          alert("O Firebase bloqueou a limpeza. Publique a versão mais recente das regras do Firestore e confirme que você está logado como leandro3dejesus@gmail.com.");
+        } else {
+          alert(`Não foi possível limpar o dia. ${err?.code || err?.message || ""}`.trim());
+        }
       }
     });
 
