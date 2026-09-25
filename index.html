@@ -375,7 +375,15 @@
 
     .available{background:var(--success-bg);color:var(--success)}
     .busy{background:var(--warning-bg);color:var(--warning)}
+    .lunch{background:#fef7e0;color:#8a4f00}
+    .bathroom{background:var(--surface-container-high);color:var(--text)}
     .offline{background:var(--surface-container-high);color:var(--muted)}
+    .status-control{display:grid;grid-template-columns:1fr minmax(180px,260px);gap:14px;align-items:center}
+    .status-control p{margin:4px 0 0;color:var(--muted);font-size:.82rem}
+    .status-select{
+      width:100%;border:1px solid var(--border-strong);background:var(--surface);
+      color:var(--text);border-radius:8px;padding:10px 12px
+    }
 
     .open-ticket{
       border:1px solid var(--border);
@@ -577,6 +585,20 @@
           <button id="finishBtn" class="btn btn-primary">Finalizei o atendimento</button>
         </div>
 
+        <div class="card" style="margin-bottom:20px">
+          <div class="status-control">
+            <div>
+              <h2 style="margin-bottom:0">Meu status</h2>
+              <p>Ao sair como disponível, você é removido temporariamente do rodízio.</p>
+            </div>
+            <select id="statusSelect" class="status-select">
+              <option value="available">Disponível</option>
+              <option value="lunch">Almoço</option>
+              <option value="bathroom">Segura aí na moral, vou no banheiro</option>
+            </select>
+          </div>
+        </div>
+
         <div class="card">
           <h2>Fila da equipe</h2>
           <div id="queueList" class="queue-list"></div>
@@ -731,6 +753,7 @@
     const openStarted = document.querySelector("#openStarted");
     const adminRow = document.querySelector("#adminRow");
     const resetDayBtn = document.querySelector("#resetDayBtn");
+    const statusSelect = document.querySelector("#statusSelect");
     const takeDialog = document.querySelector("#takeDialog");
     const finishDialog = document.querySelector("#finishDialog");
     const takeForm = document.querySelector("#takeForm");
@@ -1031,6 +1054,12 @@
         dayState.currentUid !== authUser.uid ||
         me?.status !== "available";
 
+      if (statusSelect) {
+        const editableStatus = ["available", "lunch", "bathroom"].includes(me?.status) ? me.status : "available";
+        statusSelect.value = editableStatus;
+        statusSelect.disabled = me?.status === "busy";
+      }
+
       renderQueue();
 
       if (openAttendance) {
@@ -1070,7 +1099,12 @@
       queueList.innerHTML = ordered.map(([uid,m]) => {
         const current = uid === dayState.currentUid;
         const status = m.status || "offline";
-        const statusLabel = status === "available" ? "Disponível" : status === "busy" ? "Em atendimento" : "Fora da fila";
+        const statusLabel =
+          status === "available" ? "Disponível" :
+          status === "busy" ? "Em atendimento" :
+          status === "lunch" ? "Almoço" :
+          status === "bathroom" ? "Segura aí na moral, vou no banheiro" :
+          "Fora da fila";
         const shift = Number(m.shiftStartMinutes || 0);
         const shiftText = `${String(Math.floor(shift/60)).padStart(2,"0")}:${String(shift%60).padStart(2,"0")}`;
         return `
@@ -1120,6 +1154,51 @@
         `;
       }).join("");
     }
+
+    statusSelect.addEventListener("change", async () => {
+      if (!authUser || !dayState) return;
+
+      const newStatus = statusSelect.value;
+      const dayRef = doc(db, "days", bahiaParts().dateId);
+
+      try {
+        await runTransaction(db, async tx => {
+          const snap = await tx.get(dayRef);
+          if (!snap.exists()) return;
+
+          const state = snap.data();
+          const members = { ...(state.members || {}) };
+          const member = members[authUser.uid];
+
+          if (!member || member.status === "busy") {
+            throw new Error("Finalize seu atendimento antes de alterar o status.");
+          }
+
+          let queue = [...(state.queue || [])];
+
+          if (newStatus === "available") {
+            members[authUser.uid] = { ...member, status: "available" };
+            if (!queue.includes(authUser.uid)) queue.push(authUser.uid);
+          } else {
+            members[authUser.uid] = { ...member, status: newStatus };
+            queue = queue.filter(uid => uid !== authUser.uid);
+          }
+
+          tx.update(dayRef, {
+            members,
+            queue,
+            currentUid: state.currentUid === authUser.uid
+              ? (queue[0] || null)
+              : (state.currentUid || queue[0] || null),
+            updatedAt: serverTimestamp()
+          });
+        });
+      } catch (err) {
+        console.error(err);
+        alert(err.message || "Não foi possível alterar seu status.");
+        render();
+      }
+    });
 
     takeBtn.addEventListener("click", () => {
       clientNameInput.value = "";
