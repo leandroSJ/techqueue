@@ -608,6 +608,40 @@
       .header-actions .btn,.header-actions .theme-btn{flex:1}
     }
 
+
+    .alert-permission-card{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:14px;
+      padding:13px 14px;
+      margin:-4px 0 18px;
+      border:1px solid var(--border);
+      border-radius:12px;
+      background:var(--primary-container);
+      color:var(--on-primary-container);
+    }
+    .alert-permission-card strong,.alert-permission-card span{display:block}
+    .alert-permission-card strong{font-size:.9rem;font-weight:500}
+    .alert-permission-card span{font-size:.8rem;margin-top:3px;line-height:1.4}
+    body.attention-flash::before{
+      content:"";
+      position:fixed;
+      inset:0;
+      z-index:9998;
+      pointer-events:none;
+      border:5px solid var(--primary);
+      animation:attentionBorder .8s steps(1,end) infinite;
+    }
+    @keyframes attentionBorder{
+      0%,100%{opacity:1}
+      50%{opacity:.1}
+    }
+    @media(max-width:720px){
+      .alert-permission-card{align-items:stretch;flex-direction:column}
+      .alert-permission-card .btn{width:100%}
+    }
+
     /* Responsividade geral */
     html,body{max-width:100%;overflow-x:hidden}
     img,svg{max-width:100%}
@@ -730,6 +764,14 @@
     </header>
 
     <div id="systemNotice" class="notice">Carregando expediente...</div>
+
+    <div id="alertPermissionCard" class="alert-permission-card hidden">
+      <div>
+        <strong>Ative os alertas do TechQueue</strong>
+        <span id="alertPermissionText">Permita notificações e som para receber chamadas mesmo quando esta aba estiver em segundo plano.</span>
+      </div>
+      <button id="enableAlertsBtn" class="btn btn-primary" type="button">Ativar notificações e som</button>
+    </div>
 
     <section class="hero">
       <div class="eyebrow">Próximo atendimento</div>
@@ -997,6 +1039,9 @@
     const openStarted = document.querySelector("#openStarted");
     const adminRow = document.querySelector("#adminRow");
     const resetDayBtn = document.querySelector("#resetDayBtn");
+    const alertPermissionCard = document.querySelector("#alertPermissionCard");
+    const alertPermissionText = document.querySelector("#alertPermissionText");
+    const enableAlertsBtn = document.querySelector("#enableAlertsBtn");
     const shopBtn = document.querySelector("#shopBtn");
     const walletXp = document.querySelector("#walletXp");
     const shopDialog = document.querySelector("#shopDialog");
@@ -1042,6 +1087,11 @@
     let userProfileDoc = null;
     let unsubProfile = null;
     let pendingNudgeTarget = null;
+    let alertsActivated = false;
+    let attentionFlashTimer = null;
+    let attentionFlashState = false;
+    const normalDocumentTitle = document.title;
+    const alertPlayer = new Audio();
 
     if (isConfigured) {
       app = initializeApp(firebaseConfig);
