@@ -13,13 +13,9 @@ service cloud.firestore {
         && request.auth.token.email == "leandro3dejesus@gmail.com";
     }
 
-    function after18Bahia() {
-      return request.time.hours() >= 21 || request.time.hours() < 3;
-    }
-
     match /days/{dayId} {
       allow read, create, update: if googleUser();
-      allow delete: if adminUser() && after18Bahia();
+      allow delete: if adminUser();
 
       match /attendances/{attendanceId} {
         allow read: if googleUser();
@@ -31,7 +27,7 @@ service cloud.firestore {
           && resource.data.technicianUid == request.auth.uid
           && request.resource.data.technicianUid == resource.data.technicianUid;
 
-        allow delete: if adminUser() && after18Bahia();
+        allow delete: if adminUser();
       }
 
       match /queuedClients/{queuedClientId} {
@@ -55,7 +51,7 @@ service cloud.firestore {
           && request.resource.data.targetUid != request.auth.uid;
 
         allow update: if false;
-        allow delete: if adminUser() && after18Bahia();
+        allow delete: if adminUser();
       }
     }
   }
