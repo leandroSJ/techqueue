@@ -1007,7 +1007,7 @@
         type: "sound",
         soundId: item.id,
         label: item.label,
-        description: "Libera este áudio no botão Chamar atenção.",
+        description: "Compra 1 uso deste áudio no botão Chamar atenção.",
         price: item.price
       })),
       {
@@ -1637,18 +1637,45 @@
       const submitButton = nudgeForm.querySelector('button[type="submit"]');
       submitButton.disabled = true;
 
+      const soundId = nudgeSound.value || "msn";
+      const soundInfo = SOUND_CATALOG.find(item => item.id === soundId) || SOUND_CATALOG[0];
+      const dayId = bahiaParts().dateId;
+      const nudgeRef = doc(collection(db, "days", dayId, "nudges"));
+      const profileRef = doc(db, "profiles", authUser.uid);
+
       try {
-        await addDoc(collection(db, "days", bahiaParts().dateId, "nudges"), {
-          fromUid: authUser.uid,
-          fromName: profile.name,
-          targetUid: pendingNudgeTarget.uid,
-          targetName: pendingNudgeTarget.name,
-          sound: nudgeSound.value || "msn",
-          message: customMessageField.classList.contains("hidden") ? "" : nudgeMessage.value.trim(),
-          reaction: reactionField.classList.contains("hidden") ? "" : nudgeReaction.value,
-          sticker: stickerField.classList.contains("hidden") ? "" : nudgeSticker.value,
-          createdAt: serverTimestamp(),
-          createdAtMs: Date.now()
+        await runTransaction(db, async tx => {
+          if (soundInfo.price > 0) {
+            const profileSnap = await tx.get(profileRef);
+            if (!profileSnap.exists()) throw new Error("Carteira de XP não encontrada.");
+
+            const data = profileSnap.data();
+            const credits = { ...(data.audioCredits || {}) };
+            const available = Number(credits[soundId] || 0);
+
+            if (available <= 0) {
+              throw new Error("Você não tem crédito para este áudio. Compre 1 uso na lojinha.");
+            }
+
+            credits[soundId] = available - 1;
+            tx.update(profileRef, {
+              audioCredits: credits,
+              updatedAt: serverTimestamp()
+            });
+          }
+
+          tx.set(nudgeRef, {
+            fromUid: authUser.uid,
+            fromName: profile.name,
+            targetUid: pendingNudgeTarget.uid,
+            targetName: pendingNudgeTarget.name,
+            sound: soundId,
+            message: customMessageField.classList.contains("hidden") ? "" : nudgeMessage.value.trim(),
+            reaction: reactionField.classList.contains("hidden") ? "" : nudgeReaction.value,
+            sticker: stickerField.classList.contains("hidden") ? "" : nudgeSticker.value,
+            createdAt: serverTimestamp(),
+            createdAtMs: Date.now()
+          });
         });
 
         nudgeDialog.close();
@@ -1657,7 +1684,7 @@
         if (err?.code === "permission-denied") {
           alert("O Firebase bloqueou o alerta. Publique a versão mais recente das regras do Firestore.");
         } else {
-          alert(`Não foi possível chamar a atenção deste técnico. ${err?.code || ""}`.trim());
+          alert(err?.message || `Não foi possível chamar a atenção deste técnico. ${err?.code || ""}`.trim());
         }
       } finally {
         submitButton.disabled = false;
