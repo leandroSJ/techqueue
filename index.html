@@ -1223,9 +1223,9 @@
         myOpenTicket.classList.add("hidden");
       }
 
-      const canReset = profile.role === "admin" && now.minutes >= 18 * 60;
+      const canReset = profile.role === "admin";
       resetDayBtn.disabled = !canReset;
-      resetDayBtn.title = canReset ? "" : "Disponível somente para administrador após 18:00";
+      resetDayBtn.title = canReset ? "" : "Disponível somente para o administrador";
     }
 
     function renderQueue() {
@@ -1887,7 +1887,7 @@
 
     resetDayBtn.addEventListener("click", async () => {
       const now = bahiaParts();
-      if (profile?.role !== "admin" || now.minutes < 18 * 60) return;
+      if (profile?.role !== "admin") return;
 
       const ok = confirm("Limpar todos os atendimentos do dia e zerar a fila? Esta ação não pode ser desfeita.");
       if (!ok) return;
@@ -1914,6 +1914,8 @@
           members: {},
           startedBy: null,
           openedAt: null,
+          lastAttendanceUid: null,
+          passedSinceLastAttendance: [],
           clearedAt: serverTimestamp(),
           updatedAt: serverTimestamp()
         }, { merge: true });
