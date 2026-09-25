@@ -138,25 +138,31 @@
         </section>
 
         <section style="margin-bottom:22px">
-          <h2 style="margin:0 0 6px">Jogos externos</h2>
-          <p class="muted" style="margin:0 0 12px">Jogos hospedados por provedores externos e incorporados ao TechQueue.</p>
+          <h2 style="margin:0 0 6px">Biblioteca Click Jogos</h2>
+          <p class="muted" style="margin:0 0 12px">Acesso ao catálogo completo do Click Jogos, com categorias e navegação pelo próprio portal.</p>
           <div class="games-grid external-games-grid">
             <div class="card game-card">
+              <h3>Biblioteca completa</h3>
+              <p>Abra o Click Jogos dentro do TechQueue e navegue por milhares de títulos sem precisar cadastrar jogo por jogo.</p>
+              <a class="btn primary" href="./clickjogos-library.html" style="text-decoration:none;text-align:center">Abrir biblioteca</a>
+            </div>
+            <div class="card game-card">
               <h3>Drifty Master 3D</h3>
-              <p>Jogo de drift carregado pelo mesmo provedor usado na página analisada.</p>
-              <a class="btn primary" href="./external-games.html?game=drifty-master" style="text-decoration:none;text-align:center">Jogar</a>
+              <p>Acesso direto ao jogo externo que já identificamos no HTML analisado.</p>
+              <a class="btn primary" href="./external-games.html?game=drifty-master" style="text-decoration:none;text-align:center">Jogar agora</a>
             </div>
           </div>
         </section>
 
         <section style="margin-bottom:22px">
-          <h2 style="margin:0 0 6px">Jogos locais</h2>
-          <p class="muted" style="margin:0 0 12px">Rodam direto no navegador, sem sincronização de rede durante a partida.</p>
-          <div class="games-grid local-games-grid">
-            <div class="card game-card"><h3>Estacione o Carro</h3><p>Manobra, colisão, tempo e vaga.</p><a class="btn primary" href="./local-games.html?game=parking" style="text-decoration:none;text-align:center">Jogar</a></div>
-            <div class="card game-card"><h3>Snake</h3><p>Clássico com recorde local.</p><a class="btn primary" href="./local-games.html?game=snake" style="text-decoration:none;text-align:center">Jogar</a></div>
-            <div class="card game-card"><h3>Arkanoid</h3><p>Quebre os blocos sem deixar a bola cair.</p><a class="btn primary" href="./local-games.html?game=breakout" style="text-decoration:none;text-align:center">Jogar</a></div>
-            <div class="card game-card"><h3>BMX Trial</h3><p>Corra, pule e supere os obstáculos.</p><a class="btn primary" href="./local-games.html?game=bmx" style="text-decoration:none;text-align:center">Jogar</a></div>
+          <h2 style="margin:0 0 6px">Jogo local 2D</h2>
+          <p class="muted" style="margin:0 0 12px">Mantive apenas um jogo local e refiz do zero com visual melhor, física e partículas.</p>
+          <div class="games-grid external-games-grid">
+            <div class="card game-card">
+              <h3>Neon Drift 2D</h3>
+              <p>Corrida top-down com drift, melhor volta, partículas, marcas de pneu e visual neon. Roda direto no navegador.</p>
+              <a class="btn primary" href="./local-games.html" style="text-decoration:none;text-align:center">Jogar Neon Drift</a>
+            </div>
           </div>
         </section>
 
@@ -168,7 +174,8 @@
           <section class="card">
             <h2 style="margin-top:0">Como funciona</h2>
             <p class="muted"><strong>Online:</strong> Jogo da Velha, Desenhe e Adivinhe, Forca, Dominó e Dama usam o Firestore para sincronizar os jogadores.</p>
-            <p class="muted"><strong>Local:</strong> Estacione o Carro, Snake, Arkanoid e BMX Trial rodam totalmente no navegador durante a partida, por isso não sofrem o delay do Firestore.</p>
+            <p class="muted"><strong>Biblioteca:</strong> o Click Jogos continua hospedando os jogos; o TechQueue apenas oferece o acesso e a navegação.</p>
+            <p class="muted"><strong>Local:</strong> Neon Drift 2D roda totalmente no navegador, sem delay do Firestore durante a partida.</p>
             <p class="muted">Os jogos não gastam XP e não alteram o ranking de atendimento.</p>
           </section>
         </div>
