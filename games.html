@@ -333,42 +333,73 @@
     }
 
     async function mutateRoom(id,mutator){
+      let roomResult=null;
       await mutateDay(data=>{
         const gameRooms={...(data.gameRooms||{})},room=gameRooms[id];
         if(!room)throw new Error("Sala não encontrada.");
         const next=mutator(structuredClone(room));
         if(next===null)return null;
+        roomResult=structuredClone(next);
         gameRooms[id]=next;
         return {gameRooms};
       });
+      return roomResult;
     }
 
     async function createRoom(game){
       if(!user)return;
       const id=roomId(),players={[user.uid]:displayName()},order=[user.uid],state=initialState(game,order);
+      const createdRoom={game,hostUid:user.uid,hostName:displayName(),players,playerOrder:order,maxPlayers:MAX_PLAYERS[game],status:order.length>=MIN_PLAYERS[game]?"playing":"waiting",state,createdAtMs:Date.now()};
       await mutateDay(data=>{
         const gameRooms={...(data.gameRooms||{})};
-        gameRooms[id]={game,hostUid:user.uid,hostName:displayName(),players,playerOrder:order,maxPlayers:MAX_PLAYERS[game],status:order.length>=MIN_PLAYERS[game]?"playing":"waiting",state,createdAtMs:Date.now()};
+        gameRooms[id]=createdRoom;
         return {gameRooms};
       });
-      openRoom(id);
+      openRoom(id,createdRoom);
     }
 
     async function joinRoom(id){
-      await mutateRoom(id,room=>{
+      const joinedRoom=await mutateRoom(id,room=>{
         const players={...(room.players||{})},order=[...(room.playerOrder||[])];
         if(!order.includes(user.uid)){
           if(order.length>=(room.maxPlayers||2))throw new Error("Sala lotada.");
           players[user.uid]=displayName();order.push(user.uid);
         }
-        room.players=players;room.playerOrder=order;
-        if(order.length>=MIN_PLAYERS[room.game]&&room.status==="waiting"){room.status="playing";room.state=initialState(room.game,order,room.state)}
+
+        room.players=players;
+        room.playerOrder=order;
+
+        const enoughPlayers=order.length>=MIN_PLAYERS[room.game];
+        if(enoughPlayers){
+          room.status="playing";
+
+          // Dominó precisa obrigatoriamente gerar as duas mãos quando o segundo
+          // jogador entra. Isso também corrige salas antigas que ficaram em "waiting".
+          if(room.game==="domino"){
+            const hasBothHands=order.length===2&&order.every(uid=>Array.isArray(room.state?.hands?.[uid]));
+            if(!hasBothHands)room.state=initDomino(order);
+          }else if(room.game==="hangman"){
+            const active=room.state?.activePlayers||[];
+            if(!room.state||!active.includes(user.uid))room.state=createHangmanTournament(order);
+          }else if(!room.state||Object.keys(room.state).length===0){
+            room.state=initialState(room.game,order,room.state);
+          }
+        }
+
         return room;
       });
-      openRoom(id);
+      openRoom(id,joinedRoom);
     }
 
-    function openRoom(id){currentRoomId=id;lobbyView.classList.add("hidden");roomView.classList.remove("hidden");const found=(dayState?.gameRooms||{})[id];currentRoom=found?{id,...found}:null;if(currentRoom)renderRoom()}
+    function openRoom(id,roomSnapshot=null){
+      currentRoomId=id;
+      seenHangmanActionId=null;
+      lobbyView.classList.add("hidden");
+      roomView.classList.remove("hidden");
+      const found=roomSnapshot||(dayState?.gameRooms||{})[id];
+      currentRoom=found?{id,...found}:null;
+      if(currentRoom)renderRoom();
+    }
     function backToLobby(){currentRoomId=null;currentRoom=null;selectedChecker=null;roomView.classList.add("hidden");lobbyView.classList.remove("hidden")}
 
     leaveBtn.addEventListener("click",async()=>{
