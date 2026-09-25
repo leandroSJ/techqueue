@@ -2216,7 +2216,7 @@
       if (!ok) return;
 
       try {
-        const collectionsToClear = ["attendances", "queuedClients", "nudges"];
+        const collectionsToClear = ["attendances", "queuedClients", "nudges", "events"];
 
         for (const collectionName of collectionsToClear) {
           const snap = await getDocs(collection(db, "days", now.dateId, collectionName));
