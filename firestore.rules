@@ -8,8 +8,18 @@ service cloud.firestore {
         && request.auth.token.firebase.sign_in_provider == "google.com";
     }
 
+    function adminUser() {
+      return googleUser()
+        && request.auth.token.email == "leandro3dejesus@gmail.com";
+    }
+
+    function after18Bahia() {
+      return request.time.hours() >= 21 || request.time.hours() < 3;
+    }
+
     match /days/{dayId} {
       allow read, create, update: if googleUser();
+      allow delete: if adminUser() && after18Bahia();
 
       match /attendances/{attendanceId} {
         allow read: if googleUser();
@@ -19,8 +29,33 @@ service cloud.firestore {
 
         allow update: if googleUser()
           && resource.data.technicianUid == request.auth.uid
-          && request.resource.data.technicianUid
-             == resource.data.technicianUid;
+          && request.resource.data.technicianUid == resource.data.technicianUid;
+
+        allow delete: if adminUser() && after18Bahia();
+      }
+
+      match /queuedClients/{queuedClientId} {
+        allow read: if googleUser();
+
+        allow create: if googleUser()
+          && request.resource.data.fromUid == request.auth.uid;
+
+        // Qualquer técnico autenticado pode assumir um cliente encaminhado.
+        allow delete: if googleUser();
+
+        allow update: if false;
+      }
+
+      match /nudges/{nudgeId} {
+        allow read: if googleUser();
+
+        allow create: if googleUser()
+          && request.resource.data.fromUid == request.auth.uid
+          && request.resource.data.targetUid is string
+          && request.resource.data.targetUid != request.auth.uid;
+
+        allow update: if false;
+        allow delete: if adminUser() && after18Bahia();
       }
     }
   }
