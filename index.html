@@ -2213,7 +2213,7 @@
       try {
         await runTransaction(db, async tx => {
           const snap = await tx.get(dayRef);
-          if (!snap.exists()) throw new Error("Expediente não iniciado.");
+          if (!snap.exists()) throw new Error("Fila indisponível. Recarregue a página.");
 
           const state = snap.data();
           const member = state.members?.[authUser.uid];
