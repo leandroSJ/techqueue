@@ -1387,7 +1387,22 @@
             throw new Error("Somente o próximo técnico disponível pode assumir este cliente.");
           }
 
-          const queue = (state.queue || []).filter(uid => uid !== authUser.uid);
+          const currentQueue = [...(state.queue || [])];
+          const otherAvailable = currentQueue.filter(uid =>
+            uid !== authUser.uid &&
+            state.members?.[uid]?.status === "available"
+          );
+
+          if (state.lastAttendanceUid === authUser.uid && otherAvailable.length) {
+            const passed = new Set(state.passedSinceLastAttendance || []);
+            const everyoneElsePassed = otherAvailable.every(uid => passed.has(uid));
+
+            if (!everyoneElsePassed) {
+              throw new Error("Você acabou de atender. Outro técnico da fila precisa atender ou passar a vez antes de você pegar outro cliente.");
+            }
+          }
+
+          const queue = currentQueue.filter(uid => uid !== authUser.uid);
           const members = { ...state.members };
           members[authUser.uid] = {
             ...member,
@@ -1682,6 +1697,8 @@
             queue,
             members,
             currentUid: queue[0] || null,
+            lastAttendanceUid: authUser.uid,
+            passedSinceLastAttendance: [],
             updatedAt: serverTimestamp()
           });
         });
