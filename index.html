@@ -1366,7 +1366,7 @@
           if (change.type !== "added") continue;
           const nudge = change.doc.data();
           if (nudge.targetUid === authUser?.uid) {
-            showNudge(nudge.fromName || "Outro técnico");
+            showNudge(nudge);
           }
         }
       });
@@ -1504,20 +1504,53 @@
       }).join("");
     }
 
-    queueList.addEventListener("click", async event => {
+    queueList.addEventListener("click", event => {
       const button = event.target.closest("[data-nudge-uid]");
       if (!button || !authUser) return;
 
-      button.disabled = true;
+      pendingNudgeTarget = {
+        uid: button.dataset.nudgeUid,
+        name: button.dataset.nudgeName
+      };
+
+      const unlocked = unlockedItems();
+      const unlockedSounds = SOUND_CATALOG.filter(sound =>
+        sound.id === "msn" || unlocked.has("sound:" + sound.id)
+      );
+
+      nudgeSound.innerHTML = unlockedSounds
+        .map(sound => `<option value="${sound.id}">${escapeHtml(sound.label)}</option>`)
+        .join("");
+
+      customMessageField.classList.toggle("hidden", !unlocked.has("message_pack"));
+      reactionField.classList.toggle("hidden", !unlocked.has("reaction_pack"));
+      nudgeMessage.value = "";
+      nudgeReaction.value = "";
+      nudgeTargetText.textContent = `Chamar a atenção de ${pendingNudgeTarget.name}.`;
+      nudgeDialog.showModal();
+    });
+
+    nudgeForm.addEventListener("submit", async event => {
+      event.preventDefault();
+      if (!pendingNudgeTarget || !authUser) return;
+
+      const submitButton = nudgeForm.querySelector('button[type="submit"]');
+      submitButton.disabled = true;
+
       try {
         await addDoc(collection(db, "days", bahiaParts().dateId, "nudges"), {
           fromUid: authUser.uid,
           fromName: profile.name,
-          targetUid: button.dataset.nudgeUid,
-          targetName: button.dataset.nudgeName,
+          targetUid: pendingNudgeTarget.uid,
+          targetName: pendingNudgeTarget.name,
+          sound: nudgeSound.value || "msn",
+          message: customMessageField.classList.contains("hidden") ? "" : nudgeMessage.value.trim(),
+          reaction: reactionField.classList.contains("hidden") ? "" : nudgeReaction.value,
           createdAt: serverTimestamp(),
           createdAtMs: Date.now()
         });
+
+        nudgeDialog.close();
       } catch (err) {
         console.error(err);
         if (err?.code === "permission-denied") {
@@ -1526,19 +1559,31 @@
           alert(`Não foi possível chamar a atenção deste técnico. ${err?.code || ""}`.trim());
         }
       } finally {
-        setTimeout(() => { button.disabled = false; }, 2500);
+        submitButton.disabled = false;
       }
     });
 
-    function showNudge(fromName) {
+    function showNudge(nudge) {
+      const fromName = nudge.fromName || "Outro técnico";
       document.body.classList.remove("nudged");
       void document.body.offsetWidth;
       document.body.classList.add("nudged");
 
-      nudgeToast.textContent = `${fromName} está chamando sua atenção.`;
-      nudgeToast.classList.remove("hidden");
-      setTimeout(() => nudgeToast.classList.add("hidden"), 3500);
+      const extras = [nudge.reaction, nudge.message].filter(Boolean).join(" ");
+      nudgeToast.textContent = extras
+        ? `${fromName}: ${extras}`
+        : `${fromName} está chamando sua atenção.`;
 
+      nudgeToast.classList.remove("hidden");
+      setTimeout(() => nudgeToast.classList.add("hidden"), 4500);
+
+      const sound = SOUND_CATALOG.find(item => item.id === (nudge.sound || "msn")) || SOUND_CATALOG[0];
+      const audio = new Audio(sound.file);
+      audio.volume = 0.9;
+      audio.play().catch(() => playFallbackNudge());
+    }
+
+    function playFallbackNudge() {
       try {
         const AudioCtx = window.AudioContext || window.webkitAudioContext;
         if (!AudioCtx) return;
