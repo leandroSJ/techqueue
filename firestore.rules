@@ -30,8 +30,10 @@ service cloud.firestore {
     }
 
     match /users/{userId} {
-      // Técnicos autenticados e aprovados podem enxergar a equipe.
-      allow read: if allowedUser();
+      // Cada usuário autenticado pode ler apenas o próprio perfil.
+      // Isso permite que o app carregue users/{request.auth.uid}
+      // antes de validar enabled/role para o restante do sistema.
+      allow read: if signedIn() && userId == request.auth.uid;
 
       // Perfis são cadastrados manualmente no Console Firebase/Admin SDK.
       // O navegador não pode criar, promover ou alterar usuário.
