@@ -13,6 +13,11 @@ service cloud.firestore {
         && request.auth.token.email == "leandro3dejesus@gmail.com";
     }
 
+    match /profiles/{userId} {
+      allow read, create, update: if googleUser() && request.auth.uid == userId;
+      allow delete: if false;
+    }
+
     match /days/{dayId} {
       allow read, create, update: if googleUser();
       allow delete: if adminUser();
@@ -36,9 +41,7 @@ service cloud.firestore {
         allow create: if googleUser()
           && request.resource.data.fromUid == request.auth.uid;
 
-        // Qualquer técnico autenticado pode assumir um cliente encaminhado.
         allow delete: if googleUser();
-
         allow update: if false;
       }
 
@@ -52,6 +55,25 @@ service cloud.firestore {
 
         allow update: if false;
         allow delete: if adminUser();
+      }
+
+      match /events/{eventId} {
+        allow read: if googleUser();
+
+        allow create: if googleUser()
+          && request.resource.data.fromUid == request.auth.uid;
+
+        allow update: if false;
+        allow delete: if adminUser();
+      }
+    }
+
+    match /gameRooms/{roomId} {
+      allow read, create, update, delete: if googleUser();
+
+      match /strokes/{strokeId} {
+        allow read, create, delete: if googleUser();
+        allow update: if false;
       }
     }
   }
