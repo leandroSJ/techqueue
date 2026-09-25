@@ -722,14 +722,15 @@
       const turnColor=s.turnUid===order[0]?"r":"b";
       const winner=s.winnerUid?currentRoom.players?.[s.winnerUid]:null;
       const scores=s.scores||{};
-      const legal=s.turnUid?legalCheckerMoves(s.board||[],turnColor,s.mustContinueFrom??null):[];
-      const mandatory=legal.some(move=>move.captured!==null);
-      const allowedFrom=new Set(legal.map(move=>move.from));
-      const legalTargets=new Set(selectedChecker===null?[]:legal.filter(move=>move.from===selectedChecker).map(move=>move.to));
 
       if(s.mustContinueFrom!==null&&s.turnUid===user.uid){
         selectedChecker=s.mustContinueFrom;
       }
+
+      const legal=s.turnUid?legalCheckerMoves(s.board||[],turnColor,s.mustContinueFrom??null):[];
+      const mandatory=legal.some(move=>move.captured!==null);
+      const allowedFrom=new Set(legal.map(move=>move.from));
+      const legalTargets=new Set(selectedChecker===null?[]:legal.filter(move=>move.from===selectedChecker).map(move=>move.to));
 
       gameRoot.innerHTML=`
         <div class="turn">
@@ -787,6 +788,7 @@
       const from=selectedChecker;
       await moveChecker(from,index);
       selectedChecker=null;
+      if(currentRoom)renderCheckers();
     }
 
     async function moveChecker(from,to){
