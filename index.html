@@ -2068,12 +2068,14 @@
       const now = bahiaParts();
       const dayRef = doc(db, "days", now.dateId);
       const attendanceRef = doc(db, "days", now.dateId, "attendances", openAttendance.id);
+      const profileRef = doc(db, "profiles", authUser.uid);
 
       try {
         await runTransaction(db, async tx => {
-          const [daySnap, attSnap] = await Promise.all([
+          const [daySnap, attSnap, profileSnap] = await Promise.all([
             tx.get(dayRef),
-            tx.get(attendanceRef)
+            tx.get(attendanceRef),
+            tx.get(profileRef)
           ]);
 
           if (!daySnap.exists() || !attSnap.exists()) throw new Error("Atendimento não encontrado.");
@@ -2109,6 +2111,14 @@
             currentUid: state.currentUid || queue[0] || null,
             updatedAt: serverTimestamp()
           });
+
+          const currentXp = Number(profileSnap.exists() ? profileSnap.data().xpBalance || 0 : 0);
+          tx.set(profileRef, {
+            name: profile.name,
+            email: profile.email,
+            xpBalance: currentXp + xpAwarded,
+            updatedAt: serverTimestamp()
+          }, { merge: true });
         });
 
         finishDialog.close();
