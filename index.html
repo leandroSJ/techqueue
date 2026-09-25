@@ -1121,6 +1121,7 @@
         todayAttendances = snap.docs.map(d => ({ id: d.id, ...d.data() }))
           .sort((a,b) => (b.startedAtMs || 0) - (a.startedAtMs || 0));
         renderHistory();
+        renderRanking();
       });
 
       unsubQueuedClients = onSnapshot(queuedClientsCol, snap => {
@@ -1197,8 +1198,15 @@
         dayState.currentUid !== authUser.uid ||
         me?.status !== "available";
 
+      passTurnBtn.disabled =
+        afterHours ||
+        !dayState.startedBy ||
+        dayState.currentUid !== authUser.uid ||
+        me?.status !== "available" ||
+        (dayState.queue || []).length <= 1;
+
       if (statusSelect) {
-        const editableStatus = ["available", "lunch", "bathroom"].includes(me?.status) ? me.status : "available";
+        const editableStatus = ["available", "lunch", "bathroom", "away"].includes(me?.status) ? me.status : "available";
         statusSelect.value = editableStatus;
         statusSelect.disabled = me?.status === "busy";
       }
@@ -1247,6 +1255,7 @@
           status === "busy" ? "Em atendimento" :
           status === "lunch" ? "Almoço" :
           status === "bathroom" ? "Segura aí na moral, vou no banheiro" :
+          status === "away" ? "Vou ali e já volto" :
           "Fora da fila";
         const shift = Number(m.shiftStartMinutes || 0);
         const shiftText = `${String(Math.floor(shift/60)).padStart(2,"0")}:${String(shift%60).padStart(2,"0")}`;
@@ -1452,6 +1461,69 @@
           </article>
         `;
       }).join("");
+    }
+
+    function xpForComplexity(value) {
+      if (value === "critical") return 35;
+      if (value === "moderate") return 20;
+      return 10;
+    }
+
+    function renderRanking() {
+      if (!podium || !shameWall) return;
+
+      const stats = new Map();
+
+      for (const attendance of todayAttendances) {
+        if (attendance.status !== "finished") continue;
+
+        const uid = attendance.technicianUid || attendance.technicianName;
+        if (!stats.has(uid)) {
+          stats.set(uid, {
+            name: attendance.technicianName || "Técnico",
+            count: 0,
+            xp: 0
+          });
+        }
+
+        const item = stats.get(uid);
+        item.count += 1;
+        item.xp += Number(attendance.xpAwarded ?? xpForComplexity(attendance.complexity));
+      }
+
+      const ranking = [...stats.values()]
+        .sort((a,b) => b.count - a.count || b.xp - a.xp || a.name.localeCompare(b.name));
+
+      if (!ranking.length) {
+        podium.innerHTML = '<div class="empty" style="grid-column:1/-1">O pódio ainda está vazio.</div>';
+        shameWall.innerHTML = "";
+        return;
+      }
+
+      const labels = ["1º lugar", "2º lugar", "3º lugar"];
+      podium.innerHTML = ranking.slice(0,3).map((item,index) => `
+        <div class="podium-place">
+          <div class="podium-position">${labels[index]}</div>
+          <strong>${escapeHtml(item.name)}</strong>
+          <div class="podium-score">
+            ${item.count} atendimento${item.count === 1 ? "" : "s"}
+            <span class="xp-badge">${item.xp} XP</span>
+          </div>
+        </div>
+      `).join("");
+
+      const rest = ranking.slice(3);
+      shameWall.innerHTML = rest.length
+        ? `
+          <div class="shame-wall-title">Mural da vergonha</div>
+          ${rest.map((item,index) => `
+            <div class="rank-row">
+              <span>${index + 4}º — ${escapeHtml(item.name)}</span>
+              <span>${item.count} atend. <span class="xp-badge">${item.xp} XP</span></span>
+            </div>
+          `).join("")}
+        `
+        : "";
     }
 
     statusSelect.addEventListener("change", async () => {
