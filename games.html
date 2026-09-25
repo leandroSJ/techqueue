@@ -442,17 +442,7 @@
 
     function initialState(game,order,previous=null){
       if(game==="tictactoe")return{board:Array(9).fill(""),turnUid:order[0]||null,winnerUid:null,draw:false};
-      if(game==="hangman")return{
-        word:randomWord(),
-        guessed:[],
-        wrong:0,
-        maxWrong:6,
-        winner:false,
-        lost:false,
-        winnerUid:null,
-        turnUid:order[0]||null,
-        scores:Object.fromEntries(order.map(uid=>[uid,0]))
-      };
+      if(game==="hangman")return createHangmanTournament(order);
       if(game==="draw"){
         const drawer=previous?.drawerUid&&order.length>1?order[(Math.max(0,order.indexOf(previous.drawerUid))+1)%order.length]:order[0]||null;
         return{word:randomWord(),drawerUid:drawer,guesses:[],winnerUid:null,winnerName:null,round:Number(previous?.round||0)+1,strokes:[]};
@@ -466,6 +456,116 @@
         mustContinueFrom:null
       };
       return{};
+    }
+
+    function pickHangmanEntry(level){
+      const safeLevel=Math.max(1,Math.min(HANGMAN_LEVELS.length,Number(level||1)));
+      const pool=HANGMAN_LEVELS[safeLevel-1];
+      return structuredClone(pool[Math.floor(Math.random()*pool.length)]);
+    }
+
+    function createHangmanTournament(order){
+      const active=[...order];
+      const scores=Object.fromEntries(order.map(uid=>[uid,0]));
+      return createHangmanRound({
+        activePlayers:active,
+        eliminated:[],
+        scores,
+        round:1,
+        startUid:active[0]||null,
+        lastAction:null
+      });
+    }
+
+    function createHangmanRound({activePlayers,eliminated,scores,round,startUid,lastAction}){
+      const level=Math.max(1,Math.min(HANGMAN_LEVELS.length,Number(round||1)));
+      const entry=pickHangmanEntry(level);
+      const playerErrors=Object.fromEntries((activePlayers||[]).map(uid=>[uid,0]));
+      const start=(activePlayers||[]).includes(startUid)?startUid:(activePlayers||[])[0]||null;
+
+      return{
+        word:normalize(entry.answer),
+        displayWord:entry.answer,
+        category:entry.category,
+        clueWords:entry.clues,
+        clueCount:1,
+        guessed:[],
+        letterResults:{},
+        maxWrong:6,
+        playerErrors,
+        activePlayers:[...(activePlayers||[])],
+        eliminated:[...(eliminated||[])],
+        scores:{...(scores||{})},
+        round:Number(round||1),
+        level,
+        turnUid:start,
+        championUid:null,
+        lastAction:lastAction||null
+      };
+    }
+
+    function nextActivePlayer(active,currentUid){
+      if(!active.length)return null;
+      const index=active.indexOf(currentUid);
+      if(index<0)return active[0];
+      return active[(index+1)%active.length];
+    }
+
+    function maskedHangmanWord(displayWord,guessed){
+      return [...String(displayWord||"")].map(ch=>{
+        if(ch===" ")return "/";
+        const normalized=normalize(ch);
+        if(!/[a-z]/.test(normalized))return ch;
+        return guessed.has(normalized)?ch.toUpperCase():"_";
+      }).join(" ");
+    }
+
+    function hangmanSvg(errors){
+      const e=Math.max(0,Math.min(6,Number(errors||0)));
+      return `
+        <svg class="hangman-svg" viewBox="0 0 180 180" role="img" aria-label="${e} erros de 6">
+          <g fill="none" stroke="currentColor" stroke-width="5" stroke-linecap="round">
+            <path d="M25 165 H155"/>
+            <path d="M52 165 V20 H128"/>
+            <path d="M52 42 L74 20"/>
+            <path d="M128 20 V45"/>
+            ${e>=1?'<circle cx="128" cy="62" r="17"/>':""}
+            ${e>=2?'<path d="M128 79 V118"/>':""}
+            ${e>=3?'<path d="M128 90 L103 105"/>':""}
+            ${e>=4?'<path d="M128 90 L153 105"/>':""}
+            ${e>=5?'<path d="M128 118 L106 148"/>':""}
+            ${e>=6?'<path d="M128 118 L150 148"/>':""}
+          </g>
+        </svg>
+      `;
+    }
+
+    function showGameToastMessage(message){
+      if(!gameToast)return;
+      gameToast.textContent=message;
+      gameToast.classList.remove("hidden");
+      if(gameToastTimer)clearTimeout(gameToastTimer);
+      gameToastTimer=setTimeout(()=>gameToast.classList.add("hidden"),4200);
+    }
+
+    function maybeShowHangmanAction(action){
+      if(!action?.id||seenHangmanActionId===action.id)return;
+      seenHangmanActionId=action.id;
+      showGameToastMessage(action.message||"Jogada registrada.");
+    }
+
+    function finishHangmanRound(room,s,action,nextStartUid){
+      const active=[...(s.activePlayers||[])];
+      room.state=createHangmanRound({
+        activePlayers:active,
+        eliminated:s.eliminated||[],
+        scores:s.scores||{},
+        round:Number(s.round||1)+1,
+        startUid:nextStartUid||active[0]||null,
+        lastAction:action
+      });
+      room.status="playing";
+      return room;
     }
 
     function renderTicTacToe(){
@@ -493,32 +593,70 @@
 
     function renderHangman(){
       const s=currentRoom.state||{};
+      const active=s.activePlayers||currentRoom.playerOrder||[];
+      const eliminated=new Set(s.eliminated||[]);
       const guessed=new Set(s.guessed||[]);
-      const masked=(s.word||"").split("").map(ch=>guessed.has(ch)?ch:"_").join(" ");
-      const done=s.winner||s.lost;
-      const turnName=s.turnUid?currentRoom.players?.[s.turnUid]:"";
-      const isMyTurn=s.turnUid===user.uid;
+      const letterResults=s.letterResults||{};
+      const playerErrors=s.playerErrors||{};
       const scores=s.scores||{};
+      const isMyTurn=s.turnUid===user.uid&&active.includes(user.uid);
+      const championName=s.championUid?currentRoom.players?.[s.championUid]:"";
+      const turnName=s.turnUid?currentRoom.players?.[s.turnUid]:"";
+      const revealedClues=(s.clueWords||[]).slice(0,Math.max(1,Number(s.clueCount||1)));
+
+      maybeShowHangmanAction(s.lastAction);
 
       gameRoot.innerHTML=`
         <div class="turn">
-          ${s.winner
-            ? `${escapeHtml(currentRoom.players?.[s.winnerUid]||"Jogador")} venceu e descobriu a palavra!`
-            : s.lost
-              ? `Fim de jogo. A palavra era ${escapeHtml(s.word)}.`
-              : `É a vez de ${escapeHtml(turnName||"jogador")}. ${isMyTurn?"Escolha uma letra ou arrisque a palavra.":"Aguarde sua vez."}`}
+          ${s.championUid
+            ? `${escapeHtml(championName||"Jogador")} é o campeão da Forca!`
+            : `É a vez de ${escapeHtml(turnName||"jogador")}. ${isMyTurn?"Escolha uma letra ou arrisque a resposta.":"Aguarde a jogada."}`}
         </div>
-        <div class="players">
-          ${(currentRoom.playerOrder||[]).map(uid=>`<span class="player-chip">${escapeHtml(currentRoom.players?.[uid]||"Jogador")}: ${Number(scores[uid]||0)} pontos</span>`).join("")}
+
+        <div class="hangman-meta">
+          <span class="player-chip">Rodada ${Number(s.round||1)}</span>
+          <span class="player-chip">Nível ${Number(s.level||1)} / ${HANGMAN_LEVELS.length}</span>
+          <span class="player-chip">Categoria: ${escapeHtml(s.category||"-")}</span>
+          <span class="player-chip">Restantes: ${active.length}</span>
         </div>
-        <div class="hangman-stage">Erros: ${s.wrong||0}/${s.maxWrong||6} · cada ocorrência vale 100 pontos</div>
-        <div class="word">${masked}</div>
+
+        <div class="hangman-clues">
+          <strong>Pistas progressivas</strong>
+          <div>${revealedClues.map(clue=>escapeHtml(clue)).join(" · ")}</div>
+          <div class="small muted" style="margin-top:5px">Uma nova pista é revelada a cada jogada, até acabar a lista.</div>
+        </div>
+
+        <div class="word">${maskedHangmanWord(s.displayWord||s.word,guessed)}</div>
+
+        <div class="hangman-players-grid">
+          ${(currentRoom.playerOrder||[]).map(uid=>{
+            const errors=Number(playerErrors[uid]||0);
+            const isEliminated=eliminated.has(uid);
+            return`
+              <div class="hangman-player-card ${s.turnUid===uid?"current":""} ${isEliminated?"eliminated":""}">
+                <strong>${escapeHtml(currentRoom.players?.[uid]||"Jogador")}${uid===user.uid?" · você":""}</strong>
+                ${hangmanSvg(errors)}
+                <div class="small muted">${isEliminated?"ELIMINADO":`${errors}/6 erros`} · ${Number(scores[uid]||0)} pts</div>
+              </div>
+            `;
+          }).join("")}
+        </div>
+
+        <div class="hangman-stage">
+          Letras já faladas: ${[...guessed].length?[...guessed].map(l=>l.toUpperCase()).join(", "):"nenhuma"}
+        </div>
+
         <div class="alphabet">
-          ${"abcdefghijklmnopqrstuvwxyz".split("").map(l=>`<button data-letter="${l}" ${done||!isMyTurn||guessed.has(l)?"disabled":""}>${l.toUpperCase()}</button>`).join("")}
+          ${"abcdefghijklmnopqrstuvwxyz".split("").map(letter=>{
+            const used=guessed.has(letter);
+            const result=letterResults[letter]||"";
+            return`<button class="${used?"used":""} ${result}" data-letter="${letter}" ${s.championUid||!isMyTurn||used?"disabled":""}>${letter.toUpperCase()}${used?" ×":""}</button>`;
+          }).join("")}
         </div>
-        ${!done?`
+
+        ${!s.championUid?`
           <form id="wordGuessForm" class="guess-row" style="margin-top:14px">
-            <input id="wordGuessInput" maxlength="40" placeholder="Quero arriscar a palavra" ${isMyTurn?"":"disabled"} required>
+            <input id="wordGuessInput" maxlength="80" placeholder="Arriscar a palavra ou expressão" ${isMyTurn?"":"disabled"} required>
             <button class="btn primary" ${isMyTurn?"":"disabled"}>Responder</button>
           </form>
         `:""}
@@ -527,44 +665,84 @@
       document.querySelector("#wordGuessForm")?.addEventListener("submit",guessWholeWord);
     }
 
-    function nextPlayerUid(order,currentUid){
-      if(!order.length)return null;
-      const index=Math.max(0,order.indexOf(currentUid));
-      return order[(index+1)%order.length];
-    }
-
     async function guessLetter(letter){
       await mutateRoom(currentRoomId,room=>{
-        const s={...room.state};
-        if(s.winner||s.lost||s.turnUid!==user.uid)return room;
+        const s=structuredClone(room.state||{});
+        const active=[...(s.activePlayers||room.playerOrder||[])];
+        if(s.championUid||s.turnUid!==user.uid||!active.includes(user.uid))return room;
 
         const guessed=new Set(s.guessed||[]);
         if(guessed.has(letter))return room;
         guessed.add(letter);
 
-        const occurrences=(s.word||"").split("").filter(ch=>ch===letter).length;
+        const word=normalize(s.word||"");
+        const occurrences=[...word].filter(ch=>ch===letter).length;
+        const hit=occurrences>0;
         const scores={...(s.scores||{})};
+        const errors={...(s.playerErrors||{})};
+        const results={...(s.letterResults||{})};
+
         scores[user.uid]=Number(scores[user.uid]||0)+(occurrences*100);
+        results[letter]=hit?"hit":"miss";
 
-        const wrong=occurrences>0?Number(s.wrong||0):Number(s.wrong||0)+1;
-        const winner=(s.word||"").split("").every(ch=>guessed.has(ch));
-        const lost=wrong>=Number(s.maxWrong||6)&&!winner;
-        const order=room.playerOrder||[];
+        if(!hit)errors[user.uid]=Number(errors[user.uid]||0)+1;
 
-        // No estilo programa de auditório: acertou continua, errou passa a vez.
-        const nextTurn=winner||lost?null:(occurrences>0?user.uid:nextPlayerUid(order,user.uid));
-
-        room.state={
-          ...s,
-          guessed:[...guessed],
-          wrong,
-          winner,
-          lost,
-          winnerUid:winner?user.uid:null,
-          scores,
-          turnUid:nextTurn
+        const solved=[...word].every(ch=>ch===" "||!/[a-z]/.test(ch)||guessed.has(ch));
+        const playerName=currentRoom.players?.[user.uid]||displayName();
+        const nextUid=nextActivePlayer(active,user.uid);
+        const action={
+          id:actionId(),
+          type:"letter",
+          byUid:user.uid,
+          letter:letter.toUpperCase(),
+          hit,
+          message:`${playerName} escolheu a letra ${letter.toUpperCase()} — ${hit?"acertou":"errou"}.`
         };
-        room.status=winner||lost?"finished":"playing";
+
+        s.guessed=[...guessed];
+        s.letterResults=results;
+        s.scores=scores;
+        s.playerErrors=errors;
+        s.clueCount=Math.min((s.clueWords||[]).length,Number(s.clueCount||1)+1);
+        s.lastAction=action;
+
+        if(!hit&&Number(errors[user.uid]||0)>=Number(s.maxWrong||6)){
+          const remaining=active.filter(uid=>uid!==user.uid);
+          const eliminated=[...(s.eliminated||[])];
+          if(!eliminated.includes(user.uid))eliminated.push(user.uid);
+
+          action.type="eliminated";
+          action.message=`${playerName} completou a forca e foi eliminado.`;
+
+          if(remaining.length<=1){
+            room.state={...s,activePlayers:remaining,eliminated,championUid:remaining[0]||null,turnUid:null,lastAction:action};
+            room.status="finished";
+            return room;
+          }
+
+          room.state=createHangmanRound({
+            activePlayers:remaining,
+            eliminated,
+            scores,
+            round:Number(s.round||1)+1,
+            startUid:nextActivePlayer(remaining,user.uid),
+            lastAction:action
+          });
+          room.status="playing";
+          return room;
+        }
+
+        if(solved){
+          scores[user.uid]=Number(scores[user.uid]||0)+500;
+          action.type="round_win";
+          action.message=`${playerName} completou "${s.displayWord||s.word}" e ganhou 500 pontos. Nova rodada!`;
+          s.scores=scores;
+          return finishHangmanRound(room,s,action,nextUid);
+        }
+
+        s.turnUid=nextUid;
+        room.state=s;
+        room.status="playing";
         return room;
       });
     }
@@ -576,23 +754,66 @@
       if(!answer)return;
 
       await mutateRoom(currentRoomId,room=>{
-        const s={...room.state};
-        if(s.winner||s.lost||s.turnUid!==user.uid)return room;
+        const s=structuredClone(room.state||{});
+        const active=[...(s.activePlayers||room.playerOrder||[])];
+        if(s.championUid||s.turnUid!==user.uid||!active.includes(user.uid))return room;
 
         const scores={...(s.scores||{})};
+        const errors={...(s.playerErrors||{})};
         const correct=normalize(answer)===normalize(s.word||"");
-        const order=room.playerOrder||[];
+        const playerName=currentRoom.players?.[user.uid]||displayName();
+        const nextUid=nextActivePlayer(active,user.uid);
+        const action={
+          id:actionId(),
+          type:correct?"round_win":"word_miss",
+          byUid:user.uid,
+          hit:correct,
+          message:correct
+            ? `${playerName} acertou a resposta "${s.displayWord||s.word}"! Nova rodada.`
+            : `${playerName} arriscou "${answer}" e errou.`
+        };
+
+        s.clueCount=Math.min((s.clueWords||[]).length,Number(s.clueCount||1)+1);
+        s.lastAction=action;
 
         if(correct){
           scores[user.uid]=Number(scores[user.uid]||0)+500;
-          room.state={...s,winner:true,lost:false,winnerUid:user.uid,scores,turnUid:null};
-          room.status="finished";
-        }else{
-          const wrong=Number(s.wrong||0)+1;
-          const lost=wrong>=Number(s.maxWrong||6);
-          room.state={...s,wrong,lost,scores,turnUid:lost?null:nextPlayerUid(order,user.uid)};
-          room.status=lost?"finished":"playing";
+          s.scores=scores;
+          return finishHangmanRound(room,s,action,nextUid);
         }
+
+        errors[user.uid]=Number(errors[user.uid]||0)+1;
+        s.playerErrors=errors;
+
+        if(Number(errors[user.uid]||0)>=Number(s.maxWrong||6)){
+          const remaining=active.filter(uid=>uid!==user.uid);
+          const eliminated=[...(s.eliminated||[])];
+          if(!eliminated.includes(user.uid))eliminated.push(user.uid);
+
+          action.type="eliminated";
+          action.message=`${playerName} completou a forca e foi eliminado após errar a resposta.`;
+
+          if(remaining.length<=1){
+            room.state={...s,activePlayers:remaining,eliminated,championUid:remaining[0]||null,turnUid:null,lastAction:action};
+            room.status="finished";
+            return room;
+          }
+
+          room.state=createHangmanRound({
+            activePlayers:remaining,
+            eliminated,
+            scores,
+            round:Number(s.round||1)+1,
+            startUid:nextActivePlayer(remaining,user.uid),
+            lastAction:action
+          });
+          room.status="playing";
+          return room;
+        }
+
+        s.turnUid=nextUid;
+        room.state=s;
+        room.status="playing";
         return room;
       });
 
