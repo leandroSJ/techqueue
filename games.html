@@ -52,6 +52,50 @@
     .login{min-height:70vh;display:grid;place-items:center}.login .card{width:min(420px,100%);text-align:center}.game-result{text-align:center;font-size:1.1rem;font-weight:500;margin:14px 0}
     @media(max-width:950px){.games-grid{grid-template-columns:repeat(2,1fr)}.two-col{grid-template-columns:1fr}}
     @media(max-width:560px){.games-grid{grid-template-columns:1fr}.ttt{grid-template-columns:repeat(3,78px)}.ttt button{width:78px;height:78px}.draw-canvas{height:280px}}
+
+    .local-games-grid{grid-template-columns:repeat(4,minmax(0,1fr))}
+    .external-games-grid{grid-template-columns:repeat(3,minmax(0,1fr))}
+    .game-card{min-width:0}
+    .game-card .btn{width:100%}
+    .checkers{max-width:100%;overflow:auto}
+    .domino-board,.domino-hand{max-width:100%;overflow-wrap:anywhere}
+    .guess-row{min-width:0}
+    .guess-row input{min-width:0}
+
+    @media(max-width:950px){
+      .local-games-grid,.external-games-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+    }
+
+    @media(max-width:720px){
+      .shell{width:calc(100% - 18px);padding-top:12px}
+      header{align-items:stretch;flex-direction:column}
+      header .actions{width:100%;display:grid;grid-template-columns:repeat(2,minmax(0,1fr))}
+      header .actions .btn{width:100%;text-align:center;justify-content:center}
+      .game-top{flex-direction:column;align-items:stretch}
+      .game-top .actions{width:100%;display:grid;grid-template-columns:repeat(2,minmax(0,1fr))}
+      .game-top .actions .btn{width:100%}
+      .room-row{align-items:flex-start;flex-direction:column}
+      .room-row .btn{width:100%}
+      .turn{overflow-wrap:anywhere}
+      .players{width:100%}
+      .draw-canvas{height:auto;aspect-ratio:5/2}
+      .checkers{width:100%;grid-template-columns:repeat(8,minmax(0,1fr))}
+      .square{width:100%}
+      .word{font-size:clamp(1.35rem,7vw,2rem);letter-spacing:.12rem;overflow-wrap:anywhere}
+    }
+
+    @media(max-width:560px){
+      .games-grid,.local-games-grid,.external-games-grid{grid-template-columns:1fr}
+      header .actions{grid-template-columns:1fr}
+      .game-top .actions{grid-template-columns:1fr}
+      .ttt{grid-template-columns:repeat(3,minmax(64px,1fr));width:min(100%,300px)}
+      .ttt button{width:100%;height:auto;aspect-ratio:1}
+      .alphabet button{flex:1 0 42px;min-width:42px}
+      .guess-row{flex-direction:column}
+      .guess-row .btn{width:100%}
+      .tile{min-width:50px}
+    }
+
   </style>
 </head>
 <body>
@@ -94,9 +138,21 @@
         </section>
 
         <section style="margin-bottom:22px">
+          <h2 style="margin:0 0 6px">Jogos externos</h2>
+          <p class="muted" style="margin:0 0 12px">Jogos hospedados por provedores externos e incorporados ao TechQueue.</p>
+          <div class="games-grid external-games-grid">
+            <div class="card game-card">
+              <h3>Drifty Master 3D</h3>
+              <p>Jogo de drift carregado pelo mesmo provedor usado na página analisada.</p>
+              <a class="btn primary" href="./external-games.html?game=drifty-master" style="text-decoration:none;text-align:center">Jogar</a>
+            </div>
+          </div>
+        </section>
+
+        <section style="margin-bottom:22px">
           <h2 style="margin:0 0 6px">Jogos locais</h2>
           <p class="muted" style="margin:0 0 12px">Rodam direto no navegador, sem sincronização de rede durante a partida.</p>
-          <div class="games-grid" style="grid-template-columns:repeat(4,1fr)">
+          <div class="games-grid local-games-grid">
             <div class="card game-card"><h3>Estacione o Carro</h3><p>Manobra, colisão, tempo e vaga.</p><a class="btn primary" href="./local-games.html?game=parking" style="text-decoration:none;text-align:center">Jogar</a></div>
             <div class="card game-card"><h3>Snake</h3><p>Clássico com recorde local.</p><a class="btn primary" href="./local-games.html?game=snake" style="text-decoration:none;text-align:center">Jogar</a></div>
             <div class="card game-card"><h3>Arkanoid</h3><p>Quebre os blocos sem deixar a bola cair.</p><a class="btn primary" href="./local-games.html?game=breakout" style="text-decoration:none;text-align:center">Jogar</a></div>
