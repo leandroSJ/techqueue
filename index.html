@@ -1297,7 +1297,11 @@
         });
       } catch (err) {
         console.error(err);
-        alert("Não foi possível chamar a atenção deste técnico.");
+        if (err?.code === "permission-denied") {
+          alert("O Firebase bloqueou o alerta. Publique a versão mais recente das regras do Firestore.");
+        } else {
+          alert(`Não foi possível chamar a atenção deste técnico. ${err?.code || ""}`.trim());
+        }
       } finally {
         setTimeout(() => { button.disabled = false; }, 2500);
       }
