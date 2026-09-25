@@ -384,6 +384,28 @@
       width:100%;border:1px solid var(--border-strong);background:var(--surface);
       color:var(--text);border-radius:8px;padding:10px 12px
     }
+    .person-actions{display:flex;align-items:center;gap:8px}
+    .attention-btn{
+      border:1px solid var(--border);background:transparent;color:var(--primary);
+      border-radius:999px;padding:5px 9px;font-size:.72rem;font-weight:500
+    }
+    .attention-btn:hover{background:var(--surface-container)}
+    .nudge-toast{
+      position:fixed;right:20px;bottom:20px;z-index:9999;
+      max-width:min(360px,calc(100% - 40px));padding:13px 15px;border-radius:10px;
+      background:var(--on-primary-container);color:var(--primary-container);
+      box-shadow:0 8px 24px rgba(0,0,0,.2);font-size:.9rem
+    }
+    @keyframes msnNudge{
+      0%,100%{transform:translateX(0)}
+      15%{transform:translateX(-10px)}
+      30%{transform:translateX(10px)}
+      45%{transform:translateX(-8px)}
+      60%{transform:translateX(8px)}
+      75%{transform:translateX(-4px)}
+      90%{transform:translateX(4px)}
+    }
+    body.nudged{animation:msnNudge .55s ease}
 
     .open-ticket{
       border:1px solid var(--border);
@@ -616,6 +638,8 @@
     </div>
   </main>
 
+  <div id="nudgeToast" class="nudge-toast hidden" role="status" aria-live="polite"></div>
+
   <dialog id="takeDialog">
     <form id="takeForm" class="dialog-body">
       <h2>Atendi agora</h2>
@@ -688,7 +712,7 @@
     } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-auth.js";
     import {
       getFirestore, doc, getDoc, setDoc, collection, onSnapshot, serverTimestamp,
-      runTransaction, getDocs, writeBatch
+      runTransaction, getDocs, writeBatch, addDoc
     } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-firestore.js";
 
     /*
@@ -754,6 +778,7 @@
     const adminRow = document.querySelector("#adminRow");
     const resetDayBtn = document.querySelector("#resetDayBtn");
     const statusSelect = document.querySelector("#statusSelect");
+    const nudgeToast = document.querySelector("#nudgeToast");
     const takeDialog = document.querySelector("#takeDialog");
     const finishDialog = document.querySelector("#finishDialog");
     const takeForm = document.querySelector("#takeForm");
@@ -769,6 +794,8 @@
     let todayAttendances = [];
     let unsubDay = null;
     let unsubHistory = null;
+    let unsubNudges = null;
+    let nudgesReady = false;
     let openAttendance = null;
 
     if (isConfigured) {
@@ -914,8 +941,11 @@
     function clearSubscriptions() {
       if (unsubDay) unsubDay();
       if (unsubHistory) unsubHistory();
+      if (unsubNudges) unsubNudges();
       unsubDay = null;
       unsubHistory = null;
+      unsubNudges = null;
+      nudgesReady = false;
     }
 
     async function joinTodayIfAllowed() {
@@ -989,6 +1019,7 @@
       const now = bahiaParts();
       const dayRef = doc(db, "days", now.dateId);
       const attendanceCol = collection(db, "days", now.dateId, "attendances");
+      const nudgesCol = collection(db, "days", now.dateId, "nudges");
 
       unsubDay = onSnapshot(dayRef, async snap => {
         dayState = snap.exists() ? snap.data() : null;
@@ -1000,6 +1031,21 @@
         todayAttendances = snap.docs.map(d => ({ id: d.id, ...d.data() }))
           .sort((a,b) => (b.startedAtMs || 0) - (a.startedAtMs || 0));
         renderHistory();
+      });
+
+      unsubNudges = onSnapshot(nudgesCol, snap => {
+        if (!nudgesReady) {
+          nudgesReady = true;
+          return;
+        }
+
+        for (const change of snap.docChanges()) {
+          if (change.type !== "added") continue;
+          const nudge = change.doc.data();
+          if (nudge.targetUid === authUser?.uid) {
+            showNudge(nudge.fromName || "Outro técnico");
+          }
+        }
       });
     }
 
@@ -1116,10 +1162,61 @@
               </div>
               <div class="person-sub">Entrada ${shiftText}${uid === authUser.uid ? " • você" : ""}</div>
             </div>
-            <span class="badge ${status}">${statusLabel}</span>
+            <div class="person-actions">
+              ${uid !== authUser.uid && status !== "offline"
+                ? `<button class="attention-btn" type="button" data-nudge-uid="${uid}" data-nudge-name="${escapeHtml(m.name)}">Chamar atenção</button>`
+                : ""}
+              <span class="badge ${status}">${statusLabel}</span>
+            </div>
           </div>
         `;
       }).join("");
+    }
+
+    queueList.addEventListener("click", async event => {
+      const button = event.target.closest("[data-nudge-uid]");
+      if (!button || !authUser) return;
+
+      button.disabled = true;
+      try {
+        await addDoc(collection(db, "days", bahiaParts().dateId, "nudges"), {
+          fromUid: authUser.uid,
+          fromName: profile.name,
+          targetUid: button.dataset.nudgeUid,
+          targetName: button.dataset.nudgeName,
+          createdAt: serverTimestamp(),
+          createdAtMs: Date.now()
+        });
+      } catch (err) {
+        console.error(err);
+        alert("Não foi possível chamar a atenção deste técnico.");
+      } finally {
+        setTimeout(() => { button.disabled = false; }, 2500);
+      }
+    });
+
+    function showNudge(fromName) {
+      document.body.classList.remove("nudged");
+      void document.body.offsetWidth;
+      document.body.classList.add("nudged");
+
+      nudgeToast.textContent = `${fromName} está chamando sua atenção.`;
+      nudgeToast.classList.remove("hidden");
+      setTimeout(() => nudgeToast.classList.add("hidden"), 3500);
+
+      try {
+        const AudioCtx = window.AudioContext || window.webkitAudioContext;
+        if (!AudioCtx) return;
+        const ctx = new AudioCtx();
+        const oscillator = ctx.createOscillator();
+        const gain = ctx.createGain();
+        oscillator.frequency.value = 660;
+        gain.gain.value = 0.05;
+        oscillator.connect(gain);
+        gain.connect(ctx.destination);
+        oscillator.start();
+        oscillator.stop(ctx.currentTime + 0.12);
+      } catch (_) {}
     }
 
     function renderHistory() {
