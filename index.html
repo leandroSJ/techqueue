@@ -1051,7 +1051,9 @@
           currentUid: null,
           members: {},
           startedBy: null,
-          openedAt: null
+          openedAt: null,
+          lastAttendanceUid: null,
+          passedSinceLastAttendance: []
         };
 
         if (now.minutes >= 18 * 60) {
@@ -1414,6 +1416,8 @@
             queue,
             members,
             currentUid: queue[0] || null,
+            lastAttendanceUid: authUser.uid,
+            passedSinceLastAttendance: [],
             updatedAt: serverTimestamp()
           });
         });
@@ -1455,7 +1459,8 @@
             ${done ? `
               <div class="history-details">
                 <strong>Problema:</strong> ${escapeHtml(a.problem || "-")}<br>
-                <strong>Solução:</strong> ${escapeHtml(a.solution || "-")}
+                <strong>Solução:</strong> ${escapeHtml(a.solution || "-")}<br>
+                <strong>XP:</strong> +${Number(a.xpAwarded ?? xpForComplexity(a.complexity))} XP
               </div>
             ` : ""}
           </article>
@@ -1571,6 +1576,47 @@
       }
     });
 
+    passTurnBtn.addEventListener("click", async () => {
+      if (!authUser || !dayState) return;
+
+      const dayRef = doc(db, "days", bahiaParts().dateId);
+
+      try {
+        await runTransaction(db, async tx => {
+          const snap = await tx.get(dayRef);
+          if (!snap.exists()) throw new Error("Expediente não iniciado.");
+
+          const state = snap.data();
+          const member = state.members?.[authUser.uid];
+          const queue = [...(state.queue || [])];
+
+          if (state.currentUid !== authUser.uid || member?.status !== "available") {
+            throw new Error("A vez já passou para outro técnico.");
+          }
+
+          if (queue.length <= 1) {
+            throw new Error("Você está sozinho na fila. Não há para quem passar a vez.");
+          }
+
+          const nextQueue = queue.filter(uid => uid !== authUser.uid);
+          nextQueue.push(authUser.uid);
+
+          const passed = new Set(state.passedSinceLastAttendance || []);
+          passed.add(authUser.uid);
+
+          tx.update(dayRef, {
+            queue: nextQueue,
+            currentUid: nextQueue[0] || null,
+            passedSinceLastAttendance: [...passed],
+            updatedAt: serverTimestamp()
+          });
+        });
+      } catch (err) {
+        console.error(err);
+        alert(err.message || "Não foi possível passar a vez.");
+      }
+    });
+
     takeBtn.addEventListener("click", () => {
       clientNameInput.value = "";
       takeDialog.showModal();
@@ -1597,7 +1643,22 @@
           if (state.currentUid !== authUser.uid) throw new Error("A vez já passou para outro técnico.");
           if (member?.status !== "available") throw new Error("Você não está disponível na fila.");
 
-          const queue = (state.queue || []).filter(uid => uid !== authUser.uid);
+          const currentQueue = [...(state.queue || [])];
+          const otherAvailable = currentQueue.filter(uid =>
+            uid !== authUser.uid &&
+            state.members?.[uid]?.status === "available"
+          );
+
+          if (state.lastAttendanceUid === authUser.uid && otherAvailable.length) {
+            const passed = new Set(state.passedSinceLastAttendance || []);
+            const everyoneElsePassed = otherAvailable.every(uid => passed.has(uid));
+
+            if (!everyoneElsePassed) {
+              throw new Error("Você acabou de atender. Outro técnico da fila precisa atender ou passar a vez antes de você pegar outro cliente.");
+            }
+          }
+
+          const queue = currentQueue.filter(uid => uid !== authUser.uid);
           const members = { ...state.members };
           members[authUser.uid] = {
             ...member,
@@ -1712,6 +1773,7 @@
       const problem = problemInput.value.trim();
       const solution = solutionInput.value.trim();
       const complexity = finishForm.querySelector('input[name="complexity"]:checked')?.value || "standard";
+      const xpAwarded = xpForComplexity(complexity);
       if (!problem || !solution) return;
 
       const now = bahiaParts();
@@ -1748,6 +1810,7 @@
             problem,
             solution,
             complexity,
+            xpAwarded,
             finishedAt: serverTimestamp()
           });
 
