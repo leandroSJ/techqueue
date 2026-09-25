@@ -763,7 +763,7 @@
       </div>
     </header>
 
-    <div id="systemNotice" class="notice">Carregando expediente...</div>
+    <div id="systemNotice" class="notice">Carregando fila...</div>
 
     <div id="alertPermissionCard" class="alert-permission-card hidden">
       <div>
@@ -776,7 +776,7 @@
     <section class="hero">
       <div class="eyebrow">Próximo atendimento</div>
       <div id="nextName" class="next-name">—</div>
-      <div id="queueText" class="queue-text">Aguardando início do expediente</div>
+      <div id="queueText" class="queue-text">Aguardando técnicos entrarem na fila</div>
       <div class="hero-actions">
         <button id="takeBtn" class="btn btn-primary" disabled>Atendi agora</button>
         <button id="passTurnBtn" class="btn btn-secondary" disabled>Passar a vez</button>
@@ -1169,11 +1169,6 @@
       return dayState?.members?.[uid] || null;
     }
 
-    function profileShiftText() {
-      const min = Number(profile?.shiftStartMinutes ?? 0);
-      return `${String(Math.floor(min/60)).padStart(2,"0")}:${String(min%60).padStart(2,"0")}`;
-    }
-
     function setViews(logged) {
       loginView.classList.toggle("hidden", logged);
       appView.classList.toggle("hidden", !logged);
@@ -1238,13 +1233,6 @@
         authUser = user;
 
         const googleName = (user.displayName || user.email?.split("@")[0] || "Técnico").trim();
-        const firstName = googleName
-          .normalize("NFD")
-          .replace(/[\u0300-\u036f]/g, "")
-          .split(/\s+/)[0]
-          .toLowerCase();
-
-        const isOpener = firstName === "leandro" || firstName === "ronald";
 
         const email = (user.email || "").toLowerCase();
         const isAdmin = email === "leandro3dejesus@gmail.com";
@@ -1254,13 +1242,11 @@
           name: googleName,
           email,
           enabled: true,
-          role: isAdmin ? "admin" : "tech",
-          isOpener,
-          shiftStartMinutes: isOpener ? 480 : 540
+          role: isAdmin ? "admin" : "tech"
         };
 
         loggedName.textContent = profile.name;
-        loggedShift.textContent = `Entrada ${profileShiftText()}`;
+        loggedShift.textContent = "Fila liberada 24h";
         avatar.textContent = (profile.name || "?").slice(0,1).toUpperCase();
         adminRow.classList.toggle("hidden", profile.role !== "admin");
 
@@ -1269,7 +1255,7 @@
 
         // A fila é o recurso principal: ela deve continuar funcionando mesmo
         // se a carteira/lojinha ainda não tiver permissão no Firestore.
-        await joinTodayIfAllowed();
+        await joinToday();
         subscribeToday();
 
         try {
@@ -1462,7 +1448,7 @@
       eventsReady = false;
     }
 
-    async function joinTodayIfAllowed() {
+    async function joinToday() {
       const now = bahiaParts();
       const dayRef = doc(db, "days", now.dateId);
 
@@ -1475,55 +1461,35 @@
           queue: [],
           currentUid: null,
           members: {},
-          startedBy: null,
-          openedAt: null,
           lastAttendanceUid: null,
           passedSinceLastAttendance: []
         };
 
-        if (now.minutes >= 18 * 60) {
-          if (!existing) tx.set(dayRef, { ...initial, createdAt: serverTimestamp(), updatedAt: serverTimestamp() });
-          return;
-        }
-
-        if (now.minutes < Number(profile.shiftStartMinutes)) {
-          if (!existing) tx.set(dayRef, { ...initial, createdAt: serverTimestamp(), updatedAt: serverTimestamp() });
-          return;
-        }
-
-        if (!profile.isOpener && !initial.startedBy) {
-          if (!existing) tx.set(dayRef, { ...initial, createdAt: serverTimestamp(), updatedAt: serverTimestamp() });
-          return;
-        }
-
         const members = { ...(initial.members || {}) };
         const existingMember = members[authUser.uid];
 
+        // Preserva estados temporários e atendimento em andamento ao recarregar.
         if (["busy", "lunch", "bathroom", "away"].includes(existingMember?.status)) return;
 
         members[authUser.uid] = {
+          ...existingMember,
           name: profile.name,
           status: "available",
-          shiftStartMinutes: Number(profile.shiftStartMinutes),
           joinedAtMs: existingMember?.joinedAtMs || Date.now(),
           currentAttendanceId: null
         };
 
-        let queue = [...(initial.queue || [])];
+        const queue = [...(initial.queue || [])];
         if (!queue.includes(authUser.uid)) queue.push(authUser.uid);
 
         const payload = {
           ...initial,
+          status: "open",
           members,
           queue,
           currentUid: initial.currentUid || queue[0] || null,
           updatedAt: serverTimestamp()
         };
-
-        if (!initial.startedBy && profile.isOpener) {
-          payload.startedBy = authUser.uid;
-          payload.openedAt = serverTimestamp();
-        }
 
         if (!existing) payload.createdAt = serverTimestamp();
 
@@ -1618,28 +1584,17 @@
     function render() {
       if (!profile || !dayState) return;
 
-      const now = bahiaParts();
       const current = dayState.currentUid ? dayState.members?.[dayState.currentUid] : null;
       const me = memberOf(authUser.uid);
-      const beforeShift = now.minutes < Number(profile.shiftStartMinutes);
-      const afterHours = now.minutes >= 18 * 60;
 
       nextName.textContent = current?.name || "—";
 
-      if (afterHours) {
-        systemNotice.textContent = "Expediente encerrado. Novos atendimentos estão bloqueados após 18:00.";
-      } else if (!dayState.startedBy) {
-        systemNotice.textContent = profile.isOpener
-          ? "Você pode iniciar o expediente. Leandro ou Ronald sempre abrem a fila."
-          : "Aguardando Leandro ou Ronald iniciar o expediente.";
-      } else if (beforeShift) {
-        systemNotice.textContent = `Seu expediente entra no rodízio às ${profileShiftText()}.`;
-      } else if (me?.status === "busy") {
+      if (me?.status === "busy") {
         systemNotice.textContent = "Você está em atendimento. Finalize para voltar ao final da fila.";
       } else if (dayState.currentUid === authUser.uid) {
         systemNotice.textContent = "É a sua vez de assumir o próximo cliente.";
       } else {
-        systemNotice.textContent = "A fila está sincronizada em tempo real.";
+        systemNotice.textContent = "A fila está liberada e sincronizada em tempo real, a qualquer hora.";
       }
 
       const names = (dayState.queue || [])
@@ -1648,14 +1603,10 @@
       queueText.textContent = names.length ? names.join(" → ") : "Nenhum técnico disponível na fila";
 
       takeBtn.disabled =
-        afterHours ||
-        !dayState.startedBy ||
         dayState.currentUid !== authUser.uid ||
         me?.status !== "available";
 
       passTurnBtn.disabled =
-        afterHours ||
-        !dayState.startedBy ||
         dayState.currentUid !== authUser.uid ||
         me?.status !== "available" ||
         (dayState.queue || []).length <= 1;
@@ -1698,7 +1649,7 @@
       }
 
       if (!ordered.length) {
-        queueList.innerHTML = `<div class="empty">Ninguém entrou no expediente ainda.</div>`;
+        queueList.innerHTML = `<div class="empty">Ninguém entrou na fila ainda.</div>`;
         return;
       }
 
@@ -1712,8 +1663,6 @@
           status === "bathroom" ? "Segura aí na moral, vou no banheiro" :
           status === "away" ? "Vou ali e já volto" :
           "Fora da fila";
-        const shift = Number(m.shiftStartMinutes || 0);
-        const shiftText = `${String(Math.floor(shift/60)).padStart(2,"0")}:${String(shift%60).padStart(2,"0")}`;
         return `
           <div class="person ${current ? "current" : ""}">
             <div>
@@ -1721,7 +1670,7 @@
                 ${escapeHtml(m.name)}
                 ${current ? '<span class="current-label">Próximo</span>' : ""}
               </div>
-              <div class="person-sub">Entrada ${shiftText}${uid === authUser.uid ? " • você" : ""}</div>
+              <div class="person-sub">${uid === authUser.uid ? "Você" : "Na fila"}</div>
             </div>
             <div class="person-actions">
               ${uid !== authUser.uid && status !== "offline"
@@ -2328,7 +2277,7 @@
       try {
         await runTransaction(db, async tx => {
           const daySnap = await tx.get(dayRef);
-          if (!daySnap.exists()) throw new Error("Expediente não iniciado.");
+          if (!daySnap.exists()) throw new Error("Fila indisponível. Recarregue a página.");
 
           const state = daySnap.data();
           const member = state.members?.[authUser.uid];
@@ -2596,12 +2545,10 @@
 
         await setDoc(doc(db, "days", now.dateId), {
           dateId: now.dateId,
-          status: "closed",
+          status: "open",
           queue: [],
           currentUid: null,
           members: {},
-          startedBy: null,
-          openedAt: null,
           lastAttendanceUid: null,
           passedSinceLastAttendance: [],
           clearedAt: serverTimestamp(),
