@@ -1378,6 +1378,11 @@
         dayState = snap.exists() ? snap.data() : null;
         await loadMyOpenAttendance();
         render();
+      }, err => {
+        console.error("Erro ao sincronizar fila:", err);
+        systemNotice.textContent = err?.code === "permission-denied"
+          ? "O Firebase bloqueou a sincronização da fila. Atualize as regras do Firestore."
+          : "Não foi possível sincronizar a fila agora.";
       });
 
       unsubHistory = onSnapshot(attendanceCol, snap => {
@@ -1385,6 +1390,8 @@
           .sort((a,b) => (b.startedAtMs || 0) - (a.startedAtMs || 0));
         renderHistory();
         renderRanking();
+      }, err => {
+        console.error("Erro ao carregar histórico:", err);
       });
 
       unsubQueuedClients = onSnapshot(queuedClientsCol, snap => {
@@ -1392,6 +1399,8 @@
           .map(d => ({ id: d.id, ...d.data() }))
           .sort((a,b) => (a.createdAtMs || 0) - (b.createdAtMs || 0));
         renderQueuedClients();
+      }, err => {
+        console.error("Erro ao carregar clientes encaminhados:", err);
       });
 
       unsubEvents = onSnapshot(eventsCol, snap => {
