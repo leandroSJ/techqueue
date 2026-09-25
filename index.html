@@ -807,12 +807,15 @@
 
         const isOpener = firstName === "leandro" || firstName === "ronald";
 
+        const email = (user.email || "").toLowerCase();
+        const isAdmin = email === "leandro3dejesus@gmail.com";
+
         profile = {
           uid: user.uid,
           name: googleName,
-          email: user.email || "",
+          email,
           enabled: true,
-          role: "tech",
+          role: isAdmin ? "admin" : "tech",
           isOpener,
           shiftStartMinutes: isOpener ? 480 : 540
         };
@@ -820,7 +823,7 @@
         loggedName.textContent = profile.name;
         loggedShift.textContent = `Entrada ${profileShiftText()}`;
         avatar.textContent = (profile.name || "?").slice(0,1).toUpperCase();
-        adminRow.classList.add("hidden");
+        adminRow.classList.toggle("hidden", profile.role !== "admin");
 
         setViews(true);
         await joinTodayIfAllowed();
