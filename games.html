@@ -1,0 +1,671 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="color-scheme" content="light dark" />
+  <title>TechQueue - Sala da Descompressão</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    :root{
+      color-scheme:light;
+      --bg:#f8fafd;--surface:#fff;--surface-2:#f0f4f9;--text:#1f1f1f;--muted:#5f6368;
+      --primary:#0b57d0;--on-primary:#fff;--primary-container:#d3e3fd;--border:#c4c7c5;
+      --danger:#b3261e;--success:#137333;--shadow:0 1px 2px rgba(60,64,67,.08),0 1px 3px 1px rgba(60,64,67,.06)
+    }
+    html[data-theme="dark"]{
+      color-scheme:dark;--bg:#131314;--surface:#1e1f20;--surface-2:#252627;--text:#e3e3e3;--muted:#c4c7c5;
+      --primary:#a8c7fa;--on-primary:#062e6f;--primary-container:#0842a0;--border:#444746;
+      --danger:#f2b8b5;--success:#81c995;--shadow:0 1px 2px rgba(0,0,0,.35)
+    }
+    *{box-sizing:border-box} body{margin:0;min-height:100vh;background:var(--bg);color:var(--text);font-family:Roboto,Arial,sans-serif}
+    button,input,select{font:inherit} button{cursor:pointer}.hidden{display:none!important}
+    .shell{width:min(1180px,calc(100% - 28px));margin:0 auto;padding:20px 0 48px}
+    header{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:0 0 18px;border-bottom:1px solid var(--border);margin-bottom:20px}
+    .brand h1{margin:0;font-size:1.5rem}.brand p{margin:4px 0 0;color:var(--muted)}
+    .actions{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+    .btn{min-height:40px;border-radius:20px;padding:9px 16px;border:1px solid var(--border);background:var(--surface);color:var(--primary);font-weight:500}
+    .btn.primary{background:var(--primary);color:var(--on-primary);border-color:transparent}
+    .btn.danger{color:var(--danger)} .btn:disabled{opacity:.4;cursor:not-allowed}
+    .card{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:18px;box-shadow:var(--shadow)}
+    .games-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin-bottom:20px}
+    .game-card{display:grid;gap:8px}.game-card h3{margin:0;font-size:1rem}.game-card p{margin:0;color:var(--muted);font-size:.84rem;line-height:1.4}
+    .two-col{display:grid;grid-template-columns:.8fr 1.2fr;gap:20px}
+    .room-list{display:grid;gap:8px}.room-row{display:flex;justify-content:space-between;align-items:center;gap:12px;border:1px solid var(--border);border-radius:10px;padding:11px}
+    .muted{color:var(--muted)}.small{font-size:.82rem}.status{font-size:.75rem;padding:4px 8px;border-radius:999px;background:var(--surface-2)}
+    .game-area{min-height:360px}.game-top{display:flex;justify-content:space-between;gap:12px;align-items:flex-start;margin-bottom:16px}
+    .game-top h2{margin:0 0 4px}.players{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}.player-chip{padding:5px 9px;background:var(--surface-2);border-radius:999px;font-size:.78rem}
+    .turn{padding:10px 12px;border-radius:10px;background:var(--primary-container);margin-bottom:14px}
+    .ttt{display:grid;grid-template-columns:repeat(3,92px);gap:7px;justify-content:center}.ttt button{width:92px;height:92px;border:1px solid var(--border);border-radius:12px;background:var(--surface-2);color:var(--text);font-size:2rem;font-weight:600}
+    .alphabet{display:flex;gap:6px;flex-wrap:wrap}.alphabet button{width:36px;height:36px;border-radius:8px;border:1px solid var(--border);background:var(--surface);color:var(--text)}
+    .word{font-size:2rem;letter-spacing:.25rem;text-align:center;margin:24px 0}.hangman-stage{text-align:center;font-size:1rem;color:var(--muted);margin-bottom:14px}
+    .canvas-wrap{display:grid;gap:10px}.draw-canvas{width:100%;height:360px;background:#fff;border:1px solid var(--border);border-radius:12px;touch-action:none}
+    .guess-row{display:flex;gap:8px}.guess-row input{flex:1;border:1px solid var(--border);border-radius:8px;padding:10px;background:var(--surface);color:var(--text)}
+    .guesses{display:grid;gap:5px;max-height:140px;overflow:auto;margin-top:10px}.guess{font-size:.84rem;padding:7px 9px;background:var(--surface-2);border-radius:8px}
+    .domino-board,.domino-hand{display:flex;gap:7px;flex-wrap:wrap;justify-content:center;margin:16px 0}.tile{display:inline-grid;grid-template-columns:1fr 1fr;min-width:56px;border:1px solid var(--border);border-radius:8px;overflow:hidden;background:var(--surface);color:var(--text)}
+    .tile span{padding:10px 8px;text-align:center}.tile span+span{border-left:1px solid var(--border)}button.tile{padding:0}.tile.playable{outline:2px solid var(--primary)}
+    .checkers{display:grid;grid-template-columns:repeat(8,minmax(34px,56px));justify-content:center;border:1px solid var(--border);width:max-content;margin:0 auto}
+    .square{aspect-ratio:1;border:0;border-radius:0;padding:0;display:grid;place-items:center;background:#ede7d9}.square.dark{background:#7b6855}.piece{width:72%;height:72%;border-radius:50%;border:3px solid rgba(255,255,255,.55)}
+    .piece.red{background:#c5221f}.piece.black{background:#202124}.piece.king::after{content:"K";color:#fff;font-size:.75rem;font-weight:600}.square.selected{outline:3px solid #f9ab00;outline-offset:-3px}
+    .login{min-height:70vh;display:grid;place-items:center}.login .card{width:min(420px,100%);text-align:center}
+    .error{color:var(--danger);margin-top:10px}.game-result{text-align:center;font-size:1.1rem;font-weight:500;margin:14px 0}
+    @media(max-width:950px){.games-grid{grid-template-columns:repeat(2,1fr)}.two-col{grid-template-columns:1fr}}
+    @media(max-width:560px){.games-grid{grid-template-columns:1fr}.ttt{grid-template-columns:repeat(3,78px)}.ttt button{width:78px;height:78px}.draw-canvas{height:280px}}
+  </style>
+</head>
+<body>
+  <div class="shell">
+    <header>
+      <div class="brand">
+        <h1>Sala da Descompressão</h1>
+        <p>Aqui trabalho fica do lado de fora.</p>
+      </div>
+      <div class="actions">
+        <a class="btn" href="./index.html" style="text-decoration:none;display:inline-flex;align-items:center">Voltar ao TechQueue</a>
+        <button id="themeBtn" class="btn" type="button">Modo escuro</button>
+        <button id="logoutBtn" class="btn hidden" type="button">Sair</button>
+      </div>
+    </header>
+
+    <section id="loginView" class="login">
+      <div class="card">
+        <h2>Entre para jogar</h2>
+        <p class="muted">Use a mesma conta Google do TechQueue.</p>
+        <button id="googleBtn" class="btn primary" type="button">Continuar com Google</button>
+        <div id="loginError" class="error"></div>
+      </div>
+    </section>
+
+    <main id="appView" class="hidden">
+      <section id="lobbyView">
+        <div class="games-grid">
+          <div class="card game-card"><h3>Jogo da Velha</h3><p>Partida rápida para 2 pessoas.</p><button class="btn primary" data-create-game="tictactoe">Criar sala</button></div>
+          <div class="card game-card"><h3>Desenhe e Adivinhe</h3><p>Um desenha e os outros tentam descobrir.</p><button class="btn primary" data-create-game="draw">Criar sala</button></div>
+          <div class="card game-card"><h3>Forca</h3><p>Descubram a palavra antes das tentativas acabarem.</p><button class="btn primary" data-create-game="hangman">Criar sala</button></div>
+          <div class="card game-card"><h3>Dominó</h3><p>Duelo clássico para 2 jogadores.</p><button class="btn primary" data-create-game="domino">Criar sala</button></div>
+          <div class="card game-card"><h3>Dama</h3><p>Tabuleiro para 2 jogadores.</p><button class="btn primary" data-create-game="checkers">Criar sala</button></div>
+        </div>
+
+        <div class="two-col">
+          <section class="card">
+            <h2 style="margin-top:0">Salas abertas</h2>
+            <div id="roomsList" class="room-list"><div class="muted">Carregando salas...</div></div>
+          </section>
+          <section class="card">
+            <h2 style="margin-top:0">Como funciona</h2>
+            <p class="muted">Crie uma sala e peça para alguém entrar. Tudo sincroniza pelo Firestore. Os jogos não dão XP e não mexem no ranking de atendimento.</p>
+            <p class="muted">Dominó e Dama foram feitos para 2 pessoas. Forca e Desenhe e Adivinhe aceitam mais gente.</p>
+          </section>
+        </div>
+      </section>
+
+      <section id="roomView" class="card game-area hidden">
+        <div class="game-top">
+          <div>
+            <h2 id="roomTitle">Sala</h2>
+            <div id="roomCode" class="muted small"></div>
+            <div id="players" class="players"></div>
+          </div>
+          <div class="actions">
+            <button id="restartBtn" class="btn hidden" type="button">Revanche</button>
+            <button id="leaveBtn" class="btn danger" type="button">Sair da sala</button>
+          </div>
+        </div>
+        <div id="gameRoot"></div>
+      </section>
+    </main>
+  </div>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-app.js";
+    import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-auth.js";
+    import {
+      getFirestore, collection, doc, addDoc, getDoc, setDoc, updateDoc, deleteDoc,
+      onSnapshot, runTransaction, serverTimestamp, getDocs, writeBatch
+    } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-firestore.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyDVHhF1LcLxqdb4xJDONkCoNhLS8HC7OxY",
+      authDomain: "filaarius.firebaseapp.com",
+      projectId: "filaarius",
+      storageBucket: "filaarius.firebasestorage.app",
+      messagingSenderId: "515606001825",
+      appId: "1:515606001825:web:977a8fddeb1d025ec758e0"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+
+    const GAME_NAMES = {
+      tictactoe: "Jogo da Velha",
+      draw: "Desenhe e Adivinhe",
+      hangman: "Forca",
+      domino: "Dominó",
+      checkers: "Dama"
+    };
+
+    const MAX_PLAYERS = { tictactoe:2, draw:6, hangman:6, domino:2, checkers:2 };
+    const MIN_PLAYERS = { tictactoe:2, draw:2, hangman:1, domino:2, checkers:2 };
+    const WORDS = ["abacaxi","cinema","foguete","praia","pipoca","girafa","tempestade","chocolate","bicicleta","sorvete","cachorro","montanha","dinossauro","panela","astronauta","telefone"];
+
+    const loginView = document.querySelector("#loginView");
+    const appView = document.querySelector("#appView");
+    const lobbyView = document.querySelector("#lobbyView");
+    const roomView = document.querySelector("#roomView");
+    const roomsList = document.querySelector("#roomsList");
+    const roomTitle = document.querySelector("#roomTitle");
+    const roomCode = document.querySelector("#roomCode");
+    const playersEl = document.querySelector("#players");
+    const gameRoot = document.querySelector("#gameRoot");
+    const restartBtn = document.querySelector("#restartBtn");
+    const leaveBtn = document.querySelector("#leaveBtn");
+    const googleBtn = document.querySelector("#googleBtn");
+    const loginError = document.querySelector("#loginError");
+    const logoutBtn = document.querySelector("#logoutBtn");
+    const themeBtn = document.querySelector("#themeBtn");
+
+    let user = null;
+    let rooms = [];
+    let currentRoomId = null;
+    let currentRoom = null;
+    let unsubRooms = null;
+    let unsubRoom = null;
+    let unsubStrokes = null;
+    let selectedChecker = null;
+    let drawing = false;
+    let activeStroke = [];
+
+    function setTheme(theme){
+      document.documentElement.dataset.theme = theme;
+      localStorage.setItem("techqueue-theme", theme);
+      themeBtn.textContent = theme === "dark" ? "Modo claro" : "Modo escuro";
+    }
+    setTheme(localStorage.getItem("techqueue-theme") || "light");
+    themeBtn.addEventListener("click",()=>setTheme(document.documentElement.dataset.theme === "dark" ? "light" : "dark"));
+
+    googleBtn.addEventListener("click", async()=>{
+      try{
+        const provider = new GoogleAuthProvider();
+        provider.setCustomParameters({prompt:"select_account"});
+        await signInWithPopup(auth,provider);
+      }catch(err){
+        console.error(err);
+        loginError.textContent = "Não foi possível entrar com o Google.";
+      }
+    });
+
+    logoutBtn.addEventListener("click",()=>signOut(auth));
+
+    onAuthStateChanged(auth, authUser=>{
+      user = authUser;
+      loginView.classList.toggle("hidden",!!user);
+      appView.classList.toggle("hidden",!user);
+      logoutBtn.classList.toggle("hidden",!user);
+      if(user) subscribeRooms();
+      else cleanup();
+    });
+
+    function cleanup(){
+      if(unsubRooms) unsubRooms();
+      if(unsubRoom) unsubRoom();
+      if(unsubStrokes) unsubStrokes();
+      unsubRooms=unsubRoom=unsubStrokes=null;
+      currentRoomId=null;currentRoom=null;
+    }
+
+    function subscribeRooms(){
+      if(unsubRooms) unsubRooms();
+      unsubRooms = onSnapshot(collection(db,"gameRooms"), snap=>{
+        rooms = snap.docs.map(d=>({id:d.id,...d.data()}))
+          .sort((a,b)=>(b.createdAtMs||0)-(a.createdAtMs||0));
+        renderRooms();
+      });
+    }
+
+    function renderRooms(){
+      const visible = rooms.filter(r=>r.status!=="finished" && (r.playerOrder||[]).length < (r.maxPlayers||2));
+      if(!visible.length){
+        roomsList.innerHTML='<div class="muted">Nenhuma sala aberta agora.</div>';
+        return;
+      }
+      roomsList.innerHTML=visible.map(r=>`
+        <div class="room-row">
+          <div>
+            <strong>${escapeHtml(GAME_NAMES[r.game]||r.game)}</strong>
+            <div class="muted small">Criada por ${escapeHtml(r.hostName||"Jogador")} · ${(r.playerOrder||[]).length}/${r.maxPlayers||2}</div>
+          </div>
+          <button class="btn" data-join-room="${r.id}">${(r.playerOrder||[]).includes(user?.uid)?"Abrir":"Entrar"}</button>
+        </div>
+      `).join("");
+    }
+
+    document.addEventListener("click", async event=>{
+      const create = event.target.closest("[data-create-game]");
+      if(create){ await createRoom(create.dataset.createGame); return; }
+      const join = event.target.closest("[data-join-room]");
+      if(join){ await joinRoom(join.dataset.joinRoom); return; }
+    });
+
+    async function createRoom(game){
+      if(!user) return;
+      const ref = doc(collection(db,"gameRooms"));
+      const players = {[user.uid]:displayName()};
+      const order = [user.uid];
+      const state = initialState(game,order);
+
+      await setDoc(ref,{
+        game,hostUid:user.uid,hostName:displayName(),players,playerOrder:order,
+        maxPlayers:MAX_PLAYERS[game],status: order.length>=MIN_PLAYERS[game] ? "playing":"waiting",
+        state,createdAt:serverTimestamp(),createdAtMs:Date.now(),updatedAt:serverTimestamp()
+      });
+      openRoom(ref.id);
+    }
+
+    async function joinRoom(roomId){
+      if(!user) return;
+      const ref=doc(db,"gameRooms",roomId);
+      await runTransaction(db,async tx=>{
+        const snap=await tx.get(ref);
+        if(!snap.exists()) throw new Error("Sala não existe.");
+        const room=snap.data();
+        const players={...(room.players||{})};
+        let order=[...(room.playerOrder||[])];
+
+        if(!order.includes(user.uid)){
+          if(order.length >= (room.maxPlayers||2)) throw new Error("Sala lotada.");
+          players[user.uid]=displayName();
+          order.push(user.uid);
+        }
+
+        const shouldStart = order.length >= MIN_PLAYERS[room.game];
+        const patch={players,playerOrder:order,updatedAt:serverTimestamp()};
+
+        if(shouldStart && room.status==="waiting"){
+          patch.status="playing";
+          patch.state=initialState(room.game,order);
+        }
+
+        tx.update(ref,patch);
+      });
+      openRoom(roomId);
+    }
+
+    function openRoom(roomId){
+      currentRoomId=roomId;
+      lobbyView.classList.add("hidden");
+      roomView.classList.remove("hidden");
+      if(unsubRoom) unsubRoom();
+      if(unsubStrokes){unsubStrokes();unsubStrokes=null;}
+      unsubRoom=onSnapshot(doc(db,"gameRooms",roomId),snap=>{
+        if(!snap.exists()){backToLobby();return;}
+        currentRoom={id:snap.id,...snap.data()};
+        renderRoom();
+      });
+    }
+
+    function backToLobby(){
+      if(unsubRoom) unsubRoom();
+      if(unsubStrokes) unsubStrokes();
+      unsubRoom=unsubStrokes=null;
+      currentRoomId=null;currentRoom=null;
+      selectedChecker=null;
+      roomView.classList.add("hidden");
+      lobbyView.classList.remove("hidden");
+    }
+
+    leaveBtn.addEventListener("click", async()=>{
+      if(!currentRoomId||!user){backToLobby();return;}
+      const ref=doc(db,"gameRooms",currentRoomId);
+      try{
+        await runTransaction(db,async tx=>{
+          const snap=await tx.get(ref);
+          if(!snap.exists()) return;
+          const room=snap.data();
+          const players={...(room.players||{})};
+          delete players[user.uid];
+          const order=(room.playerOrder||[]).filter(uid=>uid!==user.uid);
+          if(!order.length){
+            tx.delete(ref);
+            return;
+          }
+          const hostUid=room.hostUid===user.uid?order[0]:room.hostUid;
+          tx.update(ref,{
+            players,playerOrder:order,hostUid,
+            hostName:players[hostUid]||"Jogador",
+            status:order.length>=MIN_PLAYERS[room.game]?"playing":"waiting",
+            state:initialState(room.game,order),
+            updatedAt:serverTimestamp()
+          });
+        });
+      }catch(err){console.error(err)}
+      backToLobby();
+    });
+
+    restartBtn.addEventListener("click", async()=>{
+      if(!currentRoomId||!currentRoom) return;
+      const order=currentRoom.playerOrder||[];
+      await updateDoc(doc(db,"gameRooms",currentRoomId),{
+        state:initialState(currentRoom.game,order,currentRoom.state),
+        status:order.length>=MIN_PLAYERS[currentRoom.game]?"playing":"waiting",
+        updatedAt:serverTimestamp()
+      });
+      if(currentRoom.game==="draw") await clearStrokes();
+    });
+
+    function renderRoom(){
+      const room=currentRoom;
+      roomTitle.textContent=GAME_NAMES[room.game]||"Sala";
+      roomCode.textContent=`Sala ${room.id.slice(0,6).toUpperCase()}`;
+      playersEl.innerHTML=(room.playerOrder||[]).map(uid=>`<span class="player-chip">${escapeHtml(room.players?.[uid]||"Jogador")}${uid===user.uid?" · você":""}</span>`).join("");
+      restartBtn.classList.toggle("hidden",room.status!=="finished");
+
+      if((room.playerOrder||[]).length < MIN_PLAYERS[room.game]){
+        gameRoot.innerHTML='<div class="muted">Aguardando mais jogadores entrarem na sala.</div>';
+        return;
+      }
+
+      if(room.game==="tictactoe") renderTicTacToe();
+      if(room.game==="hangman") renderHangman();
+      if(room.game==="draw") renderDraw();
+      if(room.game==="domino") renderDomino();
+      if(room.game==="checkers") renderCheckers();
+    }
+
+    function initialState(game,order,previous=null){
+      if(game==="tictactoe") return {board:Array(9).fill(""),turnUid:order[0]||null,winnerUid:null,draw:false};
+      if(game==="hangman") return {word:randomWord(),guessed:[],wrong:0,maxWrong:6,winner:false,lost:false};
+      if(game==="draw"){
+        const drawer = previous?.drawerUid && order.length>1
+          ? order[(Math.max(0,order.indexOf(previous.drawerUid))+1)%order.length]
+          : order[0]||null;
+        return {word:randomWord(),drawerUid:drawer,guesses:[],winnerUid:null,winnerName:null,round:Number(previous?.round||0)+1};
+      }
+      if(game==="domino") return initDomino(order);
+      if(game==="checkers") return {board:initCheckersBoard(),turnUid:order[0]||null,winnerUid:null};
+      return {};
+    }
+
+    function displayName(){return (user?.displayName||user?.email?.split("@")[0]||"Jogador").trim()}
+    function randomWord(){return WORDS[Math.floor(Math.random()*WORDS.length)]}
+
+    function renderTicTacToe(){
+      const s=currentRoom.state||{};
+      const order=currentRoom.playerOrder||[];
+      const markByUid={[order[0]]:"X",[order[1]]:"O"};
+      const winner=s.winnerUid?currentRoom.players?.[s.winnerUid]:null;
+      const turnName=s.turnUid?currentRoom.players?.[s.turnUid]:"";
+
+      gameRoot.innerHTML=`
+        <div class="turn">${winner?`${escapeHtml(winner)} venceu.`:s.draw?"Deu velha.":`Vez de ${escapeHtml(turnName||"jogador")} · você é ${markByUid[user.uid]||"-"}`}</div>
+        <div class="ttt">
+          ${(s.board||Array(9).fill("")).map((v,i)=>`<button data-ttt="${i}" ${s.winnerUid||s.draw||s.turnUid!==user.uid||v?"disabled":""}>${v}</button>`).join("")}
+        </div>`;
+    }
+
+    gameRoot.addEventListener("click",async event=>{
+      const ttt=event.target.closest("[data-ttt]");
+      if(ttt){await playTicTacToe(Number(ttt.dataset.ttt));return;}
+      const letter=event.target.closest("[data-letter]");
+      if(letter){await guessLetter(letter.dataset.letter);return;}
+      const domino=event.target.closest("[data-domino-index]");
+      if(domino){await playDomino(Number(domino.dataset.dominoIndex));return;}
+      const sq=event.target.closest("[data-square]");
+      if(sq){await handleCheckerClick(Number(sq.dataset.square));return;}
+    });
+
+    async function playTicTacToe(index){
+      const ref=doc(db,"gameRooms",currentRoomId);
+      await runTransaction(db,async tx=>{
+        const snap=await tx.get(ref); if(!snap.exists()) return;
+        const room=snap.data(),s={...room.state},board=[...(s.board||[])],order=room.playerOrder||[];
+        if(s.turnUid!==user.uid||board[index]||s.winnerUid||s.draw) return;
+        const mark=user.uid===order[0]?"X":"O";
+        board[index]=mark;
+        const won=tttWinner(board,mark);
+        const draw=!won&&board.every(Boolean);
+        const next=order.find(uid=>uid!==user.uid)||user.uid;
+        tx.update(ref,{state:{...s,board,winnerUid:won?user.uid:null,draw,turnUid:won||draw?null:next},status:won||draw?"finished":"playing",updatedAt:serverTimestamp()});
+      });
+    }
+    function tttWinner(b,m){return [[0,1,2],[3,4,5],[6,7,8],[0,3,6],[1,4,7],[2,5,8],[0,4,8],[2,4,6]].some(x=>x.every(i=>b[i]===m))}
+
+    function renderHangman(){
+      const s=currentRoom.state||{}, guessed=new Set(s.guessed||[]);
+      const masked=(s.word||"").split("").map(ch=>guessed.has(ch)?ch:"_").join(" ");
+      const done=s.winner||s.lost;
+      gameRoot.innerHTML=`
+        <div class="turn">${s.winner?"A palavra foi descoberta.":s.lost?`Fim de jogo. A palavra era ${escapeHtml(s.word)}.`:"Todo mundo pode tentar uma letra."}</div>
+        <div class="hangman-stage">Erros: ${s.wrong||0}/${s.maxWrong||6}</div>
+        <div class="word">${masked}</div>
+        <div class="alphabet">
+          ${"abcdefghijklmnopqrstuvwxyz".split("").map(l=>`<button data-letter="${l}" ${done||guessed.has(l)?"disabled":""}>${l.toUpperCase()}</button>`).join("")}
+        </div>`;
+    }
+
+    async function guessLetter(letter){
+      const ref=doc(db,"gameRooms",currentRoomId);
+      await runTransaction(db,async tx=>{
+        const snap=await tx.get(ref);if(!snap.exists())return;
+        const room=snap.data(),s={...room.state};if(s.winner||s.lost)return;
+        const guessed=new Set(s.guessed||[]);if(guessed.has(letter))return;guessed.add(letter);
+        const wrong=(s.word||"").includes(letter)?Number(s.wrong||0):Number(s.wrong||0)+1;
+        const winner=(s.word||"").split("").every(ch=>guessed.has(ch));
+        const lost=wrong>=Number(s.maxWrong||6)&&!winner;
+        tx.update(ref,{state:{...s,guessed:[...guessed],wrong,winner,lost},status:winner||lost?"finished":"playing",updatedAt:serverTimestamp()});
+      });
+    }
+
+    function renderDraw(){
+      const s=currentRoom.state||{},drawerName=currentRoom.players?.[s.drawerUid]||"Jogador";
+      const isDrawer=s.drawerUid===user.uid;
+      gameRoot.innerHTML=`
+        <div class="turn">${s.winnerUid?`${escapeHtml(s.winnerName)} acertou a palavra ${escapeHtml(s.word)}.`:isDrawer?`Sua palavra: ${escapeHtml(s.word)}`:`${escapeHtml(drawerName)} está desenhando.`}</div>
+        <div class="canvas-wrap">
+          <canvas id="drawCanvas" class="draw-canvas" width="900" height="360"></canvas>
+          ${!isDrawer&&!s.winnerUid?`<form id="guessForm" class="guess-row"><input id="guessInput" maxlength="40" placeholder="Seu palpite" required><button class="btn primary">Enviar</button></form>`:""}
+          ${isDrawer&&!s.winnerUid?'<button id="clearCanvasBtn" class="btn" type="button">Limpar desenho</button>':""}
+          <div class="guesses">${(s.guesses||[]).slice(-8).map(g=>`<div class="guess"><strong>${escapeHtml(g.name)}:</strong> ${escapeHtml(g.text)}</div>`).join("")}</div>
+        </div>`;
+
+      setupCanvas(isDrawer,Number(s.round||1));
+
+      const form=document.querySelector("#guessForm");
+      if(form) form.addEventListener("submit",submitGuess);
+      const clear=document.querySelector("#clearCanvasBtn");
+      if(clear) clear.addEventListener("click",clearStrokes);
+    }
+
+    function setupCanvas(canDraw,round){
+      const canvas=document.querySelector("#drawCanvas");if(!canvas)return;
+      const ctx=canvas.getContext("2d");
+      ctx.lineWidth=3;ctx.lineCap="round";ctx.strokeStyle="#202124";
+
+      if(unsubStrokes) unsubStrokes();
+      unsubStrokes=onSnapshot(collection(db,"gameRooms",currentRoomId,"strokes"),snap=>{
+        ctx.clearRect(0,0,canvas.width,canvas.height);
+        snap.docs.map(d=>d.data()).filter(s=>Number(s.round||1)===round).sort((a,b)=>(a.createdAtMs||0)-(b.createdAtMs||0)).forEach(s=>drawStroke(ctx,s.points||[]));
+      });
+
+      if(!canDraw) return;
+      const point=e=>{
+        const r=canvas.getBoundingClientRect();
+        const src=e.touches?.[0]||e;
+        return {x:(src.clientX-r.left)*(canvas.width/r.width),y:(src.clientY-r.top)*(canvas.height/r.height)};
+      };
+      const start=e=>{drawing=true;activeStroke=[point(e)];e.preventDefault()};
+      const move=e=>{if(!drawing)return;activeStroke.push(point(e));drawStroke(ctx,activeStroke.slice(-2));e.preventDefault()};
+      const end=async e=>{
+        if(!drawing)return;drawing=false;e?.preventDefault();
+        if(activeStroke.length>1){
+          await addDoc(collection(db,"gameRooms",currentRoomId,"strokes"),{round,points:activeStroke,authorUid:user.uid,createdAt:serverTimestamp(),createdAtMs:Date.now()});
+        }
+        activeStroke=[];
+      };
+      canvas.onpointerdown=start;canvas.onpointermove=move;canvas.onpointerup=end;canvas.onpointerleave=end;
+    }
+
+    function drawStroke(ctx,pts){
+      if(pts.length<2)return;
+      ctx.beginPath();ctx.moveTo(pts[0].x,pts[0].y);
+      for(let i=1;i<pts.length;i++)ctx.lineTo(pts[i].x,pts[i].y);
+      ctx.stroke();
+    }
+
+    async function submitGuess(e){
+      e.preventDefault();
+      const input=document.querySelector("#guessInput"),text=input.value.trim();if(!text)return;
+      const ref=doc(db,"gameRooms",currentRoomId);
+      await runTransaction(db,async tx=>{
+        const snap=await tx.get(ref);if(!snap.exists())return;
+        const room=snap.data(),s={...room.state};if(s.winnerUid)return;
+        const guesses=[...(s.guesses||[]),{uid:user.uid,name:displayName(),text,at:Date.now()}].slice(-30);
+        const correct=normalize(text)===normalize(s.word||"");
+        tx.update(ref,{state:{...s,guesses,winnerUid:correct?user.uid:null,winnerName:correct?displayName():null},status:correct?"finished":"playing",updatedAt:serverTimestamp()});
+      });
+      input.value="";
+    }
+    function normalize(v){return String(v).normalize("NFD").replace(/[\u0300-\u036f]/g,"").trim().toLowerCase()}
+
+    async function clearStrokes(){
+      if(!currentRoomId)return;
+      const snap=await getDocs(collection(db,"gameRooms",currentRoomId,"strokes"));
+      for(let i=0;i<snap.docs.length;i+=400){
+        const batch=writeBatch(db);snap.docs.slice(i,i+400).forEach(d=>batch.delete(d.ref));await batch.commit();
+      }
+    }
+
+    function initDomino(order){
+      if(order.length<2)return {hands:{},board:[],boneyard:[],turnUid:order[0]||null,winnerUid:null};
+      const tiles=[];for(let a=0;a<=6;a++)for(let b=a;b<=6;b++)tiles.push([a,b]);
+      for(let i=tiles.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[tiles[i],tiles[j]]=[tiles[j],tiles[i]]}
+      return {hands:{[order[0]]:tiles.slice(0,7),[order[1]]:tiles.slice(7,14)},board:[],boneyard:tiles.slice(14),turnUid:order[0],winnerUid:null};
+    }
+
+    function renderDomino(){
+      const s=currentRoom.state||{},hand=s.hands?.[user.uid]||[],order=currentRoom.playerOrder||[];
+      const winner=s.winnerUid?currentRoom.players?.[s.winnerUid]:null;
+      const turnName=s.turnUid?currentRoom.players?.[s.turnUid]:"";
+      gameRoot.innerHTML=`
+        <div class="turn">${winner?`${escapeHtml(winner)} bateu.`:`Vez de ${escapeHtml(turnName||"jogador")}`}</div>
+        <div class="domino-board">${(s.board||[]).length?(s.board||[]).map(tileHtml).join(""):'<span class="muted">Mesa vazia</span>'}</div>
+        <div class="small muted" style="text-align:center">Seu jogo</div>
+        <div class="domino-hand">${hand.map((t,i)=>`<button class="tile ${canPlayDomino(t,s.board||[])?"playable":""}" data-domino-index="${i}" ${s.turnUid!==user.uid||s.winnerUid?"disabled":""}>${tileInner(t)}</button>`).join("")}</div>
+        <div style="text-align:center"><button id="drawDominoBtn" class="btn" ${s.turnUid!==user.uid||s.winnerUid?"disabled":""}>${(s.boneyard||[]).length?"Comprar peça":"Passar"}</button></div>`;
+      document.querySelector("#drawDominoBtn")?.addEventListener("click",drawOrPassDomino);
+    }
+    function tileInner(t){return `<span>${t[0]}</span><span>${t[1]}</span>`}
+    function tileHtml(t){return `<div class="tile">${tileInner(t)}</div>`}
+    function canPlayDomino(tile,board){if(!board.length)return true;const l=board[0][0],r=board[board.length-1][1];return tile.includes(l)||tile.includes(r)}
+
+    async function playDomino(index){
+      const ref=doc(db,"gameRooms",currentRoomId);
+      await runTransaction(db,async tx=>{
+        const snap=await tx.get(ref);if(!snap.exists())return;
+        const room=snap.data(),s=structuredClone(room.state),order=room.playerOrder||[];
+        if(s.turnUid!==user.uid||s.winnerUid)return;
+        const hand=s.hands?.[user.uid]||[],tile=hand[index];if(!tile)return;
+        let board=[...(s.board||[])],placed=null;
+        if(!board.length) placed={side:"right",tile};
+        else{
+          const left=board[0][0],right=board[board.length-1][1];
+          if(tile[0]===right)placed={side:"right",tile:[tile[0],tile[1]]};
+          else if(tile[1]===right)placed={side:"right",tile:[tile[1],tile[0]]};
+          else if(tile[1]===left)placed={side:"left",tile:[tile[0],tile[1]]};
+          else if(tile[0]===left)placed={side:"left",tile:[tile[1],tile[0]]};
+        }
+        if(!placed)return;
+        placed.side==="right"?board.push(placed.tile):board.unshift(placed.tile);
+        hand.splice(index,1);s.hands[user.uid]=hand;s.board=board;
+        const winner=hand.length===0?user.uid:null;
+        const next=order.find(uid=>uid!==user.uid)||user.uid;
+        s.winnerUid=winner;s.turnUid=winner?null:next;
+        tx.update(ref,{state:s,status:winner?"finished":"playing",updatedAt:serverTimestamp()});
+      });
+    }
+
+    async function drawOrPassDomino(){
+      const ref=doc(db,"gameRooms",currentRoomId);
+      await runTransaction(db,async tx=>{
+        const snap=await tx.get(ref);if(!snap.exists())return;
+        const room=snap.data(),s=structuredClone(room.state),order=room.playerOrder||[];
+        if(s.turnUid!==user.uid||s.winnerUid)return;
+        const hand=s.hands?.[user.uid]||[];
+        if((s.boneyard||[]).length){
+          hand.push(s.boneyard.shift());s.hands[user.uid]=hand;
+        }else{
+          s.turnUid=order.find(uid=>uid!==user.uid)||user.uid;
+        }
+        tx.update(ref,{state:s,updatedAt:serverTimestamp()});
+      });
+    }
+
+    function initCheckersBoard(){
+      const b=Array(64).fill(null);
+      for(let r=0;r<3;r++)for(let c=0;c<8;c++)if((r+c)%2===1)b[r*8+c]="r";
+      for(let r=5;r<8;r++)for(let c=0;c<8;c++)if((r+c)%2===1)b[r*8+c]="b";
+      return b;
+    }
+
+    function renderCheckers(){
+      const s=currentRoom.state||{},order=currentRoom.playerOrder||[],myColor=user.uid===order[0]?"r":"b";
+      const winner=s.winnerUid?currentRoom.players?.[s.winnerUid]:null;
+      gameRoot.innerHTML=`
+        <div class="turn">${winner?`${escapeHtml(winner)} venceu.`:`Vez de ${escapeHtml(currentRoom.players?.[s.turnUid]||"jogador")} · suas peças: ${myColor==="r"?"vermelhas":"pretas"}`}</div>
+        <div class="checkers">${(s.board||[]).map((p,i)=>{
+          const r=Math.floor(i/8),c=i%8,dark=(r+c)%2===1;
+          const cls=p?(p.toLowerCase()==="r"?"red":"black"):"";
+          return `<button class="square ${dark?"dark":""} ${selectedChecker===i?"selected":""}" data-square="${i}">${p?`<span class="piece ${cls} ${p===p.toUpperCase()?"king":""}"></span>`:""}</button>`
+        }).join("")}</div>`;
+    }
+
+    async function handleCheckerClick(index){
+      const s=currentRoom.state||{},order=currentRoom.playerOrder||[];
+      if(s.turnUid!==user.uid||s.winnerUid)return;
+      const my=user.uid===order[0]?"r":"b",piece=s.board?.[index];
+
+      if(selectedChecker===null){
+        if(piece&&piece.toLowerCase()===my){selectedChecker=index;renderCheckers()}
+        return;
+      }
+      if(piece&&piece.toLowerCase()===my){selectedChecker=index;renderCheckers();return}
+
+      const from=selectedChecker;selectedChecker=null;
+      await moveChecker(from,index);
+    }
+
+    async function moveChecker(from,to){
+      const ref=doc(db,"gameRooms",currentRoomId);
+      await runTransaction(db,async tx=>{
+        const snap=await tx.get(ref);if(!snap.exists())return;
+        const room=snap.data(),s=structuredClone(room.state),order=room.playerOrder||[],board=s.board||[];
+        if(s.turnUid!==user.uid||board[to])return;
+        const piece=board[from];if(!piece)return;
+        const my=user.uid===order[0]?"r":"b";if(piece.toLowerCase()!==my)return;
+        const fr=Math.floor(from/8),fc=from%8,tr=Math.floor(to/8),tc=to%8,dr=tr-fr,dc=tc-fc;
+        const king=piece===piece.toUpperCase(),forward=my==="r"?1:-1;
+        let valid=false,captureIndex=null;
+        if(Math.abs(dc)===1&&Math.abs(dr)===1&&(king||dr===forward)) valid=true;
+        if(Math.abs(dc)===2&&Math.abs(dr)===2&&(king||dr===2*forward)){
+          const mr=(fr+tr)/2,mc=(fc+tc)/2,mid=mr*8+mc,enemy=board[mid];
+          if(enemy&&enemy.toLowerCase()!==my){valid=true;captureIndex=mid}
+        }
+        if(!valid)return;
+        board[to]=piece;board[from]=null;if(captureIndex!==null)board[captureIndex]=null;
+        if((my==="r"&&tr===7)||(my==="b"&&tr===0))board[to]=piece.toUpperCase();
+        const opponent=order.find(uid=>uid!==user.uid)||user.uid;
+        const opponentColor=my==="r"?"b":"r";
+        const winner=!board.some(p=>p&&p.toLowerCase()===opponentColor)?user.uid:null;
+        s.board=board;s.winnerUid=winner;s.turnUid=winner?null:opponent;
+        tx.update(ref,{state:s,status:winner?"finished":"playing",updatedAt:serverTimestamp()});
+      });
+    }
+
+    function escapeHtml(value){
+      return String(value??"").replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;").replaceAll('"',"&quot;").replaceAll("'","&#039;");
+    }
+  </script>
+</body>
+</html>
