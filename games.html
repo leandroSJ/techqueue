@@ -176,6 +176,7 @@
           </div>
         </div>
         <div id="gameRoot"></div>
+        <div id="gameToast" class="game-toast hidden"></div>
       </section>
     </main>
   </div>
@@ -201,14 +202,42 @@
     const TEAM_TIMEZONE = "America/Bahia";
     const GAME_NAMES = {tictactoe:"Jogo da Velha",draw:"Desenhe e Adivinhe",hangman:"Forca",domino:"Dominó",checkers:"Dama"};
     const MAX_PLAYERS = {tictactoe:2,draw:6,hangman:6,domino:2,checkers:2};
-    const MIN_PLAYERS = {tictactoe:2,draw:2,hangman:1,domino:2,checkers:2};
-    const WORDS = ["abacaxi","cinema","foguete","praia","pipoca","girafa","tempestade","chocolate","bicicleta","sorvete","cachorro","montanha","dinossauro","panela","astronauta","telefone"];
+    const MIN_PLAYERS = {tictactoe:2,draw:2,hangman:2,domino:2,checkers:2};
+
+    const HANGMAN_LEVELS = [
+      [
+        {answer:"abacaxi",category:"Fruta",clues:["fruta","tropical","coroa","amarela","doce"]},
+        {answer:"girafa",category:"Animal",clues:["animal","africa","pescoco","alto","manchas"]},
+        {answer:"pipoca",category:"Comida",clues:["milho","cinema","estoura","salgada","lanche"]},
+        {answer:"foguete",category:"Espaço",clues:["espaco","lancamento","motor","ceu","orbita"]}
+      ],
+      [
+        {answer:"tempestade",category:"Natureza",clues:["chuva","vento","trovao","nuvem","raio"]},
+        {answer:"astronauta",category:"Profissão",clues:["espaco","traje","nasa","orbita","lua"]},
+        {answer:"bicicleta",category:"Transporte",clues:["duas","rodas","pedal","guidom","ciclista"]},
+        {answer:"dinossauro",category:"História",clues:["prehistoria","fossil","reptil","extinto","jurassico"]}
+      ],
+      [
+        {answer:"bola de cristal",category:"Expressão/objeto",clues:["vidente","futuro","redonda","previsao","misterio"]},
+        {answer:"guarda chuva",category:"Objeto",clues:["chuva","protege","abre","cabo","temporal"]},
+        {answer:"cachorro quente",category:"Comida",clues:["lanche","pao","salsicha","molho","rua"]},
+        {answer:"parque de diversoes",category:"Lugar",clues:["brinquedos","roda","ingresso","familia","montanha"]}
+      ],
+      [
+        {answer:"maquina do tempo",category:"Ficção",clues:["viagem","passado","futuro","relogio","ficcao"]},
+        {answer:"segredo a sete chaves",category:"Expressão",clues:["misterio","guardar","chaves","esconder","sigilo"]},
+        {answer:"tempestade em copo dagua",category:"Expressão",clues:["exagero","problema","pequeno","agua","expressao"]},
+        {answer:"quem espera sempre alcanca",category:"Ditado",clues:["paciencia","tempo","objetivo","ditado","persistencia"]}
+      ]
+    ];
 
     const loginView=document.querySelector("#loginView"),appView=document.querySelector("#appView"),lobbyView=document.querySelector("#lobbyView"),roomView=document.querySelector("#roomView");
     const roomsList=document.querySelector("#roomsList"),roomTitle=document.querySelector("#roomTitle"),roomCode=document.querySelector("#roomCode"),playersEl=document.querySelector("#players"),gameRoot=document.querySelector("#gameRoot");
-    const restartBtn=document.querySelector("#restartBtn"),leaveBtn=document.querySelector("#leaveBtn"),googleBtn=document.querySelector("#googleBtn"),loginError=document.querySelector("#loginError"),logoutBtn=document.querySelector("#logoutBtn"),themeBtn=document.querySelector("#themeBtn"),gameError=document.querySelector("#gameError");
+    const restartBtn=document.querySelector("#restartBtn"),leaveBtn=document.querySelector("#leaveBtn"),googleBtn=document.querySelector("#googleBtn"),loginError=document.querySelector("#loginError"),logoutBtn=document.querySelector("#logoutBtn"),themeBtn=document.querySelector("#themeBtn"),gameError=document.querySelector("#gameError"),gameToast=document.querySelector("#gameToast");
 
     let user=null,dayState=null,rooms=[],currentRoomId=null,currentRoom=null,unsubDay=null,selectedChecker=null,drawing=false,activeStroke=[];
+    let seenHangmanActionId=null;
+    let gameToastTimer=null;
 
     function bahiaDateId(date=new Date()){
       const parts=new Intl.DateTimeFormat("en-CA",{timeZone:TEAM_TIMEZONE,year:"numeric",month:"2-digit",day:"2-digit"}).formatToParts(date);
@@ -221,7 +250,14 @@
     themeBtn.addEventListener("click",()=>setTheme(document.documentElement.dataset.theme==="dark"?"light":"dark"));
     function displayName(){return (user?.displayName||user?.email?.split("@")[0]||"Jogador").trim()}
     function roomId(){return (crypto.randomUUID?.()||String(Date.now())+Math.random()).replaceAll("-","").slice(0,20)}
-    function randomWord(){return WORDS[Math.floor(Math.random()*WORDS.length)]}
+    function randomWord(){
+      const pool=HANGMAN_LEVELS[0];
+      return pool[Math.floor(Math.random()*pool.length)].answer;
+    }
+
+    function actionId(){
+      return Date.now()+"-"+Math.random().toString(36).slice(2,7);
+    }
 
     googleBtn.addEventListener("click",async()=>{
       try{
