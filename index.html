@@ -1278,8 +1278,7 @@
     }
 
     async function ensureUserProfile() {
-      const STARTER_XP = 25;
-      const STARTER_XP_VERSION = 2;
+      const WELCOME_BONUS_XP = 35;
       const ref = doc(db, "profiles", authUser.uid);
       const snap = await getDoc(ref);
 
@@ -1287,9 +1286,9 @@
         await setDoc(ref, {
           name: profile.name,
           email: profile.email,
-          xpBalance: STARTER_XP,
-          starterXpGranted: true,
-          starterXpVersion: STARTER_XP_VERSION,
+          xpBalance: WELCOME_BONUS_XP,
+          welcomeBonus35Granted: true,
+          welcomeBonusAmount: WELCOME_BONUS_XP,
           audioCredits: {},
           unlockedItems: [],
           createdAt: serverTimestamp(),
@@ -1299,36 +1298,21 @@
       }
 
       const data = snap.data();
-      const credits = { ...(data.audioCredits || {}) };
-      const unlocked = Array.isArray(data.unlockedItems) ? data.unlockedItems : [];
-      const hasPurchasedInventory =
-        Object.values(credits).some(value => Number(value || 0) > 0) ||
-        unlocked.length > 0;
-
       const patch = {
         name: profile.name,
         email: profile.email,
-        audioCredits: credits,
+        audioCredits: { ...(data.audioCredits || {}) },
+        unlockedItems: Array.isArray(data.unlockedItems) ? data.unlockedItems : [],
         updatedAt: serverTimestamp()
       };
 
-      if (Number(data.starterXpVersion || 0) < STARTER_XP_VERSION) {
-        const currentBalance = Number(data.xpBalance || 0);
-
-        // Corrige os perfis criados durante a fase em que o saldo inicial
-        // ainda estava configurado incorretamente como 35 XP.
-        if (currentBalance === 35 && data.starterXpGranted === true && !hasPurchasedInventory) {
-          patch.xpBalance = STARTER_XP;
-        } else if (currentBalance === 0 && !hasPurchasedInventory) {
-          // Perfis que ficaram zerados por falha da inicialização recebem
-          // agora os 25 XP iniciais definidos para todos os usuários.
-          patch.xpBalance = STARTER_XP;
-        } else if (data.starterXpGranted !== true) {
-          patch.xpBalance = currentBalance + STARTER_XP;
-        }
-
-        patch.starterXpGranted = true;
-        patch.starterXpVersion = STARTER_XP_VERSION;
+      // Bônus único de boas-vindas definido agora em 35 XP.
+      // O campo dedicado evita que o mesmo usuário receba novamente ao recarregar.
+      if (data.welcomeBonus35Granted !== true) {
+        patch.xpBalance = Number(data.xpBalance || 0) + WELCOME_BONUS_XP;
+        patch.welcomeBonus35Granted = true;
+        patch.welcomeBonusAmount = WELCOME_BONUS_XP;
+        patch.welcomeBonusGrantedAt = serverTimestamp();
       }
 
       await setDoc(ref, patch, { merge: true });
@@ -2602,10 +2586,10 @@
         .replaceAll("'","&#039;");
     }
 
-    // Quem entra às 09:00 com a página aberta passa a entrar automaticamente no rodízio.
+    // Mantém a presença na fila sincronizada mesmo após uma limpeza administrativa.
     setInterval(async () => {
       if (!authUser || !profile) return;
-      try { await joinTodayIfAllowed(); } catch (err) { console.error(err); }
+      try { await joinToday(); } catch (err) { console.error(err); }
     }, 30000);
   </script>
 </body>
