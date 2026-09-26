@@ -199,6 +199,15 @@
                 <button class="btn primary" data-create-game="domino" data-domino-players="4">4 jogadores</button>
               </div>
             </div>
+            <div class="card game-card">
+              <h3>Ludo Tech</h3>
+              <p>Tabuleiro com dado, 4 peças por jogador, captura e chegada ao centro.</p>
+              <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px">
+                <button class="btn primary" data-create-game="ludo" data-ludo-players="2">2 jogadores</button>
+                <button class="btn primary" data-create-game="ludo" data-ludo-players="3">3 jogadores</button>
+                <button class="btn primary" data-create-game="ludo" data-ludo-players="4">4 jogadores</button>
+              </div>
+            </div>
             <div class="card game-card"><h3>Dama</h3><p>Captura obrigatória, pontuação e dama voadora.</p><button class="btn primary" data-create-game="checkers">Criar sala</button></div>
           </div>
         </section>
@@ -266,9 +275,9 @@
     const db = getFirestore(app);
 
     const TEAM_TIMEZONE = "America/Bahia";
-    const GAME_NAMES = {tictactoe:"Jogo da Velha",draw:"Desenhe e Adivinhe",hangman:"Forca",domino:"Dominó",checkers:"Dama"};
-    const MAX_PLAYERS = {tictactoe:2,draw:6,hangman:6,domino:4,checkers:2};
-    const MIN_PLAYERS = {tictactoe:2,draw:2,hangman:2,domino:2,checkers:2};
+    const GAME_NAMES = {tictactoe:"Jogo da Velha",draw:"Desenhe e Adivinhe",hangman:"Forca",domino:"Dominó",ludo:"Ludo Tech",checkers:"Dama"};
+    const MAX_PLAYERS = {tictactoe:2,draw:6,hangman:6,domino:4,ludo:4,checkers:2};
+    const MIN_PLAYERS = {tictactoe:2,draw:2,hangman:2,domino:2,ludo:2,checkers:2};
 
     const HANGMAN_LEVELS = [
       [
@@ -380,7 +389,7 @@
       roomsList.innerHTML=visible.map(r=>`
         <div class="room-row">
           <div>
-            <strong>${escapeHtml(GAME_NAMES[r.game]||r.game)}${r.game==="domino" ? ` · ${Number(r.requiredPlayers||r.maxPlayers||2)} jogadores` : ""}</strong>
+            <strong>${escapeHtml(GAME_NAMES[r.game]||r.game)}${["domino","ludo"].includes(r.game) ? ` · ${Number(r.requiredPlayers||r.maxPlayers||2)} jogadores` : ""}</strong>
             <div class="muted small">Criada por ${escapeHtml(r.hostName||"Jogador")} · ${(r.playerOrder||[]).length}/${r.requiredPlayers||r.maxPlayers||2}</div>
           </div>
           <button class="btn" data-join-room="${r.id}">${(r.playerOrder||[]).includes(user?.uid)?"Abrir":"Entrar"}</button>
@@ -392,10 +401,13 @@
       try{
         gameError.textContent="";
         if(create){
-          const dominoPlayers=create.dataset.createGame==="domino"
+          const game=create.dataset.createGame;
+          const roomPlayers=game==="domino"
             ? Number(create.dataset.dominoPlayers||2)
-            : null;
-          await createRoom(create.dataset.createGame,dominoPlayers);
+            : game==="ludo"
+              ? Number(create.dataset.ludoPlayers||2)
+              : null;
+          await createRoom(game,roomPlayers);
           return;
         }
         if(join){await joinRoom(join.dataset.joinRoom);return}
@@ -426,20 +438,23 @@
       return roomResult;
     }
 
-    async function createRoom(game,dominoPlayers=null){
+    async function createRoom(game,roomPlayers=null){
       if(!user)return;
 
-      const requiredPlayers=game==="domino"
-        ? (Number(dominoPlayers)===4 ? 4 : 2)
+      const requestedPlayers=["domino","ludo"].includes(game)
+        ? Math.max(2,Math.min(MAX_PLAYERS[game],Number(roomPlayers||2)))
         : MIN_PLAYERS[game];
 
-      const maxPlayers=game==="domino" ? requiredPlayers : MAX_PLAYERS[game];
+      const requiredPlayers=requestedPlayers;
+      const maxPlayers=["domino","ludo"].includes(game) ? requiredPlayers : MAX_PLAYERS[game];
       const id=roomId();
       const players={[user.uid]:displayName()};
       const order=[user.uid];
-      const state=game==="domino"
-        ? initDomino(order,requiredPlayers)
-        : initialState(game,order);
+
+      let state;
+      if(game==="domino")state=initDomino(order,requiredPlayers);
+      else if(game==="ludo")state=initLudo(order,requiredPlayers);
+      else state=initialState(game,order);
 
       const createdRoom={
         game,
@@ -482,6 +497,10 @@
             const hasAllHands=order.length===requiredPlayers &&
               order.every(uid=>Array.isArray(room.state?.hands?.[uid]));
             if(!hasAllHands)room.state=initDomino(order,requiredPlayers);
+          }else if(room.game==="ludo"){
+            const ready=order.length===requiredPlayers &&
+              order.every(uid=>Array.isArray(room.state?.tokens?.[uid]));
+            if(!ready)room.state=initLudo(order,requiredPlayers);
           }else if(room.game==="hangman"){
             const active=room.state?.activePlayers||[];
             if(!room.state||!active.includes(user.uid))room.state=createHangmanTournament(order);
@@ -518,7 +537,9 @@
           const requiredPlayers=Number(room.requiredPlayers||MIN_PLAYERS[room.game]||2);
           const nextState=room.game==="domino"
             ? initDomino(order,requiredPlayers)
-            : initialState(room.game,order,room.state);
+            : room.game==="ludo"
+              ? initLudo(order,requiredPlayers)
+              : initialState(room.game,order,room.state);
           gameRooms[currentRoomId]={
             ...room,
             players,
@@ -540,7 +561,9 @@
         const requiredPlayers=Number(room.requiredPlayers||MIN_PLAYERS[room.game]||2);
         room.state=room.game==="domino"
           ? initDomino(room.playerOrder||[],requiredPlayers)
-          : initialState(room.game,room.playerOrder||[],room.state);
+          : room.game==="ludo"
+            ? initLudo(room.playerOrder||[],requiredPlayers)
+            : initialState(room.game,room.playerOrder||[],room.state);
         room.status=(room.playerOrder||[]).length>=requiredPlayers?"playing":"waiting";
         return room;
       });
@@ -560,6 +583,7 @@
       if(room.game==="hangman")renderHangman();
       if(room.game==="draw")renderDraw();
       if(room.game==="domino")renderDomino();
+      if(room.game==="ludo")renderLudo();
       if(room.game==="checkers")renderCheckers();
     }
 
@@ -571,6 +595,7 @@
         return{word:randomWord(),drawerUid:drawer,guesses:[],winnerUid:null,winnerName:null,round:Number(previous?.round||0)+1,strokes:[]};
       }
       if(game==="domino")return initDomino(order);
+      if(game==="ludo")return initLudo(order,Math.max(2,order.length));
       if(game==="checkers")return{
         board:initCheckersBoard(),
         turnUid:order[0]||null,
