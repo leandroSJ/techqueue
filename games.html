@@ -1297,7 +1297,7 @@
           byUid:user.uid,
           letter:letter.toUpperCase(),
           hit,
-          message:`${playerName} escolheu a letra ${letter.toUpperCase()} — ${hit?"acertou":"errou"}.`
+          message:`${playerName} escolheu a letra ${letter.toUpperCase()} — ${hit?"acertou e continua jogando":"errou e passou a vez"}.`
         };
 
         s.guessed=[...guessed];
@@ -1341,7 +1341,8 @@
           return finishHangmanRound(room,s,action,nextUid);
         }
 
-        s.turnUid=nextUid;
+        // Regra clássica: acertou a letra, continua jogando; errou, passa a vez.
+        s.turnUid=hit?user.uid:nextUid;
         room.state=s;
         room.status="playing";
         return room;
