@@ -1876,7 +1876,7 @@
       const soundInfo = SOUND_CATALOG.find(item => item.id === soundId) || SOUND_CATALOG[0];
       const dayId = bahiaParts().dateId;
       const nudgeRef = doc(collection(db, "days", dayId, "nudges"));
-      const profileRef = doc(db, "profiles", authUser.uid);
+      const profileRef = walletRef();
 
       try {
         await runTransaction(db, async tx => {
@@ -1885,7 +1885,9 @@
             if (!profileSnap.exists()) throw new Error("Carteira de XP não encontrada.");
 
             const data = profileSnap.data();
-            const credits = { ...(data.audioCredits || {}) };
+            const wallets = { ...(data.wallets || {}) };
+            const wallet = { ...(wallets[authUser.uid] || defaultWallet()) };
+            const credits = { ...(wallet.audioCredits || {}) };
             const available = Number(credits[soundId] || 0);
 
             if (available <= 0) {
@@ -1893,10 +1895,14 @@
             }
 
             credits[soundId] = available - 1;
-            tx.update(profileRef, {
-              audioCredits: credits,
+            wallet.audioCredits = credits;
+            wallet.updatedAtMs = Date.now();
+            wallets[authUser.uid] = wallet;
+
+            tx.set(profileRef, {
+              wallets,
               updatedAt: serverTimestamp()
-            });
+            }, { merge: true });
           }
 
           tx.set(nudgeRef, {
@@ -2457,7 +2463,7 @@
       const now = bahiaParts();
       const dayRef = doc(db, "days", now.dateId);
       const attendanceRef = doc(db, "days", now.dateId, "attendances", openAttendance.id);
-      const profileRef = doc(db, "profiles", authUser.uid);
+      const profileRef = walletRef();
 
       try {
         await runTransaction(db, async tx => {
@@ -2501,11 +2507,15 @@
             updatedAt: serverTimestamp()
           });
 
-          const currentXp = Number(profileSnap.exists() ? profileSnap.data().xpBalance || 0 : 0);
+          const walletDoc = profileSnap.exists() ? profileSnap.data() : {};
+          const wallets = { ...(walletDoc.wallets || {}) };
+          const wallet = { ...(wallets[authUser.uid] || defaultWallet()) };
+          wallet.xpBalance = Number(wallet.xpBalance || 0) + xpAwarded;
+          wallet.updatedAtMs = Date.now();
+          wallets[authUser.uid] = wallet;
+
           tx.set(profileRef, {
-            name: profile.name,
-            email: profile.email,
-            xpBalance: currentXp + xpAwarded,
+            wallets,
             updatedAt: serverTimestamp()
           }, { merge: true });
         });
