@@ -603,6 +603,7 @@
           </div>
           <div class="actions">
             <button id="restartBtn" class="btn btn-outline-primary hidden" type="button">Revanche</button>
+            <button id="closeRoomBtn" class="btn btn-outline-warning hidden" type="button">Encerrar sala</button>
             <button id="leaveBtn" class="btn btn-outline-danger" type="button">Sair da sala</button>
           </div>
         </div>
@@ -692,7 +693,7 @@
 
     const loginView=document.querySelector("#loginView"),appView=document.querySelector("#appView"),lobbyView=document.querySelector("#lobbyView"),roomView=document.querySelector("#roomView");
     const roomsList=document.querySelector("#roomsList"),roomTitle=document.querySelector("#roomTitle"),roomCode=document.querySelector("#roomCode"),playersEl=document.querySelector("#players"),gameRoot=document.querySelector("#gameRoot");
-    const restartBtn=document.querySelector("#restartBtn"),leaveBtn=document.querySelector("#leaveBtn"),googleBtn=document.querySelector("#googleBtn"),loginError=document.querySelector("#loginError"),logoutBtn=document.querySelector("#logoutBtn"),themeBtn=document.querySelector("#themeBtn"),gameError=document.querySelector("#gameError"),gameToast=document.querySelector("#gameToast");
+    const restartBtn=document.querySelector("#restartBtn"),closeRoomBtn=document.querySelector("#closeRoomBtn"),leaveBtn=document.querySelector("#leaveBtn"),googleBtn=document.querySelector("#googleBtn"),loginError=document.querySelector("#loginError"),logoutBtn=document.querySelector("#logoutBtn"),themeBtn=document.querySelector("#themeBtn"),gameError=document.querySelector("#gameError"),gameToast=document.querySelector("#gameToast");
     const gamesMenuBtn=document.querySelector("#gamesMenuBtn"),gamesHeaderMenu=document.querySelector("#gamesHeaderMenu"),gameWalletXp=document.querySelector("#gameWalletXp"),betSelect=document.querySelector("#betSelect");
 
     let user=null,dayState=null,rooms=[],currentRoomId=null,currentRoom=null,unsubDay=null,unsubBan=null,unsubWallet=null,walletBalance=null,selectedChecker=null,selectedDominoIndex=null,drawing=false,activeStroke=[];
@@ -801,6 +802,7 @@
       if(window.innerWidth>720)setGamesMenu(false);
     });
     function displayName(){return (user?.displayName||user?.email?.split("@")[0]||"Jogador").trim()}
+    function isGamesAdmin(){return (user?.email||"").toLowerCase()==="leandro3dejesus@gmail.com"}
     function roomId(){return (crypto.randomUUID?.()||String(Date.now())+Math.random()).replaceAll("-","").slice(0,20)}
     function randomWord(){
       const pool=HANGMAN_LEVELS[0];
@@ -1443,6 +1445,7 @@
       roomCode.textContent=`Sala ${room.id.slice(0,6).toUpperCase()}${betInfo}`;
       playersEl.innerHTML=(room.playerOrder||[]).map(uid=>`<span class="player-chip">${escapeHtml(room.players?.[uid]||"Jogador")}${uid===user.uid?" · você":""}</span>`).join("");
       restartBtn.classList.toggle("hidden",room.status!=="finished"||bet>0);
+      closeRoomBtn.classList.toggle("hidden",!(room.hostUid===user?.uid||isGamesAdmin()));
       const requiredPlayers=Number(room.requiredPlayers||MIN_PLAYERS[room.game]||2);
 
       if(room.game==="ludo"){
