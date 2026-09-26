@@ -580,6 +580,8 @@
     let ludoAnimationActive=false;
     let ludoAnimationQueue=Promise.resolve();
     let ludoAudioContext=null;
+    let ludoSoundUnlocked=false;
+    let ludoSoundEnabled=true;
     let gameToastTimer=null;
 
     function bahiaDateId(date=new Date()){
@@ -1029,6 +1031,14 @@
       gameRoot.innerHTML=`<div class="turn">${winner?`${escapeHtml(winner)} venceu.`:s.draw?"Deu velha.":`Vez de ${escapeHtml(turnName||"jogador")} · você é ${markByUid[user.uid]||"-"}`}</div><div class="ttt">${(s.board||Array(9).fill("")).map((v,i)=>`<button data-ttt="${i}" ${s.winnerUid||s.draw||s.turnUid!==user.uid||v?"disabled":""}>${v}</button>`).join("")}</div>`;
     }
 
+    document.addEventListener("pointerdown",()=>{
+      unlockLudoAudio(false);
+    },{capture:true});
+
+    document.addEventListener("keydown",()=>{
+      unlockLudoAudio(false);
+    },{capture:true});
+
     gameRoot.addEventListener("click",async event=>{
       const ttt=event.target.closest("[data-ttt]");if(ttt){await playTicTacToe(Number(ttt.dataset.ttt));return}
       const letter=event.target.closest("[data-letter]");if(letter){await guessLetter(letter.dataset.letter);return}
@@ -1043,6 +1053,8 @@
       if(domino){await chooseDominoTile(Number(domino.dataset.dominoIndex));return}
       const ludoColor=event.target.closest("[data-ludo-color]");
       if(ludoColor){await chooseLudoColor(ludoColor.dataset.ludoColor);return}
+      const ludoSound=event.target.closest("[data-ludo-sound]");
+      if(ludoSound){await testLudoSound();return}
       const ludoRoll=event.target.closest("[data-ludo-roll]");
       if(ludoRoll){await rollLudoDice();return}
       const ludoChoice=event.target.closest("[data-ludo-six-choice]");
@@ -1668,6 +1680,9 @@
               '<div class="ludo-status">'+
                 ludoDieHtml(s.dice||s.lastDice)+
                 controls+
+                '<button class="btn btn-sm btn-outline-light w-100 mt-2" type="button" data-ludo-sound>'+
+                  (ludoSoundUnlocked?"Som ativo":"Ativar som")+
+                '</button>'+
                 '<div class="small muted" style="text-align:center;margin-top:8px">'+escapeHtml(s.lastAction||"")+'</div>'+
               '</div>'+
               '<div>'+playerRows+'</div>'+
@@ -1689,44 +1704,100 @@
           if(!AudioCtor)return null;
           ludoAudioContext=new AudioCtor();
         }
-        if(ludoAudioContext.state==="suspended"){
-          ludoAudioContext.resume().catch(()=>{});
-        }
         return ludoAudioContext;
-      }catch(_){
+      }catch(err){
+        console.warn("Web Audio indisponível:",err);
         return null;
       }
     }
 
-    function playLudoTone(frequency,duration=0.045,volume=0.035,type="sine",delay=0){
+    async function unlockLudoAudio(feedback=false){
       const ctx=ensureLudoAudio();
-      if(!ctx||ctx.state!=="running")return;
+      if(!ctx)return false;
 
-      const start=ctx.currentTime+delay;
+      try{
+        if(ctx.state!=="running"){
+          await ctx.resume();
+        }
+
+        if(ctx.state!=="running")return false;
+        ludoSoundUnlocked=true;
+
+        // Toca um clique curto somente quando o usuário pede feedback.
+        if(feedback){
+          playLudoTone(620,0.08,0.14,"sine");
+          setTimeout(()=>playLudoTone(820,0.09,0.12,"sine"),90);
+        }
+
+        return true;
+      }catch(err){
+        console.warn("Navegador bloqueou o áudio do Ludo:",err);
+        ludoSoundUnlocked=false;
+        return false;
+      }
+    }
+
+    function scheduleLudoTone(ctx,frequency,duration,volume,type,delay){
+      if(!ludoSoundEnabled||!ctx||ctx.state!=="running")return;
+
+      const start=ctx.currentTime+Math.max(0,delay||0);
       const oscillator=ctx.createOscillator();
       const gain=ctx.createGain();
 
       oscillator.type=type;
       oscillator.frequency.setValueAtTime(frequency,start);
       gain.gain.setValueAtTime(0.0001,start);
-      gain.gain.exponentialRampToValueAtTime(volume,start+0.008);
+      gain.gain.exponentialRampToValueAtTime(Math.max(0.001,volume),start+0.006);
       gain.gain.exponentialRampToValueAtTime(0.0001,start+duration);
 
       oscillator.connect(gain);
       gain.connect(ctx.destination);
       oscillator.start(start);
-      oscillator.stop(start+duration+0.02);
+      oscillator.stop(start+duration+0.025);
+    }
+
+    function playLudoTone(frequency,duration=0.06,volume=0.11,type="sine",delay=0){
+      if(!ludoSoundEnabled)return;
+
+      const ctx=ensureLudoAudio();
+      if(!ctx)return;
+
+      if(ctx.state==="running"){
+        scheduleLudoTone(ctx,frequency,duration,volume,type,delay);
+        return;
+      }
+
+      // Caso o navegador tenha suspendido o contexto, tenta retomar e só
+      // então agenda o som. Isso evita perder o primeiro efeito sonoro.
+      ctx.resume()
+        .then(()=>{
+          if(ctx.state==="running"){
+            ludoSoundUnlocked=true;
+            scheduleLudoTone(ctx,frequency,duration,volume,type,delay);
+          }
+        })
+        .catch(()=>{});
     }
 
     function playLudoStepSound(stepIndex=0){
-      const frequencies=[420,485,450,520];
-      playLudoTone(frequencies[stepIndex%frequencies.length],0.05,0.04,"triangle");
+      const frequencies=[360,430,390,470];
+      playLudoTone(frequencies[stepIndex%frequencies.length],0.075,0.14,"square");
     }
 
     function playLudoExitBaseSound(){
-      playLudoTone(330,0.07,0.045,"triangle");
-      playLudoTone(520,0.08,0.045,"triangle",0.055);
-      playLudoTone(720,0.10,0.04,"sine",0.11);
+      playLudoTone(300,0.09,0.16,"triangle");
+      playLudoTone(480,0.10,0.15,"triangle",0.075);
+      playLudoTone(700,0.12,0.13,"sine",0.15);
+    }
+
+    async function testLudoSound(){
+      const ok=await unlockLudoAudio(true);
+      if(!ok){
+        showGameToastMessage("O navegador bloqueou o áudio. Clique novamente em 'Ativar som'.");
+      }else{
+        showGameToastMessage("Som do Ludo ativado.");
+        if(currentRoom?.game==="ludo")renderLudo();
+      }
     }
 
     function ludoDiePips(face){
@@ -1768,7 +1839,7 @@
         die.setAttribute("aria-label","Dado girando: "+randomFace);
 
         if(frame%2===0){
-          playLudoTone(150+randomFace*34,0.025,0.018,"square");
+          playLudoTone(170+randomFace*36,0.035,0.075,"square");
         }
 
         await new Promise(resolve=>setTimeout(resolve,70));
@@ -2021,7 +2092,7 @@
     }
 
     async function rollLudoDice(){
-      ensureLudoAudio();
+      await unlockLudoAudio(false);
       if(ludoAnimationActive)return;
       const roll=Math.floor(Math.random()*6)+1;
 
@@ -2087,7 +2158,7 @@
     }
 
     async function resolveLudoSixChoice(choice){
-      ensureLudoAudio();
+      await unlockLudoAudio(false);
       if(ludoAnimationActive)return;
       await mutateRoom(currentRoomId,room=>{
         const s=structuredClone(room.state||{});
