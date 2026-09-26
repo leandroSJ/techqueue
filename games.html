@@ -191,7 +191,14 @@
             <div class="card game-card"><h3>Jogo da Velha</h3><p>Partida rápida para 2 pessoas.</p><button class="btn primary" data-create-game="tictactoe">Criar sala</button></div>
             <div class="card game-card"><h3>Desenhe e Adivinhe</h3><p>Um desenha e os outros tentam descobrir.</p><button class="btn primary" data-create-game="draw">Criar sala</button></div>
             <div class="card game-card"><h3>Forca</h3><p>Turnos, pontuação e palavra secreta.</p><button class="btn primary" data-create-game="hangman">Criar sala</button></div>
-            <div class="card game-card"><h3>Dominó</h3><p>Duelo clássico para 2 jogadores.</p><button class="btn primary" data-create-game="domino">Criar sala</button></div>
+            <div class="card game-card">
+              <h3>Dominó</h3>
+              <p>Escolha uma partida para 2 ou 4 jogadores.</p>
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+                <button class="btn primary" data-create-game="domino" data-domino-players="2">2 jogadores</button>
+                <button class="btn primary" data-create-game="domino" data-domino-players="4">4 jogadores</button>
+              </div>
+            </div>
             <div class="card game-card"><h3>Dama</h3><p>Captura obrigatória, pontuação e dama voadora.</p><button class="btn primary" data-create-game="checkers">Criar sala</button></div>
           </div>
         </section>
@@ -260,7 +267,7 @@
 
     const TEAM_TIMEZONE = "America/Bahia";
     const GAME_NAMES = {tictactoe:"Jogo da Velha",draw:"Desenhe e Adivinhe",hangman:"Forca",domino:"Dominó",checkers:"Dama"};
-    const MAX_PLAYERS = {tictactoe:2,draw:6,hangman:6,domino:2,checkers:2};
+    const MAX_PLAYERS = {tictactoe:2,draw:6,hangman:6,domino:4,checkers:2};
     const MIN_PLAYERS = {tictactoe:2,draw:2,hangman:2,domino:2,checkers:2};
 
     const HANGMAN_LEVELS = [
@@ -372,7 +379,10 @@
       if(!visible.length){roomsList.innerHTML='<div class="muted">Nenhuma sala aberta agora.</div>';return}
       roomsList.innerHTML=visible.map(r=>`
         <div class="room-row">
-          <div><strong>${escapeHtml(GAME_NAMES[r.game]||r.game)}</strong><div class="muted small">Criada por ${escapeHtml(r.hostName||"Jogador")} · ${(r.playerOrder||[]).length}/${r.maxPlayers||2}</div></div>
+          <div>
+            <strong>${escapeHtml(GAME_NAMES[r.game]||r.game)}${r.game==="domino" ? ` · ${Number(r.requiredPlayers||r.maxPlayers||2)} jogadores` : ""}</strong>
+            <div class="muted small">Criada por ${escapeHtml(r.hostName||"Jogador")} · ${(r.playerOrder||[]).length}/${r.requiredPlayers||r.maxPlayers||2}</div>
+          </div>
           <button class="btn" data-join-room="${r.id}">${(r.playerOrder||[]).includes(user?.uid)?"Abrir":"Entrar"}</button>
         </div>`).join("");
     }
@@ -381,7 +391,13 @@
       const create=event.target.closest("[data-create-game]"),join=event.target.closest("[data-join-room]");
       try{
         gameError.textContent="";
-        if(create){await createRoom(create.dataset.createGame);return}
+        if(create){
+          const dominoPlayers=create.dataset.createGame==="domino"
+            ? Number(create.dataset.dominoPlayers||2)
+            : null;
+          await createRoom(create.dataset.createGame,dominoPlayers);
+          return;
+        }
         if(join){await joinRoom(join.dataset.joinRoom);return}
       }catch(err){console.error(err);gameError.textContent=err?.message||"Não foi possível abrir a sala."}
     });
@@ -410,10 +426,34 @@
       return roomResult;
     }
 
-    async function createRoom(game){
+    async function createRoom(game,dominoPlayers=null){
       if(!user)return;
-      const id=roomId(),players={[user.uid]:displayName()},order=[user.uid],state=initialState(game,order);
-      const createdRoom={game,hostUid:user.uid,hostName:displayName(),players,playerOrder:order,maxPlayers:MAX_PLAYERS[game],status:order.length>=MIN_PLAYERS[game]?"playing":"waiting",state,createdAtMs:Date.now()};
+
+      const requiredPlayers=game==="domino"
+        ? (Number(dominoPlayers)===4 ? 4 : 2)
+        : MIN_PLAYERS[game];
+
+      const maxPlayers=game==="domino" ? requiredPlayers : MAX_PLAYERS[game];
+      const id=roomId();
+      const players={[user.uid]:displayName()};
+      const order=[user.uid];
+      const state=game==="domino"
+        ? initDomino(order,requiredPlayers)
+        : initialState(game,order);
+
+      const createdRoom={
+        game,
+        hostUid:user.uid,
+        hostName:displayName(),
+        players,
+        playerOrder:order,
+        maxPlayers,
+        requiredPlayers,
+        status:order.length>=requiredPlayers?"playing":"waiting",
+        state,
+        createdAtMs:Date.now()
+      };
+
       await mutateDay(data=>{
         const gameRooms={...(data.gameRooms||{})};
         gameRooms[id]=createdRoom;
@@ -433,15 +473,15 @@
         room.players=players;
         room.playerOrder=order;
 
-        const enoughPlayers=order.length>=MIN_PLAYERS[room.game];
+        const requiredPlayers=Number(room.requiredPlayers||MIN_PLAYERS[room.game]||2);
+        const enoughPlayers=order.length>=requiredPlayers;
         if(enoughPlayers){
           room.status="playing";
 
-          // Dominó precisa obrigatoriamente gerar as duas mãos quando o segundo
-          // jogador entra. Isso também corrige salas antigas que ficaram em "waiting".
           if(room.game==="domino"){
-            const hasBothHands=order.length===2&&order.every(uid=>Array.isArray(room.state?.hands?.[uid]));
-            if(!hasBothHands)room.state=initDomino(order);
+            const hasAllHands=order.length===requiredPlayers &&
+              order.every(uid=>Array.isArray(room.state?.hands?.[uid]));
+            if(!hasAllHands)room.state=initDomino(order,requiredPlayers);
           }else if(room.game==="hangman"){
             const active=room.state?.activePlayers||[];
             if(!room.state||!active.includes(user.uid))room.state=createHangmanTournament(order);
@@ -475,7 +515,19 @@
           const order=(room.playerOrder||[]).filter(uid=>uid!==user.uid);
           if(!order.length){delete gameRooms[currentRoomId];return {gameRooms}}
           const hostUid=room.hostUid===user.uid?order[0]:room.hostUid;
-          gameRooms[currentRoomId]={...room,players,playerOrder:order,hostUid,hostName:players[hostUid]||"Jogador",status:order.length>=MIN_PLAYERS[room.game]?"playing":"waiting",state:initialState(room.game,order,room.state)};
+          const requiredPlayers=Number(room.requiredPlayers||MIN_PLAYERS[room.game]||2);
+          const nextState=room.game==="domino"
+            ? initDomino(order,requiredPlayers)
+            : initialState(room.game,order,room.state);
+          gameRooms[currentRoomId]={
+            ...room,
+            players,
+            playerOrder:order,
+            hostUid,
+            hostName:players[hostUid]||"Jogador",
+            status:order.length>=requiredPlayers?"playing":"waiting",
+            state:nextState
+          };
           return {gameRooms};
         });
       }catch(err){console.error(err)}
@@ -485,8 +537,11 @@
     restartBtn.addEventListener("click",async()=>{
       if(!currentRoomId||!currentRoom)return;
       await mutateRoom(currentRoomId,room=>{
-        room.state=initialState(room.game,room.playerOrder||[],room.state);
-        room.status=(room.playerOrder||[]).length>=MIN_PLAYERS[room.game]?"playing":"waiting";
+        const requiredPlayers=Number(room.requiredPlayers||MIN_PLAYERS[room.game]||2);
+        room.state=room.game==="domino"
+          ? initDomino(room.playerOrder||[],requiredPlayers)
+          : initialState(room.game,room.playerOrder||[],room.state);
+        room.status=(room.playerOrder||[]).length>=requiredPlayers?"playing":"waiting";
         return room;
       });
     });
@@ -496,7 +551,11 @@
       roomTitle.textContent=GAME_NAMES[room.game]||"Sala";roomCode.textContent=`Sala ${room.id.slice(0,6).toUpperCase()}`;
       playersEl.innerHTML=(room.playerOrder||[]).map(uid=>`<span class="player-chip">${escapeHtml(room.players?.[uid]||"Jogador")}${uid===user.uid?" · você":""}</span>`).join("");
       restartBtn.classList.toggle("hidden",room.status!=="finished");
-      if((room.playerOrder||[]).length<MIN_PLAYERS[room.game]){gameRoot.innerHTML='<div class="muted">Aguardando mais jogadores entrarem na sala.</div>';return}
+      const requiredPlayers=Number(room.requiredPlayers||MIN_PLAYERS[room.game]||2);
+      if((room.playerOrder||[]).length<requiredPlayers){
+        gameRoot.innerHTML=`<div class="muted">Aguardando jogadores: ${(room.playerOrder||[]).length}/${requiredPlayers}.</div>`;
+        return;
+      }
       if(room.game==="tictactoe")renderTicTacToe();
       if(room.game==="hangman")renderHangman();
       if(room.game==="draw")renderDraw();
@@ -950,20 +1009,44 @@
     }
     function normalize(v){return String(v).normalize("NFD").replace(/[\u0300-\u036f]/g,"").trim().toLowerCase()}
 
-    function initDomino(order){
-      if(order.length<2)return{hands:{},board:[],boneyard:[],turnUid:order[0]||null,winnerUid:null};
+    function initDomino(order,requiredPlayers=2){
+      const target=Number(requiredPlayers)===4?4:2;
+
+      if(order.length<target){
+        return{
+          hands:{},
+          board:[],
+          boneyard:[],
+          turnUid:order[0]||null,
+          winnerUid:null,
+          requiredPlayers:target
+        };
+      }
+
       const tiles=[];
-      for(let a=0;a<=6;a++)for(let b=a;b<=6;b++)tiles.push({a,b});
+      for(let a=0;a<=6;a++){
+        for(let b=a;b<=6;b++)tiles.push({a,b});
+      }
+
       for(let i=tiles.length-1;i>0;i--){
         const j=Math.floor(Math.random()*(i+1));
         [tiles[i],tiles[j]]=[tiles[j],tiles[i]];
       }
+
+      const hands={};
+      order.slice(0,target).forEach((uid,index)=>{
+        hands[uid]=tiles.slice(index*7,index*7+7);
+      });
+
+      const dealt=target*7;
+
       return{
-        hands:{[order[0]]:tiles.slice(0,7),[order[1]]:tiles.slice(7,14)},
+        hands,
         board:[],
-        boneyard:tiles.slice(14),
-        turnUid:order[0],
-        winnerUid:null
+        boneyard:tiles.slice(dealt),
+        turnUid:order[0]||null,
+        winnerUid:null,
+        requiredPlayers:target
       };
     }
 
@@ -983,9 +1066,17 @@
       gameRoot.innerHTML=`
         <div class="turn">${winner?`${escapeHtml(winner)} bateu.`:`Vez de ${escapeHtml(turnName||"jogador")}`}</div>
 
+        <div class="players" style="justify-content:center;margin:0 0 10px">
+          ${(currentRoom.playerOrder||[]).map(uid=>`
+            <span class="player-chip">
+              ${escapeHtml(currentRoom.players?.[uid]||"Jogador")}: ${Number(s.hands?.[uid]?.length||0)} pedras
+            </span>
+          `).join("")}
+        </div>
+
         <div class="small muted" style="text-align:center">
-          Pontas da mesa:
-          ${board.length?`${board[0].a} na esquerda · ${board[board.length-1].b} na direita`:"mesa vazia"}
+          Partida para ${Number(currentRoom.requiredPlayers||currentRoom.maxPlayers||2)} jogadores ·
+          Pontas: ${board.length?`${board[0].a} na esquerda · ${board[board.length-1].b} na direita`:"mesa vazia"}
         </div>
 
         <div class="domino-board">
@@ -1055,6 +1146,13 @@
       return dominoPlayableSides(tile,board).length>0;
     }
 
+    function nextDominoPlayer(order,currentUid){
+      if(!order.length)return null;
+      const index=order.indexOf(currentUid);
+      if(index<0)return order[0];
+      return order[(index+1)%order.length];
+    }
+
     async function chooseDominoTile(index){
       const s=currentRoom?.state||{};
       if(s.turnUid!==user.uid||s.winnerUid)return;
@@ -1117,7 +1215,7 @@
         s.board=board;
 
         const winner=hand.length===0?user.uid:null;
-        const next=order.find(uid=>uid!==user.uid)||user.uid;
+        const next=nextDominoPlayer(order,user.uid);
         s.winnerUid=winner;
         s.turnUid=winner?null:next;
         room.state=s;
@@ -1145,7 +1243,7 @@
           hand.push(s.boneyard.shift());
           s.hands[user.uid]=hand;
         }else{
-          s.turnUid=order.find(uid=>uid!==user.uid)||user.uid;
+          s.turnUid=nextDominoPlayer(order,user.uid);
         }
 
         room.state=s;
