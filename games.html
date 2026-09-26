@@ -778,6 +778,10 @@
       }
       const domino=event.target.closest("[data-domino-index]");
       if(domino){await chooseDominoTile(Number(domino.dataset.dominoIndex));return}
+      const ludoRoll=event.target.closest("[data-ludo-roll]");
+      if(ludoRoll){await rollLudoDice();return}
+      const ludoToken=event.target.closest("[data-ludo-token]");
+      if(ludoToken){await moveLudoToken(Number(ludoToken.dataset.ludoToken));return}
       const sq=event.target.closest("[data-square]");if(sq){await handleCheckerClick(Number(sq.dataset.square));return}
     });
 
@@ -1078,6 +1082,306 @@
       input.value="";
     }
     function normalize(v){return String(v).normalize("NFD").replace(/[\u0300-\u036f]/g,"").trim().toLowerCase()}
+
+
+    function initLudo(order,requiredPlayers=2){
+      const target=Math.max(2,Math.min(4,Number(requiredPlayers||2)));
+      const activeOrder=order.slice(0,target);
+      const colorsByUid={};
+      const tokens={};
+
+      activeOrder.forEach((uid,index)=>{
+        colorsByUid[uid]=LUDO_COLORS[index];
+        tokens[uid]=[-1,-1,-1,-1];
+      });
+
+      return{
+        requiredPlayers:target,
+        colorsByUid,
+        tokens,
+        turnUid:activeOrder[0]||null,
+        dice:null,
+        phase:"roll",
+        winnerUid:null,
+        consecutiveSixes:0,
+        lastAction:"Role o dado para começar."
+      };
+    }
+
+    function nextLudoPlayer(order,currentUid){
+      if(!order.length)return null;
+      const index=order.indexOf(currentUid);
+      if(index<0)return order[0];
+      return order[(index+1)%order.length];
+    }
+
+    function ludoAbsoluteTrackIndex(color,step){
+      return (LUDO_START_OFFSETS[color]+step)%52;
+    }
+
+    function ludoTokenCoord(color,step,tokenIndex){
+      if(step<0)return LUDO_YARDS[color][tokenIndex]||LUDO_YARDS[color][0];
+      if(step<=51)return LUDO_TRACK[ludoAbsoluteTrackIndex(color,step)];
+      if(step<=57)return LUDO_HOME_LANES[color][step-52];
+      return [7,7];
+    }
+
+    function ludoCanMove(step,dice){
+      if(!Number.isInteger(dice)||dice<1||dice>6)return false;
+      if(step===LUDO_FINISH_STEP)return false;
+      if(step<0)return dice===6;
+      return step+dice<=LUDO_FINISH_STEP;
+    }
+
+    function ludoMovableTokens(state,uid){
+      const dice=Number(state.dice||0);
+      return (state.tokens?.[uid]||[])
+        .map((step,index)=>ludoCanMove(step,dice)?index:null)
+        .filter(index=>index!==null);
+    }
+
+    function ludoCellClass(row,col){
+      const classes=["ludo-cell"];
+
+      if(row<6&&col<6)classes.push("home-red");
+      else if(row<6&&col>8)classes.push("home-green");
+      else if(row>8&&col>8)classes.push("home-yellow");
+      else if(row>8&&col<6)classes.push("home-blue");
+
+      const trackIndex=LUDO_TRACK.findIndex(item=>item[0]===row&&item[1]===col);
+      if(trackIndex>=0){
+        classes.push("track");
+        if(LUDO_SAFE_GLOBAL.has(trackIndex))classes.push("safe");
+        if(trackIndex===0)classes.push("start-red");
+        if(trackIndex===13)classes.push("start-green");
+        if(trackIndex===26)classes.push("start-yellow");
+        if(trackIndex===39)classes.push("start-blue");
+      }
+
+      for(const color of LUDO_COLORS){
+        if(LUDO_HOME_LANES[color].some(item=>item[0]===row&&item[1]===col)){
+          classes.push("lane-"+color);
+        }
+      }
+
+      if(row===7&&col===7)classes.push("center");
+      return classes.join(" ");
+    }
+
+    function renderLudo(){
+      const s=currentRoom.state||{};
+      const order=currentRoom.playerOrder||[];
+      const colors=s.colorsByUid||{};
+      const turnName=s.turnUid?currentRoom.players?.[s.turnUid]:"";
+      const winnerName=s.winnerUid?currentRoom.players?.[s.winnerUid]:"";
+      const myTurn=s.turnUid===user.uid&&!s.winnerUid;
+      const movable=new Set(myTurn&&s.phase==="move"?ludoMovableTokens(s,user.uid):[]);
+      const tokenMap=new Map();
+
+      order.forEach(uid=>{
+        const color=colors[uid]||"red";
+        (s.tokens?.[uid]||[]).forEach((step,tokenIndex)=>{
+          const coord=ludoTokenCoord(color,step,tokenIndex);
+          const key=coord[0]+","+coord[1];
+          if(!tokenMap.has(key))tokenMap.set(key,[]);
+          tokenMap.get(key).push({uid,color,step,tokenIndex});
+        });
+      });
+
+      let boardHtml="";
+      for(let row=0;row<15;row++){
+        for(let col=0;col<15;col++){
+          const key=row+","+col;
+          const pieces=tokenMap.get(key)||[];
+          let tokenHtml="";
+
+          pieces.forEach(piece=>{
+            const canClick=piece.uid===user.uid&&movable.has(piece.tokenIndex);
+            const label=piece.tokenIndex+1;
+            if(canClick){
+              tokenHtml+='<button class="ludo-token '+piece.color+' movable" data-ludo-token="'+piece.tokenIndex+'" title="Mover peça '+label+'">'+label+'</button>';
+            }else{
+              tokenHtml+='<span class="ludo-token '+piece.color+'" title="'+escapeHtml(currentRoom.players?.[piece.uid]||"Jogador")+' · peça '+label+'">'+label+'</span>';
+            }
+          });
+
+          boardHtml+='<div class="'+ludoCellClass(row,col)+'">'+tokenHtml+'</div>';
+        }
+      }
+
+      let playerRows="";
+      order.forEach(uid=>{
+        const color=colors[uid]||"red";
+        const pieces=s.tokens?.[uid]||[];
+        const finished=pieces.filter(step=>step===LUDO_FINISH_STEP).length;
+        playerRows+='<div class="ludo-player-row">'+
+          '<span style="display:flex;align-items:center;gap:7px;min-width:0">'+
+          '<span class="ludo-color-dot '+color+'"></span>'+
+          '<span style="overflow-wrap:anywhere">'+escapeHtml(currentRoom.players?.[uid]||"Jogador")+(uid===user.uid?" · você":"")+'</span>'+
+          '</span><strong>'+finished+'/4</strong></div>';
+      });
+
+      const headline=s.winnerUid
+        ? escapeHtml(winnerName||"Jogador")+" venceu o Ludo Tech!"
+        : "Vez de "+escapeHtml(turnName||"jogador")+". "+(myTurn?(s.phase==="roll"?"Role o dado.":"Escolha uma peça destacada."):"Aguarde sua vez.");
+
+      const rollDisabled=!myTurn||s.phase!=="roll"||s.winnerUid ? " disabled" : "";
+
+      gameRoot.innerHTML=
+        '<div class="turn">'+headline+'</div>'+
+        '<div class="ludo-wrap">'+
+          '<div class="ludo-board" aria-label="Tabuleiro de Ludo">'+boardHtml+'</div>'+
+          '<aside class="ludo-panel">'+
+            '<div class="ludo-status">'+
+              '<div class="ludo-die">'+(s.dice??"?")+'</div>'+
+              '<div style="text-align:center;margin-top:8px">'+
+                '<button class="btn primary" type="button" data-ludo-roll'+rollDisabled+'>Rolar dado</button>'+
+              '</div>'+
+              '<div class="small muted" style="text-align:center;margin-top:7px">'+escapeHtml(s.lastAction||"")+'</div>'+
+            '</div>'+
+            '<div>'+playerRows+'</div>'+
+            '<div class="ludo-rules"><strong>Regras desta versão</strong><br>'+
+              'Tire 6 para tirar uma peça da base. Ande o número do dado. Se cair sobre adversário fora de casa segura, ele volta para a base. '+
+              'Tirar 6 ou capturar dá outra jogada. Para chegar ao centro, precisa do número exato.'+
+            '</div>'+
+          '</aside>'+
+        '</div>';
+    }
+
+    async function rollLudoDice(){
+      await mutateRoom(currentRoomId,room=>{
+        const s=structuredClone(room.state||{});
+        const order=room.playerOrder||[];
+
+        if(s.winnerUid||s.turnUid!==user.uid||s.phase!=="roll")return room;
+
+        const roll=Math.floor(Math.random()*6)+1;
+        const playerName=room.players?.[user.uid]||displayName();
+        const consecutive=roll===6?Number(s.consecutiveSixes||0)+1:0;
+
+        if(consecutive>=3){
+          s.dice=roll;
+          s.phase="roll";
+          s.consecutiveSixes=0;
+          s.lastAction=playerName+" tirou três 6 seguidos e perdeu a vez.";
+          s.turnUid=nextLudoPlayer(order,user.uid);
+          room.state=s;
+          return room;
+        }
+
+        s.dice=roll;
+        s.consecutiveSixes=consecutive;
+        const movable=(s.tokens?.[user.uid]||[]).some(step=>ludoCanMove(step,roll));
+
+        if(!movable){
+          s.lastAction=playerName+" tirou "+roll+", mas não tem peça que possa mover.";
+
+          if(roll===6){
+            s.phase="roll";
+          }else{
+            s.phase="roll";
+            s.turnUid=nextLudoPlayer(order,user.uid);
+            s.dice=null;
+            s.consecutiveSixes=0;
+          }
+
+          room.state=s;
+          return room;
+        }
+
+        s.phase="move";
+        s.lastAction=playerName+" tirou "+roll+". Escolha uma peça.";
+        room.state=s;
+        return room;
+      });
+    }
+
+    async function moveLudoToken(tokenIndex){
+      await mutateRoom(currentRoomId,room=>{
+        const s=structuredClone(room.state||{});
+        const order=room.playerOrder||[];
+        const dice=Number(s.dice||0);
+
+        if(s.winnerUid||s.turnUid!==user.uid||s.phase!=="move")return room;
+
+        const tokens=[...(s.tokens?.[user.uid]||[])];
+        const oldStep=tokens[tokenIndex];
+        if(oldStep===undefined||!ludoCanMove(oldStep,dice))return room;
+
+        const color=s.colorsByUid?.[user.uid]||"red";
+        const newStep=oldStep<0?0:oldStep+dice;
+        tokens[tokenIndex]=newStep;
+        s.tokens[user.uid]=tokens;
+
+        let captured=0;
+
+        if(newStep>=0&&newStep<=51){
+          const globalIndex=ludoAbsoluteTrackIndex(color,newStep);
+
+          if(!LUDO_SAFE_GLOBAL.has(globalIndex)){
+            for(const opponentUid of order){
+              if(opponentUid===user.uid)continue;
+
+              const opponentColor=s.colorsByUid?.[opponentUid]||"red";
+              const opponentTokens=[...(s.tokens?.[opponentUid]||[])];
+
+              opponentTokens.forEach((step,index)=>{
+                if(step<0||step>51)return;
+                const opponentGlobal=ludoAbsoluteTrackIndex(opponentColor,step);
+                if(opponentGlobal===globalIndex){
+                  opponentTokens[index]=-1;
+                  captured++;
+                }
+              });
+
+              s.tokens[opponentUid]=opponentTokens;
+            }
+          }
+        }
+
+        const playerName=room.players?.[user.uid]||displayName();
+        const finished=newStep===LUDO_FINISH_STEP;
+        const won=tokens.every(step=>step===LUDO_FINISH_STEP);
+
+        if(won){
+          s.winnerUid=user.uid;
+          s.turnUid=null;
+          s.dice=null;
+          s.phase="finished";
+          s.lastAction=playerName+" colocou as 4 peças no centro e venceu.";
+          room.state=s;
+          room.status="finished";
+          return room;
+        }
+
+        const extraTurn=dice===6||captured>0;
+        let moveText;
+
+        if(oldStep<0)moveText=playerName+" tirou uma peça da base.";
+        else if(finished)moveText=playerName+" colocou uma peça no centro.";
+        else moveText=playerName+" avançou "+dice+" casa"+(dice===1?"":"s")+".";
+
+        if(captured){
+          moveText+=" Capturou "+captured+" peça"+(captured===1?"":"s")+".";
+        }
+
+        s.lastAction=moveText;
+        s.dice=null;
+        s.phase="roll";
+
+        if(extraTurn){
+          s.turnUid=user.uid;
+          if(dice!==6)s.consecutiveSixes=0;
+        }else{
+          s.turnUid=nextLudoPlayer(order,user.uid);
+          s.consecutiveSixes=0;
+        }
+
+        room.state=s;
+        room.status="playing";
+        return room;
+      });
+    }
 
     function initDomino(order,requiredPlayers=2){
       const target=Number(requiredPlayers)===4?4:2;
