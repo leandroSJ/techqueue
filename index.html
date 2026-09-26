@@ -1068,6 +1068,8 @@
     let unsubQueuedClients = null;
     let nudgesReady = false;
     let lastSeenPassEventId = null;
+    let lastSeenPresenceEventId = null;
+    let isSigningOut = false;
     let openAttendance = null;
     let userProfileDoc = null;
     let unsubProfile = null;
@@ -1197,11 +1199,15 @@
 
       if (!user) {
         authUser = null; profile = null; dayState = null; openAttendance = null;
+        isSigningOut = false;
+        logoutBtn.disabled = false;
         setViews(false);
         return;
       }
 
       try {
+        isSigningOut = false;
+        logoutBtn.disabled = false;
         authUser = user;
 
         const googleName = (user.displayName || user.email?.split("@")[0] || "Técnico").trim();
@@ -1437,12 +1443,14 @@
       userProfileDoc = null;
       nudgesReady = false;
       lastSeenPassEventId = null;
+      lastSeenPresenceEventId = null;
       activeDayId = null;
       if (dayRolloverTimer) clearInterval(dayRolloverTimer);
       dayRolloverTimer = null;
     }
 
     async function joinToday() {
+      if (isSigningOut || !authUser || !profile) return;
       const now = bahiaParts();
       const dayRef = doc(db, "days", now.dateId);
 
@@ -1461,6 +1469,7 @@
 
         const members = { ...(initial.members || {}) };
         const existingMember = members[authUser.uid];
+        const isNewPresence = !existingMember;
 
         // Preserva estados temporários e atendimento em andamento ao recarregar.
         if (["busy", "lunch", "bathroom", "away"].includes(existingMember?.status)) return;
@@ -1484,6 +1493,16 @@
           currentUid: initial.currentUid || queue[0] || null,
           updatedAt: serverTimestamp()
         };
+
+        if (isNewPresence) {
+          payload.lastPresenceEvent = {
+            id: Date.now() + "-" + authUser.uid + "-join",
+            type: "join",
+            uid: authUser.uid,
+            name: profile.name,
+            createdAtMs: Date.now()
+          };
+        }
 
         if (!existing) payload.createdAt = serverTimestamp();
 
@@ -1510,6 +1529,7 @@
       unsubDay = onSnapshot(dayRef, async snap => {
         const nextState = snap.exists() ? snap.data() : null;
         const passEvent = nextState?.lastPassEvent || null;
+        const presenceEvent = nextState?.lastPresenceEvent || null;
 
         if (passEvent?.id && passEvent.id !== lastSeenPassEventId) {
           const shouldNotify = lastSeenPassEventId !== null && passEvent.fromUid !== authUser?.uid;
@@ -1519,6 +1539,36 @@
             eventToast.textContent = `${passEvent.fromName || "Alguém"} passou a vez. Agora é a vez de ${passEvent.nextName || "outro técnico"}.`;
             eventToast.classList.remove("hidden");
             setTimeout(() => eventToast.classList.add("hidden"), 4000);
+          }
+        }
+
+        if (presenceEvent?.id && presenceEvent.id !== lastSeenPresenceEventId) {
+          const shouldNotify =
+            lastSeenPresenceEventId !== null &&
+            presenceEvent.uid !== authUser?.uid;
+
+          lastSeenPresenceEventId = presenceEvent.id;
+
+          if (shouldNotify) {
+            const actionText = presenceEvent.type === "leave" ? "saiu do TechQueue" : "entrou no TechQueue";
+            const message = `${presenceEvent.name || "Usuário"} ${actionText}.`;
+
+            eventToast.textContent = message;
+            eventToast.classList.remove("hidden");
+            setTimeout(() => eventToast.classList.add("hidden"), 4500);
+
+            if (document.hidden && "Notification" in window && Notification.permission === "granted") {
+              try {
+                new Notification("TechQueue", {
+                  body: message,
+                  tag: "techqueue-presence",
+                  renotify: true,
+                  silent: true
+                });
+              } catch (err) {
+                console.warn("Falha ao mostrar notificação de presença:", err);
+              }
+            }
           }
         }
 
@@ -2497,33 +2547,66 @@
         return;
       }
 
+      isSigningOut = true;
+      logoutBtn.disabled = true;
+
       try {
         await leaveQueue();
+        await signOut(auth);
       } catch (err) {
         console.error(err);
+        isSigningOut = false;
+        logoutBtn.disabled = false;
+        alert("Não foi possível sair agora. Tente novamente.");
       }
-      await signOut(auth);
     });
 
     async function leaveQueue() {
-      if (!authUser || !dayState) return;
-      const dayRef = doc(db, "days", bahiaParts().dateId);
+      if (!authUser) return;
+
+      const now = bahiaParts();
+      const dayRef = doc(db, "days", now.dateId);
+      const leavingUid = authUser.uid;
+      const leavingName = profile?.name || authUser.displayName || "Usuário";
 
       await runTransaction(db, async tx => {
         const snap = await tx.get(dayRef);
         if (!snap.exists()) return;
-        const state = snap.data();
-        const member = state.members?.[authUser.uid];
-        if (!member || member.status === "busy") return;
 
-        const queue = (state.queue || []).filter(uid => uid !== authUser.uid);
-        const members = { ...state.members };
-        members[authUser.uid] = { ...member, status: "offline" };
+        const state = snap.data();
+        const member = state.members?.[leavingUid];
+        if (!member) return;
+        if (member.status === "busy") {
+          throw new Error("Finalize seu atendimento antes de sair.");
+        }
+
+        const queue = (state.queue || []).filter(uid => uid !== leavingUid);
+        const members = { ...(state.members || {}) };
+
+        // Ao sair, o usuário deixa de existir na lista do dia. Assim não fica
+        // acumulando cartões "Fora da fila" e não participa mais do rodízio.
+        delete members[leavingUid];
+
+        const passedSinceLastAttendance = (state.passedSinceLastAttendance || [])
+          .filter(uid => uid !== leavingUid);
+
+        const nextCurrentUid =
+          state.currentUid === leavingUid
+            ? (queue[0] || null)
+            : (queue.includes(state.currentUid) ? state.currentUid : (queue[0] || null));
 
         tx.update(dayRef, {
           queue,
           members,
-          currentUid: state.currentUid === authUser.uid ? (queue[0] || null) : state.currentUid,
+          currentUid: nextCurrentUid,
+          passedSinceLastAttendance,
+          lastPresenceEvent: {
+            id: Date.now() + "-" + leavingUid + "-leave",
+            type: "leave",
+            uid: leavingUid,
+            name: leavingName,
+            createdAtMs: Date.now()
+          },
           updatedAt: serverTimestamp()
         });
       });
@@ -2597,7 +2680,7 @@
 
     // Mantém a presença na fila sincronizada mesmo após uma limpeza administrativa.
     setInterval(async () => {
-      if (!authUser || !profile) return;
+      if (!authUser || !profile || isSigningOut) return;
       try { await joinToday(); } catch (err) { console.error(err); }
     }, 30000);
   </script>
