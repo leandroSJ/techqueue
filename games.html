@@ -237,6 +237,16 @@
       gap:3px;
     }
     .ludo-die-face.empty{display:grid;place-items:center;color:#59636e;font-size:1.4rem;font-weight:700}
+    .ludo-die-face.rolling{
+      animation:ludoDiceRoll .16s linear infinite;
+    }
+    @keyframes ludoDiceRoll{
+      0%{transform:rotate(0deg) scale(1)}
+      25%{transform:rotate(12deg) scale(.94)}
+      50%{transform:rotate(-9deg) scale(1.06)}
+      75%{transform:rotate(8deg) scale(.96)}
+      100%{transform:rotate(0deg) scale(1)}
+    }
     .ludo-pip{width:11px;height:11px;border-radius:50%;background:transparent;align-self:center;justify-self:center}
     .ludo-pip.on{background:#151515;box-shadow:inset 0 -1px 1px rgba(255,255,255,.3)}
     .ludo-player-row{
@@ -564,9 +574,12 @@
 
     let user=null,dayState=null,rooms=[],currentRoomId=null,currentRoom=null,unsubDay=null,selectedChecker=null,selectedDominoIndex=null,drawing=false,activeStroke=[];
     let seenHangmanActionId=null;
+    let seenLudoRollId=null;
     let seenLudoMoveId=null;
     let ludoAnimationRun=0;
     let ludoAnimationActive=false;
+    let ludoAnimationQueue=Promise.resolve();
+    let ludoAudioContext=null;
     let gameToastTimer=null;
 
     function bahiaDateId(date=new Date()){
@@ -796,13 +809,17 @@
       roomView.classList.remove("hidden");
       const found=roomSnapshot||(dayState?.gameRooms||{})[id];
       currentRoom=found?{id,...found}:null;
+      seenLudoRollId=currentRoom?.game==="ludo" ? (currentRoom.state?.lastRoll?.id||null) : null;
       seenLudoMoveId=currentRoom?.game==="ludo" ? (currentRoom.state?.lastMove?.id||null) : null;
+      ludoAnimationQueue=Promise.resolve();
       if(currentRoom)renderRoom();
     }
     function backToLobby(){
       ludoAnimationRun++;
       ludoAnimationActive=false;
+      seenLudoRollId=null;
       seenLudoMoveId=null;
+      ludoAnimationQueue=Promise.resolve();
       currentRoomId=null;
       currentRoom=null;
       selectedChecker=null;
@@ -1447,7 +1464,7 @@
     function ludoDieHtml(value){
       const face=Number(value||0);
       if(face<1||face>6){
-        return '<div class="ludo-die-face empty" aria-label="Dado ainda não rolado">—</div>';
+        return '<div class="ludo-die-face empty" data-ludo-die aria-label="Dado ainda não rolado">—</div>';
       }
 
       const positions={
@@ -1464,7 +1481,7 @@
         pips+='<span class="ludo-pip'+(positions[face].includes(index)?" on":"")+'"></span>';
       }
 
-      return '<div class="ludo-die-face" aria-label="Dado: '+face+'">'+pips+'</div>';
+      return '<div class="ludo-die-face" data-ludo-die aria-label="Dado: '+face+'">'+pips+'</div>';
     }
 
     function renderLudoColorSetup(state,order,requiredPlayers){
@@ -1513,6 +1530,7 @@
     }
 
     async function chooseLudoColor(color){
+      ensureLudoAudio();
       if(!LUDO_COLORS.includes(color))return;
 
       await mutateRoom(currentRoomId,room=>{
@@ -1661,7 +1679,150 @@
           '</div>'+
         '</div>';
 
-      queueLudoMoveAnimation(s.lastMove);
+      queueLudoVisualAnimations(s.lastRoll,s.lastMove);
+    }
+
+    function ensureLudoAudio(){
+      try{
+        if(!ludoAudioContext){
+          const AudioCtor=window.AudioContext||window.webkitAudioContext;
+          if(!AudioCtor)return null;
+          ludoAudioContext=new AudioCtor();
+        }
+        if(ludoAudioContext.state==="suspended"){
+          ludoAudioContext.resume().catch(()=>{});
+        }
+        return ludoAudioContext;
+      }catch(_){
+        return null;
+      }
+    }
+
+    function playLudoTone(frequency,duration=0.045,volume=0.035,type="sine",delay=0){
+      const ctx=ensureLudoAudio();
+      if(!ctx||ctx.state!=="running")return;
+
+      const start=ctx.currentTime+delay;
+      const oscillator=ctx.createOscillator();
+      const gain=ctx.createGain();
+
+      oscillator.type=type;
+      oscillator.frequency.setValueAtTime(frequency,start);
+      gain.gain.setValueAtTime(0.0001,start);
+      gain.gain.exponentialRampToValueAtTime(volume,start+0.008);
+      gain.gain.exponentialRampToValueAtTime(0.0001,start+duration);
+
+      oscillator.connect(gain);
+      gain.connect(ctx.destination);
+      oscillator.start(start);
+      oscillator.stop(start+duration+0.02);
+    }
+
+    function playLudoStepSound(stepIndex=0){
+      const frequencies=[420,485,450,520];
+      playLudoTone(frequencies[stepIndex%frequencies.length],0.05,0.04,"triangle");
+    }
+
+    function playLudoExitBaseSound(){
+      playLudoTone(330,0.07,0.045,"triangle");
+      playLudoTone(520,0.08,0.045,"triangle",0.055);
+      playLudoTone(720,0.10,0.04,"sine",0.11);
+    }
+
+    function ludoDiePips(face){
+      const positions={
+        1:[4],
+        2:[0,8],
+        3:[0,4,8],
+        4:[0,2,6,8],
+        5:[0,2,4,6,8],
+        6:[0,2,3,5,6,8]
+      };
+
+      let pips="";
+      for(let index=0;index<9;index++){
+        pips+='<span class="ludo-pip'+(positions[face]?.includes(index)?" on":"")+'"></span>';
+      }
+      return pips;
+    }
+
+    async function animateLudoDice(roll,runId){
+      if(!roll?.id)return;
+
+      ludoAnimationActive=true;
+      const finalFace=Math.max(1,Math.min(6,Number(roll.face||1)));
+      const frames=10;
+
+      for(let frame=0;frame<frames;frame++){
+        if(runId!==ludoAnimationRun)return;
+
+        const die=gameRoot.querySelector("[data-ludo-die]");
+        if(!die)break;
+
+        let randomFace=Math.floor(Math.random()*6)+1;
+        if(frame===frames-1)randomFace=finalFace;
+
+        die.classList.remove("empty");
+        die.classList.add("rolling");
+        die.innerHTML=ludoDiePips(randomFace);
+        die.setAttribute("aria-label","Dado girando: "+randomFace);
+
+        if(frame%2===0){
+          playLudoTone(150+randomFace*34,0.025,0.018,"square");
+        }
+
+        await new Promise(resolve=>setTimeout(resolve,70));
+      }
+
+      if(runId!==ludoAnimationRun)return;
+
+      const die=gameRoot.querySelector("[data-ludo-die]");
+      if(die){
+        die.classList.remove("rolling","empty");
+        die.innerHTML=ludoDiePips(finalFace);
+        die.setAttribute("aria-label","Dado: "+finalFace);
+      }
+
+      await new Promise(resolve=>setTimeout(resolve,110));
+    }
+
+    function queueLudoVisualAnimations(roll,move){
+      const newRoll=!!roll?.id&&roll.id!==seenLudoRollId;
+      const newMove=!!move?.id&&move.id!==seenLudoMoveId;
+
+      if(!newRoll&&!newMove)return;
+
+      if(newRoll)seenLudoRollId=roll.id;
+      if(newMove)seenLudoMoveId=move.id;
+
+      const runId=ludoAnimationRun;
+
+      ludoAnimationQueue=ludoAnimationQueue
+        .then(async()=>{
+          if(runId!==ludoAnimationRun)return;
+          ludoAnimationActive=true;
+
+          if(newRoll){
+            await animateLudoDice(roll,runId);
+          }
+
+          if(runId!==ludoAnimationRun)return;
+
+          if(newMove){
+            await animateLudoMove(move,runId);
+          }
+
+          if(runId!==ludoAnimationRun)return;
+          ludoAnimationActive=false;
+
+          if(currentRoom?.game==="ludo"){
+            renderLudo();
+          }
+        })
+        .catch(err=>{
+          console.warn("Falha na animação do Ludo:",err);
+          ludoAnimationActive=false;
+        });
     }
 
     function ludoMovePath(move){
@@ -1702,18 +1863,14 @@
       ghost.style.top=(cellRect.top-boardRect.top+(cellRect.height-size)/2)+"px";
     }
 
-    async function queueLudoMoveAnimation(move){
-      if(!move?.id||move.id===seenLudoMoveId)return;
+    async function animateLudoMove(move,runId){
+      if(!move?.id)return;
 
-      seenLudoMoveId=move.id;
-      const runId=++ludoAnimationRun;
       const board=gameRoot.querySelector(".ludo-board");
       if(!board)return;
 
       const path=ludoMovePath(move);
       if(path.length<2)return;
-
-      ludoAnimationActive=true;
 
       const finalToken=[...board.querySelectorAll(".ludo-token")].find(token=>
         token.dataset.ludoPieceUid===String(move.uid) &&
@@ -1730,7 +1887,6 @@
       if(!firstCell){
         ghost.remove();
         finalToken?.classList.remove("ludo-arrival-hidden");
-        ludoAnimationActive=false;
         return;
       }
 
@@ -1752,6 +1908,12 @@
         ghost.classList.add("hop");
         positionLudoGhost(ghost,board,cell);
 
+        if(Number(move.fromStep)<0&&index===1){
+          playLudoExitBaseSound();
+        }else{
+          playLudoStepSound(index-1);
+        }
+
         await new Promise(resolve=>setTimeout(resolve,165));
       }
 
@@ -1762,12 +1924,6 @@
 
       ghost.remove();
       finalToken?.classList.remove("ludo-arrival-hidden");
-      ludoAnimationActive=false;
-
-      // Atualiza somente os controles após a animação, sem repetir o movimento.
-      if(currentRoom?.game==="ludo"&&currentRoom.state?.lastMove?.id===move.id){
-        renderLudo();
-      }
     }
 
     function applyLudoMoveState(room,s,uid,tokenIndex,dice){
@@ -1865,6 +2021,7 @@
     }
 
     async function rollLudoDice(){
+      ensureLudoAudio();
       if(ludoAnimationActive)return;
       const roll=Math.floor(Math.random()*6)+1;
 
@@ -1879,6 +2036,12 @@
 
         s.dice=roll;
         s.lastDice=roll;
+        s.lastRoll={
+          id:actionId(),
+          uid:user.uid,
+          face:roll,
+          at:Date.now()
+        };
         s.consecutiveSixes=consecutive;
 
         if(consecutive>=3){
@@ -1924,6 +2087,7 @@
     }
 
     async function resolveLudoSixChoice(choice){
+      ensureLudoAudio();
       if(ludoAnimationActive)return;
       await mutateRoom(currentRoomId,room=>{
         const s=structuredClone(room.state||{});
