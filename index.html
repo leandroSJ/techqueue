@@ -1277,53 +1277,83 @@
       }
     }
 
-    async function ensureUserProfile() {
-      const WELCOME_BONUS_XP = 35;
-      const ref = doc(db, "profiles", authUser.uid);
-      const snap = await getDoc(ref);
+    function walletRef() {
+      // A carteira fica em um documento persistente dentro de /days,
+      // caminho que o TechQueue já usa com sucesso para a fila.
+      return doc(db, "days", "_wallets");
+    }
 
-      if (!snap.exists()) {
-        await setDoc(ref, {
-          name: profile.name,
-          email: profile.email,
-          xpBalance: WELCOME_BONUS_XP,
-          welcomeBonus35Granted: true,
-          welcomeBonusAmount: WELCOME_BONUS_XP,
-          audioCredits: {},
-          unlockedItems: [],
-          createdAt: serverTimestamp(),
-          updatedAt: serverTimestamp()
-        });
-        return;
-      }
-
-      const data = snap.data();
-      const patch = {
+    function defaultWallet(oldData = null) {
+      const oldBalance = Number(oldData?.xpBalance || 0);
+      return {
         name: profile.name,
         email: profile.email,
-        audioCredits: { ...(data.audioCredits || {}) },
-        unlockedItems: Array.isArray(data.unlockedItems) ? data.unlockedItems : [],
-        updatedAt: serverTimestamp()
+        xpBalance: Math.max(35, oldBalance),
+        welcomeBonus35Granted: true,
+        welcomeBonusAmount: 35,
+        audioCredits: { ...(oldData?.audioCredits || {}) },
+        unlockedItems: Array.isArray(oldData?.unlockedItems) ? oldData.unlockedItems : [],
+        updatedAtMs: Date.now()
       };
+    }
 
-      // Bônus único de boas-vindas definido agora em 35 XP.
-      // O campo dedicado evita que o mesmo usuário receba novamente ao recarregar.
-      if (data.welcomeBonus35Granted !== true) {
-        patch.xpBalance = Number(data.xpBalance || 0) + WELCOME_BONUS_XP;
-        patch.welcomeBonus35Granted = true;
-        patch.welcomeBonusAmount = WELCOME_BONUS_XP;
-        patch.welcomeBonusGrantedAt = serverTimestamp();
+    async function ensureUserProfile() {
+      const ref = walletRef();
+      let legacyProfile = null;
+
+      // Migração oportunista: se /profiles estiver acessível, preserva saldo e itens.
+      // Se estiver bloqueado pelas regras antigas, a carteira nova continua funcionando.
+      try {
+        const legacySnap = await getDoc(doc(db, "profiles", authUser.uid));
+        if (legacySnap.exists()) legacyProfile = legacySnap.data();
+      } catch (legacyErr) {
+        console.warn("Perfil legado indisponível; usando carteira em /days/_wallets.", legacyErr);
       }
 
-      await setDoc(ref, patch, { merge: true });
+      await runTransaction(db, async tx => {
+        const snap = await tx.get(ref);
+        const data = snap.exists() ? snap.data() : {};
+        const wallets = { ...(data.wallets || {}) };
+        const existing = wallets[authUser.uid];
+
+        if (!existing) {
+          wallets[authUser.uid] = defaultWallet(legacyProfile);
+        } else {
+          wallets[authUser.uid] = {
+            ...existing,
+            name: profile.name,
+            email: profile.email,
+            xpBalance: Math.max(35, Number(existing.xpBalance || 0)),
+            welcomeBonus35Granted: true,
+            welcomeBonusAmount: 35,
+            audioCredits: { ...(existing.audioCredits || {}) },
+            unlockedItems: Array.isArray(existing.unlockedItems) ? existing.unlockedItems : [],
+            updatedAtMs: Date.now()
+          };
+        }
+
+        tx.set(ref, {
+          type: "techqueue_wallets",
+          wallets,
+          updatedAt: serverTimestamp()
+        }, { merge: true });
+      });
     }
 
     function subscribeUserProfile() {
       if (unsubProfile) unsubProfile();
-      const ref = doc(db, "profiles", authUser.uid);
+      const ref = walletRef();
+
       unsubProfile = onSnapshot(ref, snap => {
-        userProfileDoc = snap.exists() ? { id: snap.id, ...snap.data() } : null;
+        const wallets = snap.exists() ? (snap.data().wallets || {}) : {};
+        userProfileDoc = wallets[authUser.uid] || null;
         renderWalletAndShop();
+      }, err => {
+        console.error("Falha ao sincronizar carteira de XP:", err);
+        userProfileDoc = null;
+        renderWalletAndShop();
+        walletXp.textContent = "XP indisponível";
+        shopBalance.textContent = "Carteira indisponível.";
       });
     }
 
@@ -1379,7 +1409,7 @@
       if (!item) return;
 
       button.disabled = true;
-      const ref = doc(db, "profiles", authUser.uid);
+      const ref = walletRef();
 
       try {
         await runTransaction(db, async tx => {
@@ -1387,32 +1417,38 @@
           if (!snap.exists()) throw new Error("Carteira de XP não encontrada.");
 
           const data = snap.data();
-          const balance = Number(data.xpBalance || 0);
-          const unlocked = new Set(data.unlockedItems || []);
-          const credits = { ...(data.audioCredits || {}) };
+          const wallets = { ...(data.wallets || {}) };
+          const wallet = { ...(wallets[authUser.uid] || defaultWallet()) };
+          const balance = Number(wallet.xpBalance || 0);
+          const unlocked = new Set(wallet.unlockedItems || []);
+          const credits = { ...(wallet.audioCredits || {}) };
 
           if (balance < item.price) throw new Error("XP insuficiente.");
 
           if (item.type === "sound") {
             credits[item.soundId] = Number(credits[item.soundId] || 0) + 1;
-            tx.update(ref, {
-              xpBalance: balance - item.price,
-              audioCredits: credits,
-              updatedAt: serverTimestamp()
-            });
+            wallet.xpBalance = balance - item.price;
+            wallet.audioCredits = credits;
           } else {
             if (unlocked.has(item.id)) return;
             unlocked.add(item.id);
-            tx.update(ref, {
-              xpBalance: balance - item.price,
-              unlockedItems: [...unlocked],
-              updatedAt: serverTimestamp()
-            });
+            wallet.xpBalance = balance - item.price;
+            wallet.unlockedItems = [...unlocked];
           }
+
+          wallet.updatedAtMs = Date.now();
+          wallets[authUser.uid] = wallet;
+
+          tx.set(ref, {
+            wallets,
+            updatedAt: serverTimestamp()
+          }, { merge: true });
         });
       } catch (err) {
         console.error(err);
         alert(err.message || "Não foi possível comprar este item.");
+      } finally {
+        button.disabled = false;
       }
     });
 
