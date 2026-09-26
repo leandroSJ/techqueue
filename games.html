@@ -925,15 +925,18 @@
               <strong>${escapeHtml(GAME_NAMES[r.game]||r.game)}${["domino","ludo"].includes(r.game) ? ` · ${Number(r.requiredPlayers||r.maxPlayers||2)} jogadores` : ""}</strong>
               <div class="muted small">Criada por ${escapeHtml(r.hostName||"Jogador")} · ${(r.playerOrder||[]).length}/${r.requiredPlayers||r.maxPlayers||2}${betText}</div>
             </div>
-            <button class="btn" data-join-room="${r.id}" ${insufficient?"disabled":""}>
-              ${isMember?"Abrir":insufficient?"Saldo insuficiente":"Entrar"}
-            </button>
+            <div class="d-flex gap-2 flex-wrap">
+              <button class="btn" data-join-room="${r.id}" ${insufficient?"disabled":""}>
+                ${isMember?"Abrir":insufficient?"Saldo insuficiente":"Entrar"}
+              </button>
+              ${(r.hostUid===user?.uid||isGamesAdmin())?`<button class="btn btn-outline-danger" data-cancel-room="${r.id}">Encerrar</button>`:""}
+            </div>
           </div>`;
       }).join("");
     }
 
     document.addEventListener("click",async event=>{
-      const create=event.target.closest("[data-create-game]"),join=event.target.closest("[data-join-room]");
+      const create=event.target.closest("[data-create-game]"),join=event.target.closest("[data-join-room]"),cancel=event.target.closest("[data-cancel-room]");
       try{
         gameError.textContent="";
         if(create){
@@ -946,6 +949,7 @@
           await createRoom(game,roomPlayers,normalizeBet(betSelect?.value||0));
           return;
         }
+        if(cancel){await cancelRoom(cancel.dataset.cancelRoom);return}
         if(join){await joinRoom(join.dataset.joinRoom);return}
       }catch(err){console.error(err);gameError.textContent=err?.message||"Não foi possível abrir a sala."}
     });
