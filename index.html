@@ -642,6 +642,35 @@
       .alert-permission-card .btn{width:100%}
     }
 
+    .header-heading{min-width:0}
+    .mobile-menu-btn{
+      display:none;
+      width:44px;
+      height:44px;
+      padding:0;
+      border:1px solid var(--border);
+      border-radius:14px;
+      background:var(--surface);
+      color:var(--text);
+      align-items:center;
+      justify-content:center;
+      flex-direction:column;
+      gap:5px;
+      cursor:pointer;
+      box-shadow:var(--shadow);
+    }
+    .mobile-menu-btn span{
+      display:block;
+      width:20px;
+      height:2px;
+      border-radius:2px;
+      background:currentColor;
+      transition:transform .18s ease,opacity .18s ease;
+    }
+    .mobile-menu-btn.open span:nth-child(1){transform:translateY(7px) rotate(45deg)}
+    .mobile-menu-btn.open span:nth-child(2){opacity:0}
+    .mobile-menu-btn.open span:nth-child(3){transform:translateY(-7px) rotate(-45deg)}
+
     /* Responsividade geral */
     html,body{max-width:100%;overflow-x:hidden}
     img,svg{max-width:100%}
@@ -657,11 +686,50 @@
     }
 
     @media(max-width:720px){
-      header{align-items:stretch;flex-direction:column}
-      .userbox{width:100%;display:grid;grid-template-columns:auto 1fr;align-items:center}
-      .header-actions{grid-column:1/-1;width:100%;margin-left:0;display:grid;grid-template-columns:repeat(2,minmax(0,1fr))}
-      .header-actions .btn,.header-actions .theme-btn{width:100%;justify-content:center;text-align:center;min-width:0}
-      .hero{padding:20px 16px}
+      .app-header{display:block;padding-bottom:14px;margin-bottom:14px;border-bottom:1px solid var(--border)}
+      .header-heading{display:flex;align-items:center;justify-content:space-between;gap:12px}
+      .mobile-menu-btn{display:flex;flex:0 0 44px}
+      .brand h1{font-size:1.45rem}
+      .brand p{font-size:.9rem;margin-top:2px}
+      .userbox{
+        width:100%;
+        display:grid;
+        grid-template-columns:42px minmax(0,1fr);
+        gap:10px;
+        align-items:center;
+        margin-top:14px;
+      }
+      .avatar{width:42px;height:42px}
+      .user-meta strong{font-size:1rem}
+      .user-meta span{font-size:.82rem}
+      .header-actions{
+        grid-column:1/-1;
+        width:100%;
+        margin-left:0;
+        display:none;
+        grid-template-columns:1fr 1fr;
+        gap:8px;
+        padding-top:10px;
+        animation:mobileMenuIn .16s ease;
+      }
+      .header-actions.open{display:grid}
+      .header-actions .btn,.header-actions .theme-btn{
+        width:100%;
+        justify-content:center;
+        text-align:center;
+        min-width:0;
+        min-height:44px;
+      }
+      @keyframes mobileMenuIn{
+        from{opacity:0;transform:translateY(-4px)}
+        to{opacity:1;transform:translateY(0)}
+      }
+      .notice{margin-bottom:12px;padding:12px 14px}
+      .alert-permission-card{margin:0 0 14px;padding:12px;border-radius:14px}
+      .alert-permission-card strong{font-size:.95rem}
+      .alert-permission-card span{font-size:.82rem}
+      .hero{padding:18px 14px;border-radius:16px}
+      .hero .eyebrow{font-size:.78rem}
       .hero-actions,.open-ticket-actions,.dialog-actions{flex-wrap:wrap}
       .person{grid-template-columns:minmax(0,1fr) auto}
       .person-name{min-width:0;flex-wrap:wrap}
@@ -684,11 +752,12 @@
       .brand h1{font-size:1.25rem}
       .userbox{grid-template-columns:36px minmax(0,1fr)}
       .avatar{width:36px;height:36px}
-      .header-actions{grid-template-columns:1fr}
+      .header-actions{grid-template-columns:1fr 1fr}
+      .header-actions #logoutBtn{grid-column:1/-1}
       .hero-actions,.open-ticket-actions,.dialog-actions{display:grid;grid-template-columns:1fr;width:100%}
       .hero-actions .btn,.open-ticket-actions .btn,.dialog-actions .btn{width:100%}
       .podium{grid-template-columns:1fr}
-      .card{padding:16px}
+      .card{padding:14px;border-radius:14px}
       .status-select,input,textarea{font-size:16px}
       .person{grid-template-columns:1fr}
       .person-actions{justify-content:flex-start}
@@ -730,18 +799,26 @@
   </section>
 
   <main id="appView" class="shell hidden">
-    <header>
-      <div class="brand">
-        <h1>TechQueue</h1>
-        <p>Rodízio interno de atendimento</p>
+    <header class="app-header">
+      <div class="header-heading">
+        <div class="brand">
+          <h1>TechQueue</h1>
+          <p>Rodízio interno de atendimento</p>
+        </div>
+
+        <button id="mobileMenuBtn" class="mobile-menu-btn" type="button"
+          aria-label="Abrir menu" aria-expanded="false" aria-controls="mobileHeaderMenu">
+          <span></span><span></span><span></span>
+        </button>
       </div>
+
       <div class="userbox">
         <div class="avatar" id="avatar">?</div>
         <div class="user-meta">
           <strong id="loggedName">-</strong>
           <span id="loggedShift">-</span>
         </div>
-        <div class="header-actions">
+        <div id="mobileHeaderMenu" class="header-actions">
           <button id="shopBtn" class="btn btn-secondary" type="button">Lojinha <span id="walletXp">0 XP</span></button>
           <a class="btn btn-secondary" href="./games.html" style="text-decoration:none;display:inline-flex;align-items:center">Sala da Descompressão</a>
           <button class="theme-btn" type="button" data-theme-toggle>Modo escuro</button>
@@ -1006,6 +1083,8 @@
     const googleLoginBtn = document.querySelector("#googleLoginBtn");
     const loginError = document.querySelector("#loginError");
     const logoutBtn = document.querySelector("#logoutBtn");
+    const mobileMenuBtn = document.querySelector("#mobileMenuBtn");
+    const mobileHeaderMenu = document.querySelector("#mobileHeaderMenu");
     const loggedName = document.querySelector("#loggedName");
     const loggedShift = document.querySelector("#loggedShift");
     const avatar = document.querySelector("#avatar");
@@ -1054,6 +1133,28 @@
     const clientNameInput = document.querySelector("#clientName");
     const problemInput = document.querySelector("#problem");
     const solutionInput = document.querySelector("#solution");
+
+    function setMobileMenu(open) {
+      if (!mobileMenuBtn || !mobileHeaderMenu) return;
+      mobileMenuBtn.classList.toggle("open", open);
+      mobileHeaderMenu.classList.toggle("open", open);
+      mobileMenuBtn.setAttribute("aria-expanded", String(open));
+      mobileMenuBtn.setAttribute("aria-label", open ? "Fechar menu" : "Abrir menu");
+    }
+
+    mobileMenuBtn?.addEventListener("click", () => {
+      setMobileMenu(!mobileHeaderMenu?.classList.contains("open"));
+    });
+
+    mobileHeaderMenu?.addEventListener("click", event => {
+      if (event.target.closest("a,button") && window.innerWidth <= 720) {
+        setMobileMenu(false);
+      }
+    });
+
+    window.addEventListener("resize", () => {
+      if (window.innerWidth > 720) setMobileMenu(false);
+    });
 
     let app, auth, db;
     let authUser = null;
