@@ -728,6 +728,15 @@
 
         const requiredPlayers=Number(room.requiredPlayers||MIN_PLAYERS[room.game]||2);
         const enoughPlayers=order.length>=requiredPlayers;
+
+        if(room.game==="ludo"){
+          room.state=initLudo(order,requiredPlayers,room.state);
+          const selected=room.state.colorsByUid||{};
+          const colorsReady=enoughPlayers&&order.slice(0,requiredPlayers).every(uid=>selected[uid]);
+          room.status=colorsReady?"playing":"waiting";
+          return room;
+        }
+
         if(enoughPlayers){
           room.status="playing";
 
@@ -735,10 +744,6 @@
             const hasAllHands=order.length===requiredPlayers &&
               order.every(uid=>Array.isArray(room.state?.hands?.[uid]));
             if(!hasAllHands)room.state=initDomino(order,requiredPlayers);
-          }else if(room.game==="ludo"){
-            const ready=order.length===requiredPlayers &&
-              order.every(uid=>Array.isArray(room.state?.tokens?.[uid]));
-            if(!ready)room.state=initLudo(order,requiredPlayers);
           }else if(room.game==="hangman"){
             const active=room.state?.activePlayers||[];
             if(!room.state||!active.includes(user.uid))room.state=createHangmanTournament(order);
@@ -776,7 +781,7 @@
           const nextState=room.game==="domino"
             ? initDomino(order,requiredPlayers)
             : room.game==="ludo"
-              ? initLudo(order,requiredPlayers)
+              ? initLudo(order,requiredPlayers,room.state)
               : initialState(room.game,order,room.state);
           gameRooms[currentRoomId]={
             ...room,
@@ -800,7 +805,7 @@
         room.state=room.game==="domino"
           ? initDomino(room.playerOrder||[],requiredPlayers)
           : room.game==="ludo"
-            ? initLudo(room.playerOrder||[],requiredPlayers)
+            ? initLudo(room.playerOrder||[],requiredPlayers,room.state)
             : initialState(room.game,room.playerOrder||[],room.state);
         room.status=(room.playerOrder||[]).length>=requiredPlayers?"playing":"waiting";
         return room;
@@ -813,15 +818,21 @@
       playersEl.innerHTML=(room.playerOrder||[]).map(uid=>`<span class="player-chip">${escapeHtml(room.players?.[uid]||"Jogador")}${uid===user.uid?" · você":""}</span>`).join("");
       restartBtn.classList.toggle("hidden",room.status!=="finished");
       const requiredPlayers=Number(room.requiredPlayers||MIN_PLAYERS[room.game]||2);
+
+      if(room.game==="ludo"){
+        renderLudo();
+        return;
+      }
+
       if((room.playerOrder||[]).length<requiredPlayers){
         gameRoot.innerHTML=`<div class="muted">Aguardando jogadores: ${(room.playerOrder||[]).length}/${requiredPlayers}.</div>`;
         return;
       }
+
       if(room.game==="tictactoe")renderTicTacToe();
       if(room.game==="hangman")renderHangman();
       if(room.game==="draw")renderDraw();
       if(room.game==="domino")renderDomino();
-      if(room.game==="ludo")renderLudo();
       if(room.game==="checkers")renderCheckers();
     }
 
@@ -971,10 +982,12 @@
       }
       const domino=event.target.closest("[data-domino-index]");
       if(domino){await chooseDominoTile(Number(domino.dataset.dominoIndex));return}
+      const ludoColor=event.target.closest("[data-ludo-color]");
+      if(ludoColor){await chooseLudoColor(ludoColor.dataset.ludoColor);return}
       const ludoRoll=event.target.closest("[data-ludo-roll]");
       if(ludoRoll){await rollLudoDice();return}
-      const ludoToken=event.target.closest("[data-ludo-token]");
-      if(ludoToken){await moveLudoToken(Number(ludoToken.dataset.ludoToken));return}
+      const ludoChoice=event.target.closest("[data-ludo-six-choice]");
+      if(ludoChoice){await resolveLudoSixChoice(ludoChoice.dataset.ludoSixChoice);return}
       const sq=event.target.closest("[data-square]");if(sq){await handleCheckerClick(Number(sq.dataset.square));return}
     });
 
