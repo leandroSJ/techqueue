@@ -1356,7 +1356,7 @@
       if(activeBet){
         const stake=Number(currentRoom?.stakes?.[user.uid]||currentRoom?.betAmount||0);
         const confirmed=confirm(
-          `Abandonar a partida? Você perderá os ${stake} XP apostados. Sua aposta continuará no pote para quem vencer.`
+          "Abandonar a partida? Você perderá os "+stake+" XP apostados. Sua aposta continuará no pote para quem vencer."
         );
         if(!confirmed)return;
       }
@@ -1374,24 +1374,27 @@
           const room=structuredClone(gameRooms[currentRoomId]);
           if(!room)return;
 
-          const stake=Number(room.stakes?.[user.uid]||0);
-          const wasPlayingBet=
-            Number(room.betAmount||0)>0 &&
-            room.status==="playing" &&
-            !room.betSettled;
-
-          // Antes de a partida começar, sair devolve a aposta.
-          // Depois que começou, abandonar significa perder o XP para o pote.
-          const shouldRefund=stake>0&&!wasPlayingBet&&room.status==="waiting"&&!room.betSettled;
-          const walletSnap=shouldRefund?await tx.get(wRef):null;
-
           const players={...(room.players||{})};
           delete players[user.uid];
 
           const order=(room.playerOrder||[]).filter(uid=>uid!==user.uid);
           const stakes={...(room.stakes||{})};
+          const stake=Number(stakes[user.uid]||0);
+          const wasPlayingBet=
+            Number(room.betAmount||0)>0 &&
+            room.status==="playing" &&
+            !room.betSettled;
 
-          if(shouldRefund){
+          const shouldRefundWaiting=
+            stake>0 &&
+            !wasPlayingBet &&
+            room.status==="waiting" &&
+            !room.betSettled;
+
+          const needsWallet=shouldRefundWaiting||(wasPlayingBet&&order.length<=1);
+          const walletSnap=needsWallet?await tx.get(wRef):null;
+
+          if(shouldRefundWaiting){
             delete stakes[user.uid];
 
             if(!walletSnap?.exists()){
@@ -1406,24 +1409,54 @@
             wallet.updatedAtMs=Date.now();
             wallets[user.uid]=wallet;
 
-            tx.set(wRef,{
-              type:"techqueue_wallets",
-              wallets,
-              updatedAt:serverTimestamp()
-            },{merge:true});
+            tx.set(wRef,{type:"techqueue_wallets",wallets,updatedAt:serverTimestamp()},{merge:true});
           }
 
           if(!order.length){
+            if(wasPlayingBet&&stake>0){
+              if(!walletSnap?.exists())throw new Error("Carteira de XP não encontrada.");
+              const walletData=walletSnap.data();
+              const wallets={...(walletData.wallets||{})};
+              const wallet={...(wallets[user.uid]||defaultGameWallet())};
+              wallet.xpBalance=Number(wallet.xpBalance||0)+stake;
+              wallet.updatedAtMs=Date.now();
+              wallets[user.uid]=wallet;
+              tx.set(wRef,{type:"techqueue_wallets",wallets,updatedAt:serverTimestamp()},{merge:true});
+            }
+
             delete gameRooms[currentRoomId];
             tx.update(dRef,{gameRooms,updatedAt:serverTimestamp()});
             return;
           }
 
-          // Em partida apostada já iniciada, a aposta do desistente permanece no
-          // pote e os demais continuam jogando. A sala deixa de aceitar novos jogadores.
+          if(wasPlayingBet&&order.length===1){
+            if(!walletSnap?.exists())throw new Error("Carteira de XP não encontrada para pagar o vencedor.");
+
+            const winnerUid=order[0];
+            const pot=Object.values(stakes).reduce((sum,value)=>sum+Number(value||0),0);
+            const walletData=walletSnap.data();
+            const wallets={...(walletData.wallets||{})};
+            const winnerWallet={...(wallets[winnerUid]||{xpBalance:0,audioCredits:{},unlockedItems:[]})};
+
+            winnerWallet.xpBalance=Number(winnerWallet.xpBalance||0)+pot;
+            winnerWallet.updatedAtMs=Date.now();
+            wallets[winnerUid]=winnerWallet;
+
+            tx.set(wRef,{type:"techqueue_wallets",wallets,updatedAt:serverTimestamp()},{merge:true});
+            delete gameRooms[currentRoomId];
+            tx.update(dRef,{gameRooms,updatedAt:serverTimestamp()});
+            return;
+          }
+
+          if(!wasPlayingBet&&order.length===1&&room.status==="playing"){
+            delete gameRooms[currentRoomId];
+            tx.update(dRef,{gameRooms,updatedAt:serverTimestamp()});
+            return;
+          }
+
           if(wasPlayingBet){
             const nextState=removePlayerFromActiveGame(room,user.uid,order);
-            const finished=order.length===1;
+            const nextHostUid=room.hostUid===user.uid?order[0]:room.hostUid;
 
             gameRooms[currentRoomId]={
               ...room,
@@ -1433,9 +1466,9 @@
               betPot:Object.values(stakes).reduce((sum,value)=>sum+Number(value||0),0),
               requiredPlayers:order.length,
               maxPlayers:order.length,
-              hostUid:room.hostUid===user.uid?order[0]:room.hostUid,
-              hostName:players[room.hostUid===user.uid?order[0]:room.hostUid]||"Jogador",
-              status:finished?"finished":"playing",
+              hostUid:nextHostUid,
+              hostName:players[nextHostUid]||"Jogador",
+              status:"playing",
               state:nextState,
               lastAbandonment:{
                 uid:user.uid,
@@ -1471,13 +1504,12 @@
 
           tx.update(dRef,{gameRooms,updatedAt:serverTimestamp()});
         });
+
+        backToLobby();
       }catch(err){
         console.error(err);
-        gameError.textContent=err?.message||"Não foi possível sair da sala.";
-        return;
+        alert(err?.message||"Não foi possível sair da sala.");
       }
-
-      backToLobby();
     });
 
     closeRoomBtn.addEventListener("click",async()=>{
