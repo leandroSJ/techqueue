@@ -834,12 +834,18 @@
       try{
         const isAdmin=(user.email||"").toLowerCase()==="leandro3dejesus@gmail.com";
         const banRef=doc(db,"bans",user.uid);
-        const banSnap=await getDoc(banRef);
 
-        if(banSnap.exists()&&!isAdmin){
-          loginError.textContent="Seu acesso ao TechQueue foi bloqueado pelo administrador.";
-          await signOut(auth);
-          return;
+        if(!isAdmin){
+          try{
+            const banSnap=await getDoc(banRef);
+            if(banSnap.exists()){
+              loginError.textContent="Seu acesso ao TechQueue foi bloqueado pelo administrador.";
+              await signOut(auth);
+              return;
+            }
+          }catch(banErr){
+            console.warn("Não foi possível consultar banimento agora; acesso aos jogos continuará.",banErr);
+          }
         }
 
         if(unsubBan)unsubBan();
