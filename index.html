@@ -756,7 +756,7 @@
         </div>
         <div class="header-actions">
           <button id="shopBtn" class="btn btn-secondary" type="button">Lojinha <span id="walletXp">0 XP</span></button>
-          <a class="btn btn-secondary" href="./games.html" target="_blank" rel="noopener" style="text-decoration:none;display:inline-flex;align-items:center">Sala da Descompressão</a>
+          <a class="btn btn-secondary" href="./games.html" style="text-decoration:none;display:inline-flex;align-items:center">Sala da Descompressão</a>
           <button class="theme-btn" type="button" data-theme-toggle>Modo escuro</button>
           <button id="logoutBtn" class="btn btn-secondary">Sair</button>
         </div>
@@ -1083,7 +1083,7 @@
     let unsubEvents = null;
     let unsubQueuedClients = null;
     let nudgesReady = false;
-    let eventsReady = false;
+    let lastSeenPassEventId = null;
     let openAttendance = null;
     let userProfileDoc = null;
     let unsubProfile = null;
@@ -1457,7 +1457,6 @@
       if (unsubDay) unsubDay();
       if (unsubHistory) unsubHistory();
       if (unsubNudges) unsubNudges();
-      if (unsubEvents) unsubEvents();
       if (unsubQueuedClients) unsubQueuedClients();
       if (unsubProfile) unsubProfile();
       unsubDay = null;
@@ -1468,7 +1467,7 @@
       unsubProfile = null;
       userProfileDoc = null;
       nudgesReady = false;
-      eventsReady = false;
+      lastSeenPassEventId = null;
       activeDayId = null;
       if (dayRolloverTimer) clearInterval(dayRolloverTimer);
       dayRolloverTimer = null;
@@ -1537,11 +1536,24 @@
       const dayRef = doc(db, "days", now.dateId);
       const attendanceCol = collection(db, "days", now.dateId, "attendances");
       const nudgesCol = collection(db, "days", now.dateId, "nudges");
-      const eventsCol = collection(db, "days", now.dateId, "events");
       const queuedClientsCol = collection(db, "days", now.dateId, "queuedClients");
 
       unsubDay = onSnapshot(dayRef, async snap => {
-        dayState = snap.exists() ? snap.data() : null;
+        const nextState = snap.exists() ? snap.data() : null;
+        const passEvent = nextState?.lastPassEvent || null;
+
+        if (passEvent?.id && passEvent.id !== lastSeenPassEventId) {
+          const shouldNotify = lastSeenPassEventId !== null && passEvent.fromUid !== authUser?.uid;
+          lastSeenPassEventId = passEvent.id;
+
+          if (shouldNotify) {
+            eventToast.textContent = `${passEvent.fromName || "Alguém"} passou a vez. Agora é a vez de ${passEvent.nextName || "outro técnico"}.`;
+            eventToast.classList.remove("hidden");
+            setTimeout(() => eventToast.classList.add("hidden"), 4000);
+          }
+        }
+
+        dayState = nextState;
         await loadMyOpenAttendance();
         render();
       }, err => {
@@ -1569,23 +1581,6 @@
         console.error("Erro ao carregar clientes encaminhados:", err);
       });
 
-      unsubEvents = onSnapshot(eventsCol, snap => {
-        if (!eventsReady) {
-          eventsReady = true;
-          return;
-        }
-
-        for (const change of snap.docChanges()) {
-          if (change.type !== "added") continue;
-          const event = change.doc.data();
-
-          if (event.type === "turn_pass" && event.fromUid !== authUser?.uid) {
-            eventToast.textContent = `${event.fromName || "Alguém"} passou a vez. Agora é a vez de ${event.nextName || "outro técnico"}.`;
-            eventToast.classList.remove("hidden");
-            setTimeout(() => eventToast.classList.add("hidden"), 4000);
-          }
-        }
-      });
 
       unsubNudges = onSnapshot(nudgesCol, snap => {
         if (!nudgesReady) {
@@ -2249,7 +2244,6 @@
 
       const dayId = bahiaParts().dateId;
       const dayRef = doc(db, "days", dayId);
-      const eventRef = doc(collection(db, "days", dayId, "events"));
 
       try {
         await runTransaction(db, async tx => {
@@ -2281,17 +2275,16 @@
             queue: nextQueue,
             currentUid: nextUid,
             passedSinceLastAttendance: [...passed],
+            lastPassEvent: {
+              id: Date.now() + "-" + authUser.uid,
+              type: "turn_pass",
+              fromUid: authUser.uid,
+              fromName: profile.name,
+              nextUid,
+              nextName,
+              createdAtMs: Date.now()
+            },
             updatedAt: serverTimestamp()
-          });
-
-          tx.set(eventRef, {
-            type: "turn_pass",
-            fromUid: authUser.uid,
-            fromName: profile.name,
-            nextUid,
-            nextName,
-            createdAt: serverTimestamp(),
-            createdAtMs: Date.now()
           });
         });
       } catch (err) {
