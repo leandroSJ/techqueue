@@ -125,6 +125,7 @@
     }
     .ludo-wrap{display:grid;grid-template-columns:minmax(0,1fr) 230px;gap:16px;align-items:start}
     .ludo-board{
+      position:relative;
       width:min(100%,680px);
       aspect-ratio:1;
       margin:0 auto;
@@ -193,6 +194,24 @@
     .ludo-token.green{background:#138b0d}
     .ludo-token.yellow{background:#ffd51a;color:#372d00}
     .ludo-token.blue{background:#218bd0}
+    .ludo-moving-token{
+      position:absolute!important;
+      z-index:30!important;
+      pointer-events:none;
+      margin:0!important;
+      max-width:none!important;
+      transition:left .14s ease,top .14s ease;
+      will-change:left,top,transform;
+    }
+    .ludo-moving-token.hop{
+      animation:ludoPieceHop .16s ease;
+    }
+    .ludo-token.ludo-arrival-hidden{visibility:hidden}
+    @keyframes ludoPieceHop{
+      0%{transform:translateY(0) scale(1)}
+      48%{transform:translateY(-9px) scale(1.18)}
+      100%{transform:translateY(0) scale(1)}
+    }
     .ludo-panel{
       display:grid;
       gap:10px;
@@ -545,6 +564,9 @@
 
     let user=null,dayState=null,rooms=[],currentRoomId=null,currentRoom=null,unsubDay=null,selectedChecker=null,selectedDominoIndex=null,drawing=false,activeStroke=[];
     let seenHangmanActionId=null;
+    let seenLudoMoveId=null;
+    let ludoAnimationRun=0;
+    let ludoAnimationActive=false;
     let gameToastTimer=null;
 
     function bahiaDateId(date=new Date()){
@@ -774,9 +796,19 @@
       roomView.classList.remove("hidden");
       const found=roomSnapshot||(dayState?.gameRooms||{})[id];
       currentRoom=found?{id,...found}:null;
+      seenLudoMoveId=currentRoom?.game==="ludo" ? (currentRoom.state?.lastMove?.id||null) : null;
       if(currentRoom)renderRoom();
     }
-    function backToLobby(){currentRoomId=null;currentRoom=null;selectedChecker=null;roomView.classList.add("hidden");lobbyView.classList.remove("hidden")}
+    function backToLobby(){
+      ludoAnimationRun++;
+      ludoAnimationActive=false;
+      seenLudoMoveId=null;
+      currentRoomId=null;
+      currentRoom=null;
+      selectedChecker=null;
+      roomView.classList.add("hidden");
+      lobbyView.classList.remove("hidden");
+    }
 
     leaveBtn.addEventListener("click",async()=>{
       if(!currentRoomId||!user){backToLobby();return}
@@ -1558,12 +1590,12 @@
           let tokenHtml="";
 
           pieces.forEach(piece=>{
-            tokenHtml+='<span class="ludo-token '+piece.color+'" title="'+
+            tokenHtml+='<span class="ludo-token '+piece.color+'" data-ludo-piece-uid="'+piece.uid+'" data-ludo-piece-index="'+piece.tokenIndex+'" title="'+
               escapeHtml(currentRoom.players?.[piece.uid]||"Jogador")+
               ' · peça '+(piece.tokenIndex+1)+'"></span>';
           });
 
-          boardHtml+='<div class="'+ludoCellClass(row,col)+'">'+tokenHtml+'</div>';
+          boardHtml+='<div class="'+ludoCellClass(row,col)+'" data-ludo-cell="'+row+','+col+'">'+tokenHtml+'</div>';
         }
       }
 
@@ -1603,7 +1635,7 @@
             '<button class="btn btn-light fw-semibold" type="button" data-ludo-six-choice="advance"'+(hasAdvance?"":" disabled")+'>Avançar peça</button>'+
           '</div>';
       }else{
-        const rollDisabled=!myTurn||s.phase!=="roll"||s.winnerUid?" disabled":"";
+        const rollDisabled=!myTurn||s.phase!=="roll"||s.winnerUid||ludoAnimationActive?" disabled":"";
         controls='<div style="text-align:center;margin-top:8px">'+
           '<button class="btn btn-warning fw-semibold w-100" type="button" data-ludo-roll'+rollDisabled+'>Rolar dado</button>'+
         '</div>';
@@ -1628,6 +1660,114 @@
             '</aside>'+
           '</div>'+
         '</div>';
+
+      queueLudoMoveAnimation(s.lastMove);
+    }
+
+    function ludoMovePath(move){
+      if(!move||!move.color)return[];
+
+      const path=[];
+      const tokenIndex=Number(move.tokenIndex||0);
+      const fromStep=Number(move.fromStep);
+      const toStep=Number(move.toStep);
+
+      if(fromStep<0){
+        path.push(ludoTokenCoord(move.color,-1,tokenIndex));
+        path.push(ludoTokenCoord(move.color,0,tokenIndex));
+        return path;
+      }
+
+      path.push(ludoTokenCoord(move.color,fromStep,tokenIndex));
+      for(let step=fromStep+1;step<=toStep;step++){
+        path.push(ludoTokenCoord(move.color,step,tokenIndex));
+      }
+
+      return path;
+    }
+
+    function ludoCellElement(coord){
+      if(!coord)return null;
+      return gameRoot.querySelector('[data-ludo-cell="'+coord[0]+','+coord[1]+'"]');
+    }
+
+    function positionLudoGhost(ghost,board,cell){
+      const boardRect=board.getBoundingClientRect();
+      const cellRect=cell.getBoundingClientRect();
+      const size=Math.min(26,Math.max(14,cellRect.width*.72));
+
+      ghost.style.width=size+"px";
+      ghost.style.height=size+"px";
+      ghost.style.left=(cellRect.left-boardRect.left+(cellRect.width-size)/2)+"px";
+      ghost.style.top=(cellRect.top-boardRect.top+(cellRect.height-size)/2)+"px";
+    }
+
+    async function queueLudoMoveAnimation(move){
+      if(!move?.id||move.id===seenLudoMoveId)return;
+
+      seenLudoMoveId=move.id;
+      const runId=++ludoAnimationRun;
+      const board=gameRoot.querySelector(".ludo-board");
+      if(!board)return;
+
+      const path=ludoMovePath(move);
+      if(path.length<2)return;
+
+      ludoAnimationActive=true;
+
+      const finalToken=[...board.querySelectorAll(".ludo-token")].find(token=>
+        token.dataset.ludoPieceUid===String(move.uid) &&
+        token.dataset.ludoPieceIndex===String(move.tokenIndex)
+      );
+
+      finalToken?.classList.add("ludo-arrival-hidden");
+
+      const ghost=document.createElement("span");
+      ghost.className="ludo-token ludo-moving-token "+move.color;
+      board.appendChild(ghost);
+
+      const firstCell=ludoCellElement(path[0]);
+      if(!firstCell){
+        ghost.remove();
+        finalToken?.classList.remove("ludo-arrival-hidden");
+        ludoAnimationActive=false;
+        return;
+      }
+
+      positionLudoGhost(ghost,board,firstCell);
+
+      await new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)));
+
+      for(let index=1;index<path.length;index++){
+        if(runId!==ludoAnimationRun){
+          ghost.remove();
+          return;
+        }
+
+        const cell=ludoCellElement(path[index]);
+        if(!cell)continue;
+
+        ghost.classList.remove("hop");
+        void ghost.offsetWidth;
+        ghost.classList.add("hop");
+        positionLudoGhost(ghost,board,cell);
+
+        await new Promise(resolve=>setTimeout(resolve,165));
+      }
+
+      if(runId!==ludoAnimationRun){
+        ghost.remove();
+        return;
+      }
+
+      ghost.remove();
+      finalToken?.classList.remove("ludo-arrival-hidden");
+      ludoAnimationActive=false;
+
+      // Atualiza somente os controles após a animação, sem repetir o movimento.
+      if(currentRoom?.game==="ludo"&&currentRoom.state?.lastMove?.id===move.id){
+        renderLudo();
+      }
     }
 
     function applyLudoMoveState(room,s,uid,tokenIndex,dice){
@@ -1639,6 +1779,18 @@
 
       const color=s.colorsByUid?.[uid]||"red";
       const newStep=oldStep<0?0:oldStep+dice;
+
+      s.lastMove={
+        id:actionId(),
+        uid,
+        tokenIndex,
+        color,
+        fromStep:oldStep,
+        toStep:newStep,
+        dice,
+        at:Date.now()
+      };
+
       tokens[tokenIndex]=newStep;
       s.tokens={...(s.tokens||{}),[uid]:tokens};
 
@@ -1713,6 +1865,7 @@
     }
 
     async function rollLudoDice(){
+      if(ludoAnimationActive)return;
       const roll=Math.floor(Math.random()*6)+1;
 
       await mutateRoom(currentRoomId,room=>{
@@ -1771,6 +1924,7 @@
     }
 
     async function resolveLudoSixChoice(choice){
+      if(ludoAnimationActive)return;
       await mutateRoom(currentRoomId,room=>{
         const s=structuredClone(room.state||{});
 
