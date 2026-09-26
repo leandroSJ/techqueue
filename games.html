@@ -8,6 +8,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;600&display=swap" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
   <style>
     :root{
       color-scheme:light;
@@ -27,10 +28,13 @@
     header{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:0 0 18px;border-bottom:1px solid var(--border);margin-bottom:20px}
     .brand h1{margin:0;font-size:1.5rem}.brand p{margin:4px 0 0;color:var(--muted)}
     .actions{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
-    .btn{min-height:40px;border-radius:20px;padding:9px 16px;border:1px solid var(--border);background:var(--surface);color:var(--primary);font-weight:500}
-    .btn.primary{background:var(--primary);color:var(--on-primary);border-color:transparent}.btn.danger{color:var(--danger)}.btn:disabled{opacity:.4;cursor:not-allowed}
-    .card{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:18px;box-shadow:var(--shadow)}
-    .games-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;margin-bottom:20px;align-items:stretch}
+    .btn{min-height:40px;font-weight:500}
+    .btn.primary{background:var(--primary);color:var(--on-primary);border-color:var(--primary)}
+    .btn.primary:hover,.btn.primary:focus{filter:brightness(.94);background:var(--primary);color:var(--on-primary);border-color:var(--primary)}
+    .btn.danger{color:var(--danger);border-color:color-mix(in srgb,var(--danger) 45%,var(--border))}
+    .btn.danger:hover{background:var(--danger);color:#fff;border-color:var(--danger)}
+    .card{background:var(--surface);border-color:var(--border);border-radius:16px;box-shadow:var(--shadow)}
+    .game-card,.panel-card,.game-area,.login .card{padding:18px}
     .game-card{display:flex;flex-direction:column;gap:10px;min-width:0;height:100%}
     .game-card h3{margin:0;font-size:1rem}
     .game-card p{margin:0;color:var(--muted);font-size:.84rem;line-height:1.4;flex:1}
@@ -38,7 +42,7 @@
     .game-card-actions.two{grid-template-columns:repeat(2,minmax(0,1fr))}
     .game-card-actions.three{grid-template-columns:repeat(3,minmax(0,1fr))}
     .game-card-actions .btn{width:100%;min-width:0;padding:9px 8px;white-space:normal;line-height:1.15;text-align:center}
-    .two-col{display:grid;grid-template-columns:.8fr 1.2fr;gap:20px}.room-list{display:grid;gap:8px}
+    .room-list{display:grid;gap:8px}
     .room-row{display:flex;justify-content:space-between;align-items:center;gap:12px;border:1px solid var(--border);border-radius:10px;padding:11px}
     .muted{color:var(--muted)}.small{font-size:.82rem}.error{color:var(--danger);margin:0 0 12px;line-height:1.4}
     .game-area{min-height:360px}.game-top{display:flex;justify-content:space-between;gap:12px;align-items:flex-start;margin-bottom:16px}
@@ -133,7 +137,7 @@
     .square{aspect-ratio:1;border:0;border-radius:0;padding:0;display:grid;place-items:center;background:#ede7d9}.square.dark{background:#7b6855}.piece{width:72%;height:72%;border-radius:50%;border:3px solid rgba(255,255,255,.55)}
     .piece.red{background:#c5221f}.piece.black{background:#202124}.piece.king::after{content:"K";color:#fff;font-size:.75rem;font-weight:600}.square.selected{outline:3px solid #f9ab00;outline-offset:-3px}.square.capture-required{box-shadow:inset 0 0 0 3px #34a853}.square.legal-target{box-shadow:inset 0 0 0 3px #4285f4}
     .login{min-height:70vh;display:grid;place-items:center}.login .card{width:min(420px,100%);text-align:center}.game-result{text-align:center;font-size:1.1rem;font-weight:500;margin:14px 0}
-    @media(max-width:950px){.games-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.two-col{grid-template-columns:1fr}}
+
     @media(max-width:560px){.games-grid{grid-template-columns:1fr}.game-card-actions.three{grid-template-columns:1fr 1fr}.game-card-actions.three .btn:last-child{grid-column:1/-1}.ttt{grid-template-columns:repeat(3,78px)}.ttt button{width:78px;height:78px}.draw-canvas{height:280px}}
 
     .local-games-grid{grid-template-columns:repeat(4,minmax(0,1fr))}
@@ -153,9 +157,6 @@
       .shell{width:calc(100% - 18px);padding-top:12px}
       .game-card-actions.three{grid-template-columns:1fr 1fr}
       .game-card-actions.three .btn:last-child{grid-column:1/-1}
-      header{align-items:stretch;flex-direction:column}
-      header .actions{width:100%;display:grid;grid-template-columns:repeat(2,minmax(0,1fr))}
-      header .actions .btn{width:100%;text-align:center;justify-content:center}
       .game-top{flex-direction:column;align-items:stretch}
       .game-top .actions{width:100%;display:grid;grid-template-columns:repeat(2,minmax(0,1fr))}
       .game-top .actions .btn{width:100%}
@@ -170,8 +171,7 @@
     }
 
     @media(max-width:560px){
-      .games-grid,.local-games-grid,.external-games-grid{grid-template-columns:1fr}
-      header .actions{grid-template-columns:1fr}
+      .local-games-grid,.external-games-grid{grid-template-columns:1fr}
       .game-top .actions{grid-template-columns:1fr}
       .ttt{grid-template-columns:repeat(3,minmax(64px,1fr));width:min(100%,300px)}
       .ttt button{width:100%;height:auto;aspect-ratio:1}
@@ -185,24 +185,24 @@
 </head>
 <body>
   <div class="shell">
-    <header>
+    <header class="d-flex flex-column flex-md-row align-items-md-center justify-content-between gap-3 pb-3 mb-4 border-bottom">
       <div class="brand">
-        <h1>Sala da Descompressão</h1>
-        <p>Aqui trabalho fica do lado de fora.</p>
+        <h1 class="h4 fw-semibold mb-1">Sala da Descompressão</h1>
+        <p class="mb-0">Aqui trabalho fica do lado de fora.</p>
       </div>
       <div class="actions">
-        <a class="btn" href="./index.html" style="text-decoration:none;display:inline-flex;align-items:center">Voltar ao TechQueue</a>
-        <button id="themeBtn" class="btn" type="button">Modo escuro</button>
-        <button id="logoutBtn" class="btn hidden" type="button">Sair</button>
+        <a class="btn btn-outline-primary rounded-pill px-3" href="./index.html">Voltar ao TechQueue</a>
+        <button id="themeBtn" class="btn btn-outline-secondary rounded-pill px-3" type="button">Modo escuro</button>
+        <button id="logoutBtn" class="btn btn-outline-secondary rounded-pill px-3 hidden" type="button">Sair</button>
       </div>
     </header>
 
     <section id="loginView" class="login">
-      <div class="card">
-        <h2>Entre para jogar</h2>
-        <p class="muted">Use a mesma conta Google do TechQueue.</p>
-        <button id="googleBtn" class="btn primary" type="button">Continuar com Google</button>
-        <div id="loginError" class="error"></div>
+      <div class="card shadow-sm">
+        <h2 class="h5 fw-semibold mb-2">Entre para jogar</h2>
+        <p class="muted mb-3">Use a mesma conta Google do TechQueue.</p>
+        <button id="googleBtn" class="btn btn-primary w-100" type="button">Continuar com Google</button>
+        <div id="loginError" class="error mt-2"></div>
       </div>
     </section>
 
@@ -210,61 +210,106 @@
       <section id="lobbyView">
         <div id="gameError" class="error"></div>
 
-        <section style="margin-bottom:22px">
-          <h2 style="margin:0 0 6px">Jogos online</h2>
-          <p class="muted" style="margin:0 0 12px">Partidas sincronizadas entre os usuários pelo Firestore.</p>
-          <div class="games-grid">
-            <div class="card game-card"><h3>Jogo da Velha</h3><p>Partida rápida para 2 pessoas.</p><button class="btn primary" data-create-game="tictactoe">Criar sala</button></div>
-            <div class="card game-card"><h3>Desenhe e Adivinhe</h3><p>Um desenha e os outros tentam descobrir.</p><button class="btn primary" data-create-game="draw">Criar sala</button></div>
-            <div class="card game-card"><h3>Forca</h3><p>Turnos, pontuação e palavra secreta.</p><button class="btn primary" data-create-game="hangman">Criar sala</button></div>
-            <div class="card game-card">
-              <h3>Dominó</h3>
-              <p>Escolha uma partida para 2 ou 4 jogadores.</p>
-              <div class="game-card-actions two">
-                <button class="btn primary" data-create-game="domino" data-domino-players="2">2 jogadores</button>
-                <button class="btn primary" data-create-game="domino" data-domino-players="4">4 jogadores</button>
+        <section class="mb-4">
+          <div class="mb-3">
+            <h2 class="h5 fw-semibold mb-1">Jogos online</h2>
+            <p class="muted mb-0">Partidas sincronizadas entre os usuários pelo Firestore.</p>
+          </div>
+
+          <div class="row g-3">
+            <div class="col-12 col-md-6 col-xl-4">
+              <div class="card game-card shadow-sm">
+                <h3>Jogo da Velha</h3>
+                <p>Partida rápida para 2 pessoas.</p>
+                <button class="btn btn-primary mt-auto" data-create-game="tictactoe">Criar sala</button>
               </div>
             </div>
-            <div class="card game-card">
-              <h3>Ludo Tech</h3>
-              <p>Tabuleiro com dado, 4 peças por jogador, captura e chegada ao centro.</p>
-              <div class="game-card-actions three">
-                <button class="btn primary" data-create-game="ludo" data-ludo-players="2">2 jogadores</button>
-                <button class="btn primary" data-create-game="ludo" data-ludo-players="3">3 jogadores</button>
-                <button class="btn primary" data-create-game="ludo" data-ludo-players="4">4 jogadores</button>
+
+            <div class="col-12 col-md-6 col-xl-4">
+              <div class="card game-card shadow-sm">
+                <h3>Desenhe e Adivinhe</h3>
+                <p>Um desenha e os outros tentam descobrir.</p>
+                <button class="btn btn-primary mt-auto" data-create-game="draw">Criar sala</button>
               </div>
             </div>
-            <div class="card game-card"><h3>Dama</h3><p>Captura obrigatória, pontuação e dama voadora.</p><button class="btn primary" data-create-game="checkers">Criar sala</button></div>
+
+            <div class="col-12 col-md-6 col-xl-4">
+              <div class="card game-card shadow-sm">
+                <h3>Forca</h3>
+                <p>Turnos, pontuação e palavra secreta.</p>
+                <button class="btn btn-primary mt-auto" data-create-game="hangman">Criar sala</button>
+              </div>
+            </div>
+
+            <div class="col-12 col-md-6 col-xl-4">
+              <div class="card game-card shadow-sm">
+                <h3>Dominó</h3>
+                <p>Escolha uma partida para 2 ou 4 jogadores.</p>
+                <div class="game-card-actions two">
+                  <button class="btn btn-primary" data-create-game="domino" data-domino-players="2">2 jogadores</button>
+                  <button class="btn btn-primary" data-create-game="domino" data-domino-players="4">4 jogadores</button>
+                </div>
+              </div>
+            </div>
+
+            <div class="col-12 col-md-6 col-xl-4">
+              <div class="card game-card shadow-sm">
+                <h3>Ludo Tech</h3>
+                <p>Tabuleiro com dado, 4 peças por jogador, captura e chegada ao centro.</p>
+                <div class="game-card-actions three">
+                  <button class="btn btn-primary" data-create-game="ludo" data-ludo-players="2">2 jogadores</button>
+                  <button class="btn btn-primary" data-create-game="ludo" data-ludo-players="3">3 jogadores</button>
+                  <button class="btn btn-primary" data-create-game="ludo" data-ludo-players="4">4 jogadores</button>
+                </div>
+              </div>
+            </div>
+
+            <div class="col-12 col-md-6 col-xl-4">
+              <div class="card game-card shadow-sm">
+                <h3>Dama</h3>
+                <p>Captura obrigatória, pontuação e dama voadora.</p>
+                <button class="btn btn-primary mt-auto" data-create-game="checkers">Criar sala</button>
+              </div>
+            </div>
           </div>
         </section>
 
-        <section style="margin-bottom:22px">
-          <h2 style="margin:0 0 6px">Biblioteca Click Jogos</h2>
-          <p class="muted" style="margin:0 0 12px">Acesso ao catálogo completo do Click Jogos, com categorias e navegação pelo próprio portal.</p>
-          <div class="games-grid external-games-grid">
-            <div class="card game-card">
-              <h3>Biblioteca completa</h3>
-              <p>Abra o Click Jogos dentro do TechQueue e navegue por milhares de títulos sem precisar cadastrar jogo por jogo.</p>
-              <a class="btn primary" href="./clickjogos-library.html" style="text-decoration:none;text-align:center">Abrir biblioteca</a>
+        <section class="mb-4">
+          <div class="mb-3">
+            <h2 class="h5 fw-semibold mb-1">Biblioteca Click Jogos</h2>
+            <p class="muted mb-0">Acesso ao catálogo completo do Click Jogos, com categorias e navegação pelo próprio portal.</p>
+          </div>
+
+          <div class="row g-3">
+            <div class="col-12 col-md-6 col-xl-4">
+              <div class="card game-card shadow-sm">
+                <h3>Biblioteca completa</h3>
+                <p>Abra o Click Jogos dentro do TechQueue e navegue por milhares de títulos sem precisar cadastrar jogo por jogo.</p>
+                <a class="btn btn-primary mt-auto" href="./clickjogos-library.html">Abrir biblioteca</a>
+              </div>
             </div>
           </div>
         </section>
 
-        <div class="two-col">
-          <section class="card">
-            <h2 style="margin-top:0">Salas abertas</h2>
-            <div id="roomsList" class="room-list"><div class="muted">Carregando salas...</div></div>
-          </section>
-          <section class="card">
-            <h2 style="margin-top:0">Como funciona</h2>
-            <p class="muted"><strong>Online:</strong> Jogo da Velha, Desenhe e Adivinhe, Forca, Dominó, Ludo Tech e Dama usam o Firestore para sincronizar os jogadores.</p>
-            <p class="muted"><strong>Biblioteca:</strong> o Click Jogos continua hospedando os jogos; o TechQueue apenas oferece o acesso e a navegação.</p>
-            <p class="muted">Os jogos não gastam XP e não alteram o ranking de atendimento.</p>
-          </section>
+        <div class="row g-3">
+          <div class="col-12 col-lg-5">
+            <section class="card panel-card shadow-sm h-100">
+              <h2 class="h5 fw-semibold mb-3">Salas abertas</h2>
+              <div id="roomsList" class="room-list"><div class="muted">Carregando salas...</div></div>
+            </section>
+          </div>
+          <div class="col-12 col-lg-7">
+            <section class="card panel-card shadow-sm h-100">
+              <h2 class="h5 fw-semibold mb-3">Como funciona</h2>
+              <p class="muted"><strong>Online:</strong> Jogo da Velha, Desenhe e Adivinhe, Forca, Dominó, Ludo Tech e Dama usam o Firestore para sincronizar os jogadores.</p>
+              <p class="muted"><strong>Biblioteca:</strong> o Click Jogos continua hospedando os jogos; o TechQueue apenas oferece o acesso e a navegação.</p>
+              <p class="muted mb-0">Os jogos não gastam XP e não alteram o ranking de atendimento.</p>
+            </section>
+          </div>
         </div>
       </section>
 
-      <section id="roomView" class="card game-area hidden">
+      <section id="roomView" class="card game-area shadow-sm hidden">
         <div class="game-top">
           <div>
             <h2 id="roomTitle">Sala</h2>
@@ -272,8 +317,8 @@
             <div id="players" class="players"></div>
           </div>
           <div class="actions">
-            <button id="restartBtn" class="btn hidden" type="button">Revanche</button>
-            <button id="leaveBtn" class="btn danger" type="button">Sair da sala</button>
+            <button id="restartBtn" class="btn btn-outline-primary hidden" type="button">Revanche</button>
+            <button id="leaveBtn" class="btn btn-outline-danger" type="button">Sair da sala</button>
           </div>
         </div>
         <div id="gameRoot"></div>
@@ -282,6 +327,7 @@
     </main>
   </div>
 
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-app.js";
     import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-auth.js";
@@ -373,7 +419,12 @@
       return `${map.year}-${map.month}-${map.day}`;
     }
     function dayRef(){return doc(db,"days",bahiaDateId())}
-    function setTheme(theme){document.documentElement.dataset.theme=theme;localStorage.setItem("techqueue-theme",theme);themeBtn.textContent=theme==="dark"?"Modo claro":"Modo escuro"}
+    function setTheme(theme){
+      document.documentElement.dataset.theme=theme;
+      document.documentElement.setAttribute("data-bs-theme",theme);
+      localStorage.setItem("techqueue-theme",theme);
+      themeBtn.textContent=theme==="dark"?"Modo claro":"Modo escuro";
+    }
     setTheme(localStorage.getItem("techqueue-theme")||"light");
     themeBtn.addEventListener("click",()=>setTheme(document.documentElement.dataset.theme==="dark"?"light":"dark"));
     function displayName(){return (user?.displayName||user?.email?.split("@")[0]||"Jogador").trim()}
