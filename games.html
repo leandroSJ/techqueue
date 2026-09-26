@@ -950,6 +950,66 @@
       }catch(err){console.error(err);gameError.textContent=err?.message||"Não foi possível abrir a sala."}
     });
 
+    async function cancelRoom(id){
+      if(!user||!id)return;
+
+      const room=(dayState?.gameRooms||{})[id]||rooms.find(r=>r.id===id);
+      if(!room||(room.hostUid!==user.uid&&!isGamesAdmin())){
+        gameError.textContent="Somente o criador da sala ou o administrador pode encerrá-la.";
+        return;
+      }
+
+      if(!confirm("Encerrar esta sala? Se houver XP apostado e ainda não houver vencedor, as apostas serão devolvidas."))return;
+
+      const dRef=dayRef();
+      const wRef=walletRef();
+
+      try{
+        await runTransaction(db,async tx=>{
+          const daySnap=await tx.get(dRef);
+          if(!daySnap.exists())return;
+
+          const data=daySnap.data();
+          const gameRooms={...(data.gameRooms||{})};
+          const liveRoom=structuredClone(gameRooms[id]);
+          if(!liveRoom)return;
+
+          if(liveRoom.hostUid!==user.uid&&!isGamesAdmin()){
+            throw new Error("Você não pode encerrar esta sala.");
+          }
+
+          const stakes={...(liveRoom.stakes||{})};
+          const refundable=!liveRoom.betSettled&&Object.values(stakes).some(value=>Number(value||0)>0);
+
+          if(refundable){
+            const walletSnap=await tx.get(wRef);
+            if(!walletSnap.exists())throw new Error("Carteira de XP não encontrada para devolver as apostas.");
+
+            const walletData=walletSnap.data();
+            const wallets={...(walletData.wallets||{})};
+
+            for(const [uid,value] of Object.entries(stakes)){
+              const refund=Number(value||0);
+              if(refund<=0)continue;
+              const wallet={...(wallets[uid]||{xpBalance:0,audioCredits:{},unlockedItems:[]})};
+              wallet.xpBalance=Number(wallet.xpBalance||0)+refund;
+              wallet.updatedAtMs=Date.now();
+              wallets[uid]=wallet;
+            }
+
+            tx.set(wRef,{type:"techqueue_wallets",wallets,updatedAt:serverTimestamp()},{merge:true});
+          }
+
+          delete gameRooms[id];
+          tx.update(dRef,{gameRooms,updatedAt:serverTimestamp()});
+        });
+
+        if(currentRoomId===id)backToLobby();
+      }catch(err){
+        console.error(err);
+        alert(err?.message||"Não foi possível encerrar a sala.");
+      }
+    }
     function roomWinnerUid(room){
       return room?.state?.championUid||room?.state?.winnerUid||null;
     }
@@ -1420,7 +1480,7 @@
       backToLobby();
     });
 
-    restartBtn.addEventListener("click",async()=>{
+    closeRoomBtn.addEventListener("click",async()=>{\n      if(currentRoomId)await cancelRoom(currentRoomId);\n    });\n\n    restartBtn.addEventListener("click",async()=>{
       if(!currentRoomId||!currentRoom)return;
       await mutateRoom(currentRoomId,room=>{
         const requiredPlayers=Number(room.requiredPlayers||MIN_PLAYERS[room.game]||2);
