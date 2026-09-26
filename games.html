@@ -1221,12 +1221,82 @@
       lobbyView.classList.remove("hidden");
     }
 
+    function removePlayerFromActiveGame(room,leavingUid,remainingOrder){
+      const state=structuredClone(room.state||{});
+
+      if(remainingOrder.length===1){
+        const winnerUid=remainingOrder[0];
+        return {
+          ...state,
+          winnerUid,
+          championUid:winnerUid,
+          turnUid:null,
+          phase:room.game==="ludo"?"finished":state.phase
+        };
+      }
+
+      if(room.game==="hangman"){
+        const active=(state.activePlayers||room.playerOrder||[]).filter(uid=>uid!==leavingUid);
+        const playerErrors={...(state.playerErrors||{})};
+        delete playerErrors[leavingUid];
+        state.activePlayers=active;
+        state.playerErrors=playerErrors;
+        state.eliminated=[...(state.eliminated||[]),leavingUid];
+        if(state.turnUid===leavingUid)state.turnUid=active[0]||null;
+        return state;
+      }
+
+      if(room.game==="draw"){
+        if(state.drawerUid===leavingUid){
+          return initialState("draw",remainingOrder,null);
+        }
+        return state;
+      }
+
+      if(room.game==="domino"){
+        const hands={...(state.hands||{})};
+        delete hands[leavingUid];
+        state.hands=hands;
+        if(state.turnUid===leavingUid)state.turnUid=remainingOrder[0]||null;
+        return state;
+      }
+
+      if(room.game==="ludo"){
+        const tokens={...(state.tokens||{})};
+        const colorsByUid={...(state.colorsByUid||{})};
+        delete tokens[leavingUid];
+        delete colorsByUid[leavingUid];
+        state.tokens=tokens;
+        state.colorsByUid=colorsByUid;
+
+        if(state.turnUid===leavingUid){
+          state.turnUid=remainingOrder[0]||null;
+          state.phase="roll";
+          state.dice=null;
+          state.consecutiveSixes=0;
+          state.lastAction="Um jogador abandonou a partida. O jogo continua com os participantes restantes.";
+        }
+        return state;
+      }
+
+      if(state.turnUid===leavingUid)state.turnUid=remainingOrder[0]||null;
+      return state;
+    }
+
     leaveBtn.addEventListener("click",async()=>{
       if(!currentRoomId||!user){backToLobby();return}
 
-      if(Number(currentRoom?.betAmount||0)>0&&currentRoom?.status==="playing"&&!currentRoom?.betSettled){
-        alert("Esta partida tem aposta de XP em andamento. Finalize a partida antes de sair da sala.");
-        return;
+      const activeBet=
+        Number(currentRoom?.betAmount||0)>0 &&
+        currentRoom?.status==="playing" &&
+        !currentRoom?.betSettled;
+
+      if(activeBet){
+        const stake=Number(currentRoom?.stakes?.[user.uid]||currentRoom?.betAmount||0);
+        const confirmed=confirm(
+          `Abandonar a partida? Você perderá os ${stake} XP apostados. Sua aposta continuará no pote para quem vencer.`
+        );
+        if(!confirmed)return;
       }
 
       try{
@@ -1243,7 +1313,14 @@
           if(!room)return;
 
           const stake=Number(room.stakes?.[user.uid]||0);
-          const shouldRefund=stake>0&&room.status==="waiting"&&!room.betSettled;
+          const wasPlayingBet=
+            Number(room.betAmount||0)>0 &&
+            room.status==="playing" &&
+            !room.betSettled;
+
+          // Antes de a partida começar, sair devolve a aposta.
+          // Depois que começou, abandonar significa perder o XP para o pote.
+          const shouldRefund=stake>0&&!wasPlayingBet&&room.status==="waiting"&&!room.betSettled;
           const walletSnap=shouldRefund?await tx.get(wRef):null;
 
           const players={...(room.players||{})};
@@ -1251,21 +1328,61 @@
 
           const order=(room.playerOrder||[]).filter(uid=>uid!==user.uid);
           const stakes={...(room.stakes||{})};
-          delete stakes[user.uid];
 
           if(shouldRefund){
-            if(!walletSnap?.exists())throw new Error("Carteira de XP não encontrada para devolver a aposta.");
+            delete stakes[user.uid];
+
+            if(!walletSnap?.exists()){
+              throw new Error("Carteira de XP não encontrada para devolver a aposta.");
+            }
+
             const walletData=walletSnap.data();
             const wallets={...(walletData.wallets||{})};
             const wallet={...(wallets[user.uid]||defaultGameWallet())};
+
             wallet.xpBalance=Number(wallet.xpBalance||0)+stake;
             wallet.updatedAtMs=Date.now();
             wallets[user.uid]=wallet;
-            tx.set(wRef,{type:"techqueue_wallets",wallets,updatedAt:serverTimestamp()},{merge:true});
+
+            tx.set(wRef,{
+              type:"techqueue_wallets",
+              wallets,
+              updatedAt:serverTimestamp()
+            },{merge:true});
           }
 
           if(!order.length){
             delete gameRooms[currentRoomId];
+            tx.update(dRef,{gameRooms,updatedAt:serverTimestamp()});
+            return;
+          }
+
+          // Em partida apostada já iniciada, a aposta do desistente permanece no
+          // pote e os demais continuam jogando. A sala deixa de aceitar novos jogadores.
+          if(wasPlayingBet){
+            const nextState=removePlayerFromActiveGame(room,user.uid,order);
+            const finished=order.length===1;
+
+            gameRooms[currentRoomId]={
+              ...room,
+              players,
+              playerOrder:order,
+              stakes,
+              betPot:Object.values(stakes).reduce((sum,value)=>sum+Number(value||0),0),
+              requiredPlayers:order.length,
+              maxPlayers:order.length,
+              hostUid:room.hostUid===user.uid?order[0]:room.hostUid,
+              hostName:players[room.hostUid===user.uid?order[0]:room.hostUid]||"Jogador",
+              status:finished?"finished":"playing",
+              state:nextState,
+              lastAbandonment:{
+                uid:user.uid,
+                name:room.players?.[user.uid]||displayName(),
+                stake,
+                at:Date.now()
+              }
+            };
+
             tx.update(dRef,{gameRooms,updatedAt:serverTimestamp()});
             return;
           }
