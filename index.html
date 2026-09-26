@@ -287,24 +287,24 @@
     if(isConfigured){app=initializeApp(firebaseConfig);auth=getAuth(app);db=getFirestore(app);onAuthStateChanged(auth,handleAuthState)}
     const TEAM_TIMEZONE="America/Bahia";
     const SOUND_CATALOG=[
-      {id:"msn",label:"MSN - nova mensagem",file:"./assets/sounds/new-message-msn.mp3",price:0},
-      {id:"dbz",label:"Kakaroto, você é uma besta",file:"./assets/sounds/dbz-pt-br-kakaroto-voce-e-uma-besta.mp3",price:20},
-      {id:"problema",label:"Tu sai de problema",file:"./assets/sounds/tu-sai-de-problema.mp3",price:25},
-      {id:"grosso",label:"Vai entrar o grosso",file:"./assets/sounds/luladrao-vai-entrar-o-grosso.mp3",price:35},
-      {id:"avast",label:"Avast - ameaça detectada",file:"./assets/sounds/avast-ameaca-detectada.mp3",price:20},
-      {id:"hadouken",label:"Bom dia Hadouken",file:"./assets/sounds/bom-dia-hadouken.mp3",price:20},
-      {id:"todos_todes",label:"Bom dia a todos e todes",file:"./assets/sounds/bom-dia-a-todos-e-todes-meme(1).mp3",price:20},
-      {id:"machucar",label:"Alguém vai se machucar",file:"./assets/sounds/alguem-vai-se-machucar-amegan-smzinho.mp3",price:20},
-      {id:"cagou",label:"Será que cagou? Full HD",file:"./assets/sounds/sera-que-cagou-full-hd-1.mp3",price:20},
-      {id:"pastor",label:"Pastor metralhadora",file:"./assets/sounds/pastor-metralhadora.mp3",price:20},
-      {id:"bichao",label:"Cê é o bichão mesmo, hein doido",file:"./assets/sounds/ce-e-o-bichao-memo-hein-doido-red.mp3",price:20},
+      {id:"msn",label:"MSN - nova mensagem",file:"./assets/sounds/new-message-msn.mp3",price:10},
+      {id:"dbz",label:"Kakaroto, você é uma besta",file:"./assets/sounds/dbz-pt-br-kakaroto-voce-e-uma-besta.mp3",price:65},
+      {id:"problema",label:"Tu sai de problema",file:"./assets/sounds/tu-sai-de-problema.mp3",price:30},
+      {id:"grosso",label:"Vai entrar o grosso",file:"./assets/sounds/luladrao-vai-entrar-o-grosso.mp3",price:90},
+      {id:"avast",label:"Avast - ameaça detectada",file:"./assets/sounds/avast-ameaca-detectada.mp3",price:25},
+      {id:"hadouken",label:"Bom dia Hadouken",file:"./assets/sounds/bom-dia-hadouken.mp3",price:70},
+      {id:"todos_todes",label:"Bom dia a todos e todes",file:"./assets/sounds/bom-dia-a-todos-e-todes-meme(1).mp3",price:45},
+      {id:"machucar",label:"Alguém vai se machucar",file:"./assets/sounds/alguem-vai-se-machucar-amegan-smzinho.mp3",price:100},
+      {id:"cagou",label:"Será que cagou? Full HD",file:"./assets/sounds/sera-que-cagou-full-hd-1.mp3",price:55},
+      {id:"pastor",label:"Pastor metralhadora",file:"./assets/sounds/pastor-metralhadora.mp3",price:35},
+      {id:"bichao",label:"Cê é o bichão mesmo, hein doido",file:"./assets/sounds/ce-e-o-bichao-memo-hein-doido-red.mp3",price:80},
       {id:"unico_kakaroto",label:"Único imbecil é Kakaroto",file:"./assets/sounds/Unico_imbecil_eh_kakaroto.mp3",price:20},
-      {id:"vegeta_maldade",label:"Vegeta - meu coração é pura maldade",file:"./assets/sounds/dragon-ball-z-vegeta-meu-coracao-e-pura-maldade.mp3",price:20},
-      {id:"vegeta_genio",label:"Vegeta - o miserável é um gênio",file:"./assets/sounds/vegeta-o-miseravel-e-um-genio.mp3",price:20},
-      {id:"sextou_tio",label:"Sextou, meu tio",file:"./assets/sounds/sextou-meu-tio.mp3",price:20},
-      {id:"sextou",label:"Sextou!",file:"./assets/sounds/sextou_gJyn6iW.mp3",price:20},
-      {id:"lula_pobre",label:"Pobre nasceu pra trabalhar",file:"./assets/sounds/lula-pobre-nasceu-pra-trabalhar.mp3",price:20},
-      {id:"dilma",label:"Dilma filosofando",file:"./assets/sounds/dilma-filosofando-eoq.mp3",price:20}
+      {id:"vegeta_maldade",label:"Vegeta - meu coração é pura maldade",file:"./assets/sounds/dragon-ball-z-vegeta-meu-coracao-e-pura-maldade.mp3",price:75},
+      {id:"vegeta_genio",label:"Vegeta - o miserável é um gênio",file:"./assets/sounds/vegeta-o-miseravel-e-um-genio.mp3",price:50},
+      {id:"sextou_tio",label:"Sextou, meu tio",file:"./assets/sounds/sextou-meu-tio.mp3",price:60},
+      {id:"sextou",label:"Sextou!",file:"./assets/sounds/sextou_gJyn6iW.mp3",price:40},
+      {id:"lula_pobre",label:"Pobre nasceu pra trabalhar",file:"./assets/sounds/lula-pobre-nasceu-pra-trabalhar.mp3",price:85},
+      {id:"dilma",label:"Dilma filosofando",file:"./assets/sounds/dilma-filosofando-eoq.mp3",price:95}
     ];
     const SHOP_ITEMS=[...SOUND_CATALOG.filter(item=>item.price>0).map(item=>({id:"sound:"+item.id,type:"sound",soundId:item.id,label:item.label,description:"Compra 1 uso deste áudio no botão Chamar atenção.",price:item.price})),{id:"message_pack",type:"feature",label:"Mensagem personalizada",description:"Libera uma mensagem curta junto com o alerta.",price:20},{id:"reaction_pack",type:"feature",label:"Pacote de reações",description:"Libera reações rápidas para enviar junto com o alerta.",price:15},{id:"sticker_pack",type:"feature",label:"Pacote de figurinhas",description:"Libera figurinhas de texto para mandar junto com o alerta.",price:30}];
     const REACTIONS=["","👍","😂","👀","🔥","😴","🤡"];
@@ -339,15 +339,22 @@
       if(!authUser||!target)return;
       pendingNudgeTarget=target;
       const unlocked=unlockedItems(),credits=audioCredits();
-      const unlockedSounds=SOUND_CATALOG.filter(sound=>sound.id==="msn"||Number(credits[sound.id]||0)>0);
-      nudgeSound.innerHTML=unlockedSounds.map(sound=>`<option value="${sound.id}">${escapeHtml(sound.label)}</option>`).join("");
+      const unlockedSounds=SOUND_CATALOG.filter(sound=>Number(credits[sound.id]||0)>0);
+      const submitButton=nudgeForm.querySelector('button[type="submit"]');
+      nudgeSound.innerHTML=unlockedSounds.length
+        ? unlockedSounds.map(sound=>`<option value="${sound.id}">${escapeHtml(sound.label)}</option>`).join("")
+        : '<option value="">Nenhum áudio comprado</option>';
+      nudgeSound.disabled=!unlockedSounds.length;
+      if(submitButton)submitButton.disabled=!unlockedSounds.length;
       customMessageField.classList.toggle("hidden",!unlocked.has("message_pack"));
       reactionField.classList.toggle("hidden",!unlocked.has("reaction_pack"));
       stickerField.classList.toggle("hidden",!unlocked.has("sticker_pack"));
       nudgeMessage.value=nudgeReaction.value=nudgeSticker.value="";
-      nudgeTargetText.textContent=target.uid==="all"
-        ?"Chamar a atenção de todos os usuários conectados."
-        :`Chamar a atenção de ${target.name}.`;
+      nudgeTargetText.textContent=!unlockedSounds.length
+        ?"Você não tem áudio disponível. Compre um uso na lojinha."
+        :target.uid==="all"
+          ?"Chamar a atenção de todos os usuários conectados."
+          :`Chamar a atenção de ${target.name}.`;
       nudgeDialog.showModal();
     }
     queueList.addEventListener("click",async event=>{
@@ -425,7 +432,7 @@
     window.addEventListener("focus",stopAttentionFlash);document.addEventListener("visibilitychange",()=>{if(!document.hidden)stopAttentionFlash()});
     attentionAcknowledgeBtn?.addEventListener("click",()=>{stopAttentionFlash();nudgeToast.classList.add("hidden")});
     function showSystemNotification(nudge){if(!("Notification" in window)||Notification.permission!=="granted")return;const fromName=nudge.fromName||"Outro técnico",extras=[nudge.reaction,nudge.sticker?"["+nudge.sticker+"]":"",nudge.message].filter(Boolean).join(" ");try{const notification=new Notification("TechQueue - chamada de atenção",{body:extras?`${fromName}: ${extras}`:`${fromName} está chamando sua atenção.`,tag:"techqueue-nudge",renotify:true,silent:true});notification.onclick=()=>{window.focus();stopAttentionFlash();notification.close()}}catch(err){console.warn("Falha ao mostrar notificação do sistema:",err)}}
-    nudgeForm.addEventListener("submit",async event=>{event.preventDefault();if(!pendingNudgeTarget||!authUser)return;const submitButton=nudgeForm.querySelector('button[type="submit"]');submitButton.disabled=true;const soundId=nudgeSound.value||"msn",soundInfo=SOUND_CATALOG.find(item=>item.id===soundId)||SOUND_CATALOG[0],dayId=bahiaParts().dateId,nudgeRef=doc(collection(db,"days",dayId,"nudges")),profileRef=walletRef();try{await runTransaction(db,async tx=>{if(soundInfo.price>0){const profileSnap=await tx.get(profileRef);if(!profileSnap.exists())throw new Error("Carteira de XP não encontrada.");const data=profileSnap.data(),wallets={...(data.wallets||{})},wallet={...(wallets[authUser.uid]||defaultWallet())},credits={...(wallet.audioCredits||{})},available=Number(credits[soundId]||0);if(available<=0)throw new Error("Você não tem crédito para este áudio. Compre 1 uso na lojinha.");credits[soundId]=available-1;wallet.audioCredits=credits;wallet.updatedAtMs=Date.now();wallets[authUser.uid]=wallet;tx.set(profileRef,{wallets,updatedAt:serverTimestamp()},{merge:true})}tx.set(nudgeRef,{fromUid:authUser.uid,fromName:profile.name,targetUid:pendingNudgeTarget.uid,targetName:pendingNudgeTarget.name,sound:soundId,message:customMessageField.classList.contains("hidden")?"":nudgeMessage.value.trim(),reaction:reactionField.classList.contains("hidden")?"":nudgeReaction.value,sticker:stickerField.classList.contains("hidden")?"":nudgeSticker.value,createdAt:serverTimestamp(),createdAtMs:Date.now()})});nudgeDialog.close()}catch(err){console.error(err);if(err?.code==="permission-denied")alert("O Firebase bloqueou o alerta. Publique a versão mais recente das regras do Firestore.");else alert(err?.message||`Não foi possível enviar a chamada de atenção. ${err?.code||""}`.trim())}finally{submitButton.disabled=false}});
+    nudgeForm.addEventListener("submit",async event=>{event.preventDefault();if(!pendingNudgeTarget||!authUser)return;const submitButton=nudgeForm.querySelector('button[type="submit"]');submitButton.disabled=true;const soundId=nudgeSound.value,soundInfo=SOUND_CATALOG.find(item=>item.id===soundId),dayId=bahiaParts().dateId,nudgeRef=doc(collection(db,"days",dayId,"nudges")),profileRef=walletRef();try{if(!soundInfo)throw new Error("Escolha um áudio comprado na lojinha.");await runTransaction(db,async tx=>{if(soundInfo.price>0){const profileSnap=await tx.get(profileRef);if(!profileSnap.exists())throw new Error("Carteira de XP não encontrada.");const data=profileSnap.data(),wallets={...(data.wallets||{})},wallet={...(wallets[authUser.uid]||defaultWallet())},credits={...(wallet.audioCredits||{})},available=Number(credits[soundId]||0);if(available<=0)throw new Error("Você não tem crédito para este áudio. Compre 1 uso na lojinha.");credits[soundId]=available-1;wallet.audioCredits=credits;wallet.updatedAtMs=Date.now();wallets[authUser.uid]=wallet;tx.set(profileRef,{wallets,updatedAt:serverTimestamp()},{merge:true})}tx.set(nudgeRef,{fromUid:authUser.uid,fromName:profile.name,targetUid:pendingNudgeTarget.uid,targetName:pendingNudgeTarget.name,sound:soundId,message:customMessageField.classList.contains("hidden")?"":nudgeMessage.value.trim(),reaction:reactionField.classList.contains("hidden")?"":nudgeReaction.value,sticker:stickerField.classList.contains("hidden")?"":nudgeSticker.value,createdAt:serverTimestamp(),createdAtMs:Date.now()})});nudgeDialog.close()}catch(err){console.error(err);if(err?.code==="permission-denied")alert("O Firebase bloqueou o alerta. Publique a versão mais recente das regras do Firestore.");else alert(err?.message||`Não foi possível enviar a chamada de atenção. ${err?.code||""}`.trim())}finally{submitButton.disabled=false}});
 
     function showNudge(nudge){const fromName=nudge.fromName||"Outro técnico";document.body.classList.remove("nudged");void document.body.offsetWidth;document.body.classList.add("nudged");const extras=[nudge.reaction,nudge.sticker?"["+nudge.sticker+"]":"",nudge.message].filter(Boolean).join(" ");const message=extras||"Precisa da sua atenção no TechQueue.";if(attentionModal&&window.bootstrap?.Modal){attentionModalFrom.textContent=`${fromName} chamou sua atenção.`;attentionModalMessage.textContent=message;window.bootstrap.Modal.getOrCreateInstance(attentionModal,{backdrop:"static",keyboard:false}).show()}else{nudgeToast.textContent=extras?`${fromName}: ${extras}`:`${fromName} está chamando sua atenção.`;nudgeToast.classList.remove("hidden");setTimeout(()=>nudgeToast.classList.add("hidden"),4500)}const isInBackground=document.hidden||!document.hasFocus();if(isInBackground){startAttentionFlash(fromName);showSystemNotification(nudge);if(navigator.vibrate)try{navigator.vibrate([180,80,180])}catch(_){}}const sound=SOUND_CATALOG.find(item=>item.id===(nudge.sound||"msn"))||SOUND_CATALOG[0];alertPlayer.pause();alertPlayer.src=sound.file;alertPlayer.currentTime=0;alertPlayer.volume=.9;alertPlayer.play().catch(()=>playFallbackNudge())}
     function playFallbackNudge(){try{const AudioCtx=window.AudioContext||window.webkitAudioContext;if(!AudioCtx)return;const ctx=new AudioCtx(),oscillator=ctx.createOscillator(),gain=ctx.createGain();oscillator.frequency.value=660;gain.gain.value=.05;oscillator.connect(gain);gain.connect(ctx.destination);oscillator.start();oscillator.stop(ctx.currentTime+.12)}catch(_){}}
