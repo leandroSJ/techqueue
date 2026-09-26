@@ -451,6 +451,9 @@
     .busy{background:var(--warning-bg);color:var(--warning)}
     .lunch{background:#fef7e0;color:#8a4f00}
     .bathroom{background:var(--surface-container-high);color:var(--text)}
+    .paid_bathroom{background:#f3e8ff;color:#6b21a8}
+    .smoke{background:#e0f2fe;color:#075985}
+    .away{background:#eef2ff;color:#3730a3}
     .offline{background:var(--surface-container-high);color:var(--muted)}
     .status-control{display:grid;grid-template-columns:1fr minmax(180px,260px);gap:14px;align-items:center}
     .status-control p{margin:4px 0 0;color:var(--muted);font-size:.82rem}
@@ -867,8 +870,11 @@
             </div>
             <select id="statusSelect" class="status-select">
               <option value="available">Disponível</option>
+              <option value="offline">Offline</option>
               <option value="lunch">Almoço</option>
+              <option value="smoke">Vou PITAR</option>
               <option value="bathroom">Segura aí na moral, vou no banheiro</option>
+              <option value="paid_bathroom">Caga remunerada</option>
               <option value="away">Vou ali e já volto</option>
             </select>
           </div>
@@ -1573,7 +1579,7 @@
         const isNewPresence = !existingMember;
 
         // Preserva estados temporários e atendimento em andamento ao recarregar.
-        if (["busy", "lunch", "bathroom", "away"].includes(existingMember?.status)) return;
+        if (["busy", "offline", "lunch", "smoke", "bathroom", "paid_bathroom", "away"].includes(existingMember?.status)) return;
 
         members[authUser.uid] = {
           ...existingMember,
@@ -1762,7 +1768,7 @@
         (dayState.queue || []).length <= 1;
 
       if (statusSelect) {
-        const editableStatus = ["available", "lunch", "bathroom", "away"].includes(me?.status) ? me.status : "available";
+        const editableStatus = ["available", "offline", "lunch", "smoke", "bathroom", "paid_bathroom", "away"].includes(me?.status) ? me.status : "available";
         statusSelect.value = editableStatus;
         statusSelect.disabled = me?.status === "busy";
       }
@@ -1809,8 +1815,11 @@
         const statusLabel =
           status === "available" ? "Disponível" :
           status === "busy" ? "Em atendimento" :
+          status === "offline" ? "Offline" :
           status === "lunch" ? "Almoço" :
+          status === "smoke" ? "Vou PITAR" :
           status === "bathroom" ? "Segura aí na moral, vou no banheiro" :
+          status === "paid_bathroom" ? "Caga remunerada" :
           status === "away" ? "Vou ali e já volto" :
           "Fora da fila";
         return `
@@ -1820,7 +1829,7 @@
                 ${escapeHtml(m.name)}
                 ${current ? '<span class="current-label">Próximo</span>' : ""}
               </div>
-              <div class="person-sub">${uid === authUser.uid ? "Você" : "Na fila"}</div>
+              <div class="person-sub">${uid === authUser.uid ? "Você" : (status === "available" || status === "busy" ? "Na fila" : "Fora do rodízio")}</div>
             </div>
             <div class="person-actions">
               ${uid !== authUser.uid && status !== "offline"
