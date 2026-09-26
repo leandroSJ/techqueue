@@ -249,7 +249,7 @@
           </section>
           <section class="card">
             <h2 style="margin-top:0">Como funciona</h2>
-            <p class="muted"><strong>Online:</strong> Jogo da Velha, Desenhe e Adivinhe, Forca, Dominó e Dama usam o Firestore para sincronizar os jogadores.</p>
+            <p class="muted"><strong>Online:</strong> Jogo da Velha, Desenhe e Adivinhe, Forca, Dominó, Ludo Tech e Dama usam o Firestore para sincronizar os jogadores.</p>
             <p class="muted"><strong>Biblioteca:</strong> o Click Jogos continua hospedando os jogos; o TechQueue apenas oferece o acesso e a navegação.</p>
             <p class="muted">Os jogos não gastam XP e não alteram o ranking de atendimento.</p>
           </section>
@@ -1249,13 +1249,13 @@
     }
 
     async function rollLudoDice(){
+      const roll=Math.floor(Math.random()*6)+1;
+
       await mutateRoom(currentRoomId,room=>{
         const s=structuredClone(room.state||{});
         const order=room.playerOrder||[];
 
         if(s.winnerUid||s.turnUid!==user.uid||s.phase!=="roll")return room;
-
-        const roll=Math.floor(Math.random()*6)+1;
         const playerName=room.players?.[user.uid]||displayName();
         const consecutive=roll===6?Number(s.consecutiveSixes||0)+1:0;
 
