@@ -316,7 +316,21 @@
 
     googleLoginBtn?.addEventListener("click",async()=>{if(!isConfigured){if(loginError)loginError.textContent="Configure o Firebase antes de usar o login.";return}if(loginError)loginError.textContent="";googleLoginBtn.disabled=true;try{const provider=new GoogleAuthProvider();provider.setCustomParameters({prompt:"select_account"});await signInWithPopup(auth,provider)}catch(err){console.error(err);if(err.code==="auth/popup-closed-by-user")loginError.textContent="Login com Google cancelado.";else if(err.code==="auth/unauthorized-domain")loginError.textContent="Este domínio ainda não foi autorizado no Firebase.";else if(err.code==="auth/operation-not-allowed")loginError.textContent="Ative o provedor Google no Firebase Authentication.";else loginError.textContent="Não foi possível entrar com o Google."}finally{googleLoginBtn.disabled=false}});
 
-    async function handleAuthState(user){clearSubscriptions();if(!user){authUser=null;profile=null;dayState=null;openAttendance=null;isSigningOut=false;logoutBtn.disabled=false;setViews(false);return}try{isSigningOut=false;logoutBtn.disabled=false;authUser=user;const googleName=(user.displayName||user.email?.split("@")[0]||"Técnico").trim();const email=(user.email||"").toLowerCase();const isAdmin=email==="leandro3dejesus@gmail.com";profile={uid:user.uid,name:googleName,email,enabled:true,role:isAdmin?"admin":"tech"};const banSnap=await getDoc(doc(db,"bans",user.uid));if(banSnap.exists()&&!isAdmin){loginError.textContent="Seu acesso ao TechQueue foi bloqueado pelo administrador.";await signOut(auth);return}subscribeBanStatus();loggedName.textContent=profile.name;loggedShift.textContent="Fila liberada 24h";avatar.textContent=(profile.name||"?").slice(0,1).toUpperCase();adminRow.classList.toggle("hidden",profile.role!=="admin");setViews(true);refreshAlertPermissionUI();await joinToday();subscribeToday();try{await ensureUserProfile();subscribeUserProfile()}catch(walletErr){console.error("Falha ao iniciar carteira/lojinha:",walletErr);userProfileDoc={xpBalance:0,unlockedItems:[],audioCredits:{}};renderWalletAndShop();walletXp.textContent="XP indisponível";shopBalance.textContent="Saldo indisponível — verifique as regras do Firestore."}}catch(err){console.error(err);loginError.textContent="Não foi possível iniciar sua sessão."}}
+    async function handleAuthState(user){clearSubscriptions();if(!user){authUser=null;profile=null;dayState=null;openAttendance=null;isSigningOut=false;logoutBtn.disabled=false;setViews(false);return}try{isSigningOut=false;logoutBtn.disabled=false;authUser=user;const googleName=(user.displayName||user.email?.split("@")[0]||"Técnico").trim();const email=(user.email||"").toLowerCase();const isAdmin=email==="leandro3dejesus@gmail.com";profile={uid:user.uid,name:googleName,email,enabled:true,role:isAdmin?"admin":"tech"};
+      if(!isAdmin){
+        try{
+          const banSnap=await getDoc(doc(db,"bans",user.uid));
+          if(banSnap.exists()){
+            loginError.textContent="Seu acesso ao TechQueue foi bloqueado pelo administrador.";
+            await signOut(auth);
+            return;
+          }
+        }catch(banErr){
+          console.warn("Não foi possível consultar banimento agora; login continuará normalmente.",banErr);
+        }
+      }
+      subscribeBanStatus();
+      loggedName.textContent=profile.name;loggedShift.textContent="Fila liberada 24h";avatar.textContent=(profile.name||"?").slice(0,1).toUpperCase();adminRow.classList.toggle("hidden",profile.role!=="admin");setViews(true);refreshAlertPermissionUI();await joinToday();subscribeToday();try{await ensureUserProfile();subscribeUserProfile()}catch(walletErr){console.error("Falha ao iniciar carteira/lojinha:",walletErr);userProfileDoc={xpBalance:0,unlockedItems:[],audioCredits:{}};renderWalletAndShop();walletXp.textContent="XP indisponível";shopBalance.textContent="Saldo indisponível — verifique as regras do Firestore."}}catch(err){console.error(err);loginError.textContent="Não foi possível iniciar sua sessão."}}
 
     function walletRef(){return doc(db,"days","_wallets")}
     function defaultWallet(oldData=null){
