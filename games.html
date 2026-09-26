@@ -1480,7 +1480,11 @@
       backToLobby();
     });
 
-    closeRoomBtn.addEventListener("click",async()=>{\n      if(currentRoomId)await cancelRoom(currentRoomId);\n    });\n\n    restartBtn.addEventListener("click",async()=>{
+    closeRoomBtn.addEventListener("click",async()=>{
+      if(currentRoomId)await cancelRoom(currentRoomId);
+    });
+
+    restartBtn.addEventListener("click",async()=>{
       if(!currentRoomId||!currentRoom)return;
       await mutateRoom(currentRoomId,room=>{
         const requiredPlayers=Number(room.requiredPlayers||MIN_PLAYERS[room.game]||2);
