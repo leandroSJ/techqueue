@@ -1290,27 +1290,40 @@
     function normalize(v){return String(v).normalize("NFD").replace(/[\u0300-\u036f]/g,"").trim().toLowerCase()}
 
 
-    function initLudo(order,requiredPlayers=2){
+    function initLudo(order,requiredPlayers=2,previous=null){
       const target=Math.max(2,Math.min(4,Number(requiredPlayers||2)));
       const activeOrder=order.slice(0,target);
       const colorsByUid={};
-      const tokens={};
+      const usedColors=new Set();
 
-      activeOrder.forEach((uid,index)=>{
-        colorsByUid[uid]=LUDO_COLORS[index];
+      activeOrder.forEach(uid=>{
+        const previousColor=previous?.colorsByUid?.[uid];
+        if(LUDO_COLORS.includes(previousColor)&&!usedColors.has(previousColor)){
+          colorsByUid[uid]=previousColor;
+          usedColors.add(previousColor);
+        }
+      });
+
+      const tokens={};
+      activeOrder.forEach(uid=>{
         tokens[uid]=[-1,-1,-1,-1];
       });
+
+      const colorsReady=activeOrder.length===target&&activeOrder.every(uid=>colorsByUid[uid]);
 
       return{
         requiredPlayers:target,
         colorsByUid,
         tokens,
-        turnUid:activeOrder[0]||null,
+        turnUid:colorsReady?(activeOrder[0]||null):null,
         dice:null,
-        phase:"roll",
+        lastDice:null,
+        phase:colorsReady?"roll":"color",
         winnerUid:null,
         consecutiveSixes:0,
-        lastAction:"Role o dado para começar."
+        lastAction:colorsReady
+          ?"Cores definidas. A partida começou."
+          :"Escolha sua cor antes da partida começar."
       };
     }
 
@@ -1339,20 +1352,35 @@
       return step+dice<=LUDO_FINISH_STEP;
     }
 
-    function ludoMovableTokens(state,uid){
-      const dice=Number(state.dice||0);
-      return (state.tokens?.[uid]||[])
-        .map((step,index)=>ludoCanMove(step,dice)?index:null)
-        .filter(index=>index!==null);
+    function ludoBestAdvanceIndex(state,uid,dice){
+      const tokens=state.tokens?.[uid]||[];
+      const candidates=tokens
+        .map((step,index)=>({step,index}))
+        .filter(item=>item.step>=0&&ludoCanMove(item.step,dice))
+        .sort((a,b)=>b.step-a.step);
+      return candidates.length?candidates[0].index:-1;
+    }
+
+    function ludoFirstBaseIndex(state,uid){
+      return (state.tokens?.[uid]||[]).findIndex(step=>step<0);
     }
 
     function ludoCellClass(row,col){
       const classes=["ludo-cell"];
 
-      if(row<6&&col<6)classes.push("home-red");
-      else if(row<6&&col>8)classes.push("home-green");
-      else if(row>8&&col>8)classes.push("home-yellow");
-      else if(row>8&&col<6)classes.push("home-blue");
+      if(row<6&&col<6){
+        classes.push("home-red");
+        if(row>=1&&row<=4&&col>=1&&col<=4)classes.push("yard-inner");
+      }else if(row<6&&col>8){
+        classes.push("home-green");
+        if(row>=1&&row<=4&&col>=10&&col<=13)classes.push("yard-inner");
+      }else if(row>8&&col>8){
+        classes.push("home-yellow");
+        if(row>=10&&row<=13&&col>=10&&col<=13)classes.push("yard-inner");
+      }else if(row>8&&col<6){
+        classes.push("home-blue");
+        if(row>=10&&row<=13&&col>=1&&col<=4)classes.push("yard-inner");
+      }
 
       const trackIndex=LUDO_TRACK.findIndex(item=>item[0]===row&&item[1]===col);
       if(trackIndex>=0){
@@ -1374,14 +1402,132 @@
       return classes.join(" ");
     }
 
+    function ludoDieHtml(value){
+      const face=Number(value||0);
+      if(face<1||face>6){
+        return '<div class="ludo-die-face empty" aria-label="Dado ainda não rolado">—</div>';
+      }
+
+      const positions={
+        1:[4],
+        2:[0,8],
+        3:[0,4,8],
+        4:[0,2,6,8],
+        5:[0,2,4,6,8],
+        6:[0,2,3,5,6,8]
+      };
+
+      let pips="";
+      for(let index=0;index<9;index++){
+        pips+='<span class="ludo-pip'+(positions[face].includes(index)?" on":"")+'"></span>';
+      }
+
+      return '<div class="ludo-die-face" aria-label="Dado: '+face+'">'+pips+'</div>';
+    }
+
+    function renderLudoColorSetup(state,order,requiredPlayers){
+      const colors=state.colorsByUid||{};
+      const usedByOthers=new Set(
+        order
+          .filter(uid=>uid!==user.uid)
+          .map(uid=>colors[uid])
+          .filter(Boolean)
+      );
+      const myColor=colors[user.uid]||null;
+
+      let colorButtons="";
+      const labels={red:"Vermelho",green:"Verde",yellow:"Amarelo",blue:"Azul"};
+
+      LUDO_COLORS.forEach(color=>{
+        const disabled=usedByOthers.has(color)?" disabled":"";
+        const selected=myColor===color?" selected":"";
+        colorButtons+='<button type="button" class="ludo-color-btn '+color+selected+'" data-ludo-color="'+color+'"'+disabled+'>'+
+          labels[color]+
+        '</button>';
+      });
+
+      let rows="";
+      order.forEach(uid=>{
+        const color=colors[uid]||null;
+        rows+='<div class="ludo-waiting-row">'+
+          '<span>'+escapeHtml(currentRoom.players?.[uid]||"Jogador")+(uid===user.uid?" · você":"")+'</span>'+
+          '<strong>'+(color?labels[color]:"Escolhendo cor...")+'</strong>'+
+        '</div>';
+      });
+
+      const waiting=Math.max(0,requiredPlayers-order.length);
+
+      gameRoot.innerHTML=
+        '<div class="ludo-color-setup">'+
+          '<div class="text-center">'+
+            '<h3 class="h5 fw-semibold mb-1">Escolha sua cor</h3>'+
+            '<p class="muted mb-0">Cada jogador escolhe uma cor antes do tabuleiro ser liberado.</p>'+
+          '</div>'+
+          '<div class="ludo-color-grid">'+colorButtons+'</div>'+
+          '<div class="ludo-waiting-list">'+rows+'</div>'+
+          (waiting?'<div class="alert alert-secondary mt-3 mb-0">Aguardando mais '+waiting+' jogador'+(waiting===1?"":"es")+' entrar'+(waiting===1?"":"em")+'.</div>':'')+
+          (!waiting&&order.some(uid=>!colors[uid])?'<div class="alert alert-secondary mt-3 mb-0">Todos entraram. Falta cada jogador confirmar uma cor.</div>':'')+
+        '</div>';
+    }
+
+    async function chooseLudoColor(color){
+      if(!LUDO_COLORS.includes(color))return;
+
+      await mutateRoom(currentRoomId,room=>{
+        const order=room.playerOrder||[];
+        const requiredPlayers=Number(room.requiredPlayers||room.maxPlayers||2);
+        const s=structuredClone(room.state||initLudo(order,requiredPlayers));
+
+        if(s.phase!=="color"&&s.turnUid)return room;
+
+        const colors={...(s.colorsByUid||{})};
+        const alreadyUsed=order.some(uid=>uid!==user.uid&&colors[uid]===color);
+        if(alreadyUsed)return room;
+
+        colors[user.uid]=color;
+        s.colorsByUid=colors;
+
+        if(!Array.isArray(s.tokens?.[user.uid])){
+          s.tokens={...(s.tokens||{}),[user.uid]:[-1,-1,-1,-1]};
+        }
+
+        const full=order.length>=requiredPlayers;
+        const allColors=full&&order.slice(0,requiredPlayers).every(uid=>colors[uid]);
+
+        if(allColors){
+          s.phase="roll";
+          s.turnUid=order[0]||null;
+          s.dice=null;
+          s.lastDice=null;
+          s.lastAction="Cores definidas. A partida começou.";
+          room.status="playing";
+        }else{
+          s.phase="color";
+          s.turnUid=null;
+          s.lastAction="Aguardando jogadores e escolhas de cor.";
+          room.status="waiting";
+        }
+
+        room.state=s;
+        return room;
+      });
+    }
+
     function renderLudo(){
       const s=currentRoom.state||{};
       const order=currentRoom.playerOrder||[];
+      const requiredPlayers=Number(currentRoom.requiredPlayers||currentRoom.maxPlayers||2);
       const colors=s.colorsByUid||{};
+      const colorsReady=order.length>=requiredPlayers&&order.slice(0,requiredPlayers).every(uid=>colors[uid]);
+
+      if(s.phase==="color"||!colorsReady){
+        renderLudoColorSetup(s,order,requiredPlayers);
+        return;
+      }
+
       const turnName=s.turnUid?currentRoom.players?.[s.turnUid]:"";
       const winnerName=s.winnerUid?currentRoom.players?.[s.winnerUid]:"";
       const myTurn=s.turnUid===user.uid&&!s.winnerUid;
-      const movable=new Set(myTurn&&s.phase==="move"?ludoMovableTokens(s,user.uid):[]);
       const tokenMap=new Map();
 
       order.forEach(uid=>{
@@ -1402,13 +1548,9 @@
           let tokenHtml="";
 
           pieces.forEach(piece=>{
-            const canClick=piece.uid===user.uid&&movable.has(piece.tokenIndex);
-            const label=piece.tokenIndex+1;
-            if(canClick){
-              tokenHtml+='<button class="ludo-token '+piece.color+' movable" data-ludo-token="'+piece.tokenIndex+'" title="Mover peça '+label+'">'+label+'</button>';
-            }else{
-              tokenHtml+='<span class="ludo-token '+piece.color+'" title="'+escapeHtml(currentRoom.players?.[piece.uid]||"Jogador")+' · peça '+label+'">'+label+'</span>';
-            }
+            tokenHtml+='<span class="ludo-token '+piece.color+'" title="'+
+              escapeHtml(currentRoom.players?.[piece.uid]||"Jogador")+
+              ' · peça '+(piece.tokenIndex+1)+'"></span>';
           });
 
           boardHtml+='<div class="'+ludoCellClass(row,col)+'">'+tokenHtml+'</div>';
@@ -1422,36 +1564,142 @@
         const finished=pieces.filter(step=>step===LUDO_FINISH_STEP).length;
         playerRows+='<div class="ludo-player-row">'+
           '<span style="display:flex;align-items:center;gap:7px;min-width:0">'+
-          '<span class="ludo-color-dot '+color+'"></span>'+
-          '<span style="overflow-wrap:anywhere">'+escapeHtml(currentRoom.players?.[uid]||"Jogador")+(uid===user.uid?" · você":"")+'</span>'+
-          '</span><strong>'+finished+'/4</strong></div>';
+            '<span class="ludo-color-dot '+color+'"></span>'+
+            '<span style="overflow-wrap:anywhere">'+escapeHtml(currentRoom.players?.[uid]||"Jogador")+(uid===user.uid?" · você":"")+'</span>'+
+          '</span>'+
+          '<strong>'+finished+'/4</strong>'+
+        '</div>';
       });
 
-      const headline=s.winnerUid
-        ? escapeHtml(winnerName||"Jogador")+" venceu o Ludo Tech!"
-        : "Vez de "+escapeHtml(turnName||"jogador")+". "+(myTurn?(s.phase==="roll"?"Role o dado.":"Escolha uma peça destacada."):"Aguarde sua vez.");
+      let headline;
+      if(s.winnerUid){
+        headline=escapeHtml(winnerName||"Jogador")+" venceu o Ludo Tech!";
+      }else if(myTurn&&s.phase==="six-choice"){
+        headline="Você tirou 6. Escolha entre tirar uma peça da base ou avançar.";
+      }else if(myTurn){
+        headline="Sua vez. Role o dado.";
+      }else{
+        headline="Vez de "+escapeHtml(turnName||"jogador")+". Aguarde sua vez.";
+      }
 
-      const rollDisabled=!myTurn||s.phase!=="roll"||s.winnerUid ? " disabled" : "";
+      let controls="";
+      if(myTurn&&s.phase==="six-choice"){
+        const hasBase=ludoFirstBaseIndex(s,user.uid)>=0;
+        const hasAdvance=ludoBestAdvanceIndex(s,user.uid,6)>=0;
+
+        controls=
+          '<div class="ludo-choice">'+
+            '<button class="btn btn-warning fw-semibold" type="button" data-ludo-six-choice="release"'+(hasBase?"":" disabled")+'>Tirar peça da base</button>'+
+            '<button class="btn btn-light fw-semibold" type="button" data-ludo-six-choice="advance"'+(hasAdvance?"":" disabled")+'>Avançar peça</button>'+
+          '</div>';
+      }else{
+        const rollDisabled=!myTurn||s.phase!=="roll"||s.winnerUid?" disabled":"";
+        controls='<div style="text-align:center;margin-top:8px">'+
+          '<button class="btn btn-warning fw-semibold w-100" type="button" data-ludo-roll'+rollDisabled+'>Rolar dado</button>'+
+        '</div>';
+      }
 
       gameRoot.innerHTML=
         '<div class="turn">'+headline+'</div>'+
-        '<div class="ludo-wrap">'+
-          '<div class="ludo-board" aria-label="Tabuleiro de Ludo">'+boardHtml+'</div>'+
-          '<aside class="ludo-panel">'+
-            '<div class="ludo-status">'+
-              '<div class="ludo-die">'+(s.dice??"?")+'</div>'+
-              '<div style="text-align:center;margin-top:8px">'+
-                '<button class="btn primary" type="button" data-ludo-roll'+rollDisabled+'>Rolar dado</button>'+
+        '<div class="ludo-stage">'+
+          '<div class="ludo-wrap">'+
+            '<div class="ludo-board" aria-label="Tabuleiro de Ludo">'+boardHtml+'</div>'+
+            '<aside class="ludo-panel">'+
+              '<div class="ludo-status">'+
+                ludoDieHtml(s.dice||s.lastDice)+
+                controls+
+                '<div class="small muted" style="text-align:center;margin-top:8px">'+escapeHtml(s.lastAction||"")+'</div>'+
               '</div>'+
-              '<div class="small muted" style="text-align:center;margin-top:7px">'+escapeHtml(s.lastAction||"")+'</div>'+
-            '</div>'+
-            '<div>'+playerRows+'</div>'+
-            '<div class="ludo-rules"><strong>Regras desta versão</strong><br>'+
-              'Tire 6 para tirar uma peça da base. Ande o número do dado. Se cair sobre adversário fora de casa segura, ele volta para a base. '+
-              'Tirar 6 ou capturar dá outra jogada. Para chegar ao centro, precisa do número exato.'+
-            '</div>'+
-          '</aside>'+
+              '<div>'+playerRows+'</div>'+
+              '<div class="ludo-rules"><strong>Regras desta versão</strong><br>'+
+                'A peça anda automaticamente ao rolar 1 a 5. Quando sair 6, você escolhe entre avançar ou tirar uma peça da base. '+
+                'Ao cair sobre uma peça adversária fora de casa segura, ela volta para a base. Para chegar ao centro é necessário o número exato.'+
+              '</div>'+
+            '</aside>'+
+          '</div>'+
         '</div>';
+    }
+
+    function applyLudoMoveState(room,s,uid,tokenIndex,dice){
+      const order=room.playerOrder||[];
+      const tokens=[...(s.tokens?.[uid]||[])];
+      const oldStep=tokens[tokenIndex];
+
+      if(oldStep===undefined||!ludoCanMove(oldStep,dice))return room;
+
+      const color=s.colorsByUid?.[uid]||"red";
+      const newStep=oldStep<0?0:oldStep+dice;
+      tokens[tokenIndex]=newStep;
+      s.tokens={...(s.tokens||{}),[uid]:tokens};
+
+      let captured=0;
+
+      if(newStep>=0&&newStep<=51){
+        const globalIndex=ludoAbsoluteTrackIndex(color,newStep);
+
+        if(!LUDO_SAFE_GLOBAL.has(globalIndex)){
+          for(const opponentUid of order){
+            if(opponentUid===uid)continue;
+
+            const opponentColor=s.colorsByUid?.[opponentUid]||"red";
+            const opponentTokens=[...(s.tokens?.[opponentUid]||[])];
+
+            opponentTokens.forEach((step,index)=>{
+              if(step<0||step>51)return;
+              const opponentGlobal=ludoAbsoluteTrackIndex(opponentColor,step);
+
+              if(opponentGlobal===globalIndex){
+                opponentTokens[index]=-1;
+                captured++;
+              }
+            });
+
+            s.tokens[opponentUid]=opponentTokens;
+          }
+        }
+      }
+
+      const playerName=room.players?.[uid]||"Jogador";
+      const finished=newStep===LUDO_FINISH_STEP;
+      const won=tokens.every(step=>step===LUDO_FINISH_STEP);
+
+      s.lastDice=dice;
+      s.dice=null;
+
+      if(won){
+        s.winnerUid=uid;
+        s.turnUid=null;
+        s.phase="finished";
+        s.lastAction=playerName+" colocou as 4 peças no centro e venceu.";
+        room.state=s;
+        room.status="finished";
+        return room;
+      }
+
+      let moveText;
+      if(oldStep<0)moveText=playerName+" tirou uma peça da base.";
+      else if(finished)moveText=playerName+" colocou uma peça no centro.";
+      else moveText=playerName+" avançou "+dice+" casa"+(dice===1?"":"s")+" automaticamente.";
+
+      if(captured){
+        moveText+=" Capturou "+captured+" peça"+(captured===1?"":"s")+" e mandou para a base.";
+      }
+
+      s.lastAction=moveText;
+      s.phase="roll";
+
+      const extraTurn=dice===6||captured>0;
+      if(extraTurn){
+        s.turnUid=uid;
+        if(dice!==6)s.consecutiveSixes=0;
+      }else{
+        s.turnUid=nextLudoPlayer(order,uid);
+        s.consecutiveSixes=0;
+      }
+
+      room.state=s;
+      room.status="playing";
+      return room;
     }
 
     async function rollLudoDice(){
@@ -1462,12 +1710,17 @@
         const order=room.playerOrder||[];
 
         if(s.winnerUid||s.turnUid!==user.uid||s.phase!=="roll")return room;
+
         const playerName=room.players?.[user.uid]||displayName();
         const consecutive=roll===6?Number(s.consecutiveSixes||0)+1:0;
 
+        s.dice=roll;
+        s.lastDice=roll;
+        s.consecutiveSixes=consecutive;
+
         if(consecutive>=3){
-          s.dice=roll;
           s.phase="roll";
+          s.dice=null;
           s.consecutiveSixes=0;
           s.lastAction=playerName+" tirou três 6 seguidos e perdeu a vez.";
           s.turnUid=nextLudoPlayer(order,user.uid);
@@ -1475,116 +1728,63 @@
           return room;
         }
 
-        s.dice=roll;
-        s.consecutiveSixes=consecutive;
-        const movable=(s.tokens?.[user.uid]||[]).some(step=>ludoCanMove(step,roll));
+        const baseIndex=ludoFirstBaseIndex(s,user.uid);
+        const advanceIndex=ludoBestAdvanceIndex(s,user.uid,roll);
 
-        if(!movable){
-          s.lastAction=playerName+" tirou "+roll+", mas não tem peça que possa mover.";
-
-          if(roll===6){
-            s.phase="roll";
-          }else{
-            s.phase="roll";
-            s.turnUid=nextLudoPlayer(order,user.uid);
-            s.dice=null;
-            s.consecutiveSixes=0;
+        if(roll===6){
+          if(baseIndex>=0&&advanceIndex>=0){
+            s.phase="six-choice";
+            s.lastAction=playerName+" tirou 6. Escolha se quer tirar uma peça da base ou avançar.";
+            room.state=s;
+            return room;
           }
 
-          room.state=s;
-          return room;
+          if(baseIndex>=0){
+            return applyLudoMoveState(room,s,user.uid,baseIndex,roll);
+          }
+
+          if(advanceIndex>=0){
+            return applyLudoMoveState(room,s,user.uid,advanceIndex,roll);
+          }
+        }else if(advanceIndex>=0){
+          return applyLudoMoveState(room,s,user.uid,advanceIndex,roll);
         }
 
-        s.phase="move";
-        s.lastAction=playerName+" tirou "+roll+". Escolha uma peça.";
+        s.dice=null;
+        s.phase="roll";
+        s.consecutiveSixes=0;
+        s.lastAction=playerName+" tirou "+roll+", mas não tinha peça que pudesse avançar.";
+        s.turnUid=nextLudoPlayer(order,user.uid);
         room.state=s;
         return room;
       });
     }
 
-    async function moveLudoToken(tokenIndex){
+    async function resolveLudoSixChoice(choice){
       await mutateRoom(currentRoomId,room=>{
         const s=structuredClone(room.state||{});
-        const order=room.playerOrder||[];
-        const dice=Number(s.dice||0);
 
-        if(s.winnerUid||s.turnUid!==user.uid||s.phase!=="move")return room;
-
-        const tokens=[...(s.tokens?.[user.uid]||[])];
-        const oldStep=tokens[tokenIndex];
-        if(oldStep===undefined||!ludoCanMove(oldStep,dice))return room;
-
-        const color=s.colorsByUid?.[user.uid]||"red";
-        const newStep=oldStep<0?0:oldStep+dice;
-        tokens[tokenIndex]=newStep;
-        s.tokens[user.uid]=tokens;
-
-        let captured=0;
-
-        if(newStep>=0&&newStep<=51){
-          const globalIndex=ludoAbsoluteTrackIndex(color,newStep);
-
-          if(!LUDO_SAFE_GLOBAL.has(globalIndex)){
-            for(const opponentUid of order){
-              if(opponentUid===user.uid)continue;
-
-              const opponentColor=s.colorsByUid?.[opponentUid]||"red";
-              const opponentTokens=[...(s.tokens?.[opponentUid]||[])];
-
-              opponentTokens.forEach((step,index)=>{
-                if(step<0||step>51)return;
-                const opponentGlobal=ludoAbsoluteTrackIndex(opponentColor,step);
-                if(opponentGlobal===globalIndex){
-                  opponentTokens[index]=-1;
-                  captured++;
-                }
-              });
-
-              s.tokens[opponentUid]=opponentTokens;
-            }
-          }
-        }
-
-        const playerName=room.players?.[user.uid]||displayName();
-        const finished=newStep===LUDO_FINISH_STEP;
-        const won=tokens.every(step=>step===LUDO_FINISH_STEP);
-
-        if(won){
-          s.winnerUid=user.uid;
-          s.turnUid=null;
-          s.dice=null;
-          s.phase="finished";
-          s.lastAction=playerName+" colocou as 4 peças no centro e venceu.";
-          room.state=s;
-          room.status="finished";
+        if(s.winnerUid||s.turnUid!==user.uid||s.phase!=="six-choice"||Number(s.dice)!==6){
           return room;
         }
 
-        const extraTurn=dice===6||captured>0;
-        let moveText;
+        const baseIndex=ludoFirstBaseIndex(s,user.uid);
+        const advanceIndex=ludoBestAdvanceIndex(s,user.uid,6);
 
-        if(oldStep<0)moveText=playerName+" tirou uma peça da base.";
-        else if(finished)moveText=playerName+" colocou uma peça no centro.";
-        else moveText=playerName+" avançou "+dice+" casa"+(dice===1?"":"s")+".";
-
-        if(captured){
-          moveText+=" Capturou "+captured+" peça"+(captured===1?"":"s")+".";
+        if(choice==="release"&&baseIndex>=0){
+          return applyLudoMoveState(room,s,user.uid,baseIndex,6);
         }
 
-        s.lastAction=moveText;
+        if(choice==="advance"&&advanceIndex>=0){
+          return applyLudoMoveState(room,s,user.uid,advanceIndex,6);
+        }
+
+        if(baseIndex>=0)return applyLudoMoveState(room,s,user.uid,baseIndex,6);
+        if(advanceIndex>=0)return applyLudoMoveState(room,s,user.uid,advanceIndex,6);
+
         s.dice=null;
         s.phase="roll";
-
-        if(extraTurn){
-          s.turnUid=user.uid;
-          if(dice!==6)s.consecutiveSixes=0;
-        }else{
-          s.turnUid=nextLudoPlayer(order,user.uid);
-          s.consecutiveSixes=0;
-        }
-
         room.state=s;
-        room.status="playing";
         return room;
       });
     }
