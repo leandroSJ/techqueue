@@ -8,6 +8,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;600&display=swap" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet">
   <style>
     :root{
       color-scheme:light;
@@ -56,397 +57,78 @@
     }
 
     *{box-sizing:border-box}
-
     html,body{margin:0;min-height:100%}
-
-    body{
-      min-height:100vh;
-      font-family:Roboto,Arial,sans-serif;
-      background:var(--bg);
-      color:var(--text);
-      transition:background-color .18s ease,color .18s ease;
-    }
-
+    body{min-height:100vh;font-family:Roboto,Arial,sans-serif;background:var(--bg);color:var(--text);transition:background-color .18s ease,color .18s ease}
     button,input,textarea{font:inherit}
     button{cursor:pointer}
     .hidden{display:none!important}
-
-    .shell{
-      width:min(1120px,calc(100% - 32px));
-      margin:0 auto;
-      padding:24px 0 48px;
-    }
-
-    .login-wrap{
-      min-height:100vh;
-      display:grid;
-      place-items:center;
-      padding:24px;
-    }
-
-    .login-card{
-      width:min(420px,100%);
-      background:var(--surface);
-      border:1px solid var(--border);
-      border-radius:16px;
-      padding:28px;
-      box-shadow:var(--shadow);
-    }
-
-    .login-topbar{
-      display:flex;
-      align-items:center;
-      justify-content:space-between;
-      gap:16px;
-      margin-bottom:6px;
-    }
-
-    .logo{
-      font-size:1.45rem;
-      font-weight:600;
-      letter-spacing:-.02em;
-    }
-
-    .subtitle{
-      color:var(--muted);
-      margin:0 0 26px;
-      line-height:1.45;
-    }
-
+    .shell{width:min(1120px,calc(100% - 32px));margin:0 auto;padding:24px 0 48px}
+    .login-wrap{min-height:100vh;display:grid;place-items:center;padding:24px}
+    .login-card{width:min(420px,100%);background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:28px;box-shadow:var(--shadow)}
+    .login-topbar{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:6px}
+    .logo{font-size:1.45rem;font-weight:600;letter-spacing:-.02em}
+    .subtitle{color:var(--muted);margin:0 0 26px;line-height:1.45}
     .field{display:grid;gap:7px;margin-bottom:16px}
-
-    label{
-      color:var(--text);
-      font-size:.875rem;
-      font-weight:500;
-    }
-
-    input,textarea{
-      width:100%;
-      border:1px solid var(--border-strong);
-      background:var(--surface);
-      color:var(--text);
-      border-radius:8px;
-      padding:12px 13px;
-      outline:none;
-      transition:border-color .15s ease,box-shadow .15s ease;
-    }
-
+    label{color:var(--text);font-size:.875rem;font-weight:500}
+    input,textarea{width:100%;border:1px solid var(--border-strong);background:var(--surface);color:var(--text);border-radius:8px;padding:12px 13px;outline:none;transition:border-color .15s ease,box-shadow .15s ease}
     textarea{min-height:120px;resize:vertical}
-
-    input:focus,textarea:focus{
-      border-color:var(--primary);
-      box-shadow:0 0 0 1px var(--primary);
-    }
-
-    .btn{
-      min-height:40px;
-      border:0;
-      border-radius:20px;
-      padding:9px 18px;
-      font-weight:500;
-      transition:background-color .15s ease,box-shadow .15s ease,opacity .15s ease;
-    }
-
+    input:focus,textarea:focus{border-color:var(--primary);box-shadow:0 0 0 1px var(--primary)}
+    .btn{min-height:40px;border:0;border-radius:20px;padding:9px 18px;font-weight:500;transition:background-color .15s ease,box-shadow .15s ease,opacity .15s ease}
     .btn:hover{box-shadow:var(--shadow)}
     .btn:disabled{cursor:not-allowed;opacity:.38;box-shadow:none}
-
-    .btn-primary{
-      background:var(--primary);
-      color:var(--on-primary);
-    }
-
-    .btn-secondary{
-      background:transparent;
-      color:var(--primary);
-      border:1px solid var(--border);
-    }
-
-    .btn-danger{
-      background:var(--danger-bg);
-      color:var(--danger);
-      border:1px solid color-mix(in srgb,var(--danger) 40%,transparent);
-    }
-
+    .btn-primary{background:var(--primary);color:var(--on-primary)}
+    .btn-secondary{background:transparent;color:var(--primary);border:1px solid var(--border)}
+    .btn-danger{background:var(--danger-bg);color:var(--danger);border:1px solid color-mix(in srgb,var(--danger) 40%,transparent)}
     .btn-full{width:100%}
-
-    .theme-btn{
-      min-height:36px;
-      padding:7px 13px;
-      white-space:nowrap;
-      background:transparent;
-      color:var(--primary);
-      border:1px solid var(--border);
-      border-radius:18px;
-      font-size:.84rem;
-      font-weight:500;
-    }
-
-    .google-btn{
-      width:100%;
-      display:flex;
-      align-items:center;
-      justify-content:center;
-      gap:11px;
-      background:var(--surface);
-      color:var(--text);
-      border:1px solid var(--border);
-      margin-bottom:18px;
-      border-radius:20px;
-    }
-
+    .theme-btn{min-height:36px;padding:7px 13px;white-space:nowrap;background:transparent;color:var(--primary);border:1px solid var(--border);border-radius:18px;font-size:.84rem;font-weight:500}
+    .google-btn{width:100%;display:flex;align-items:center;justify-content:center;gap:11px;background:var(--surface);color:var(--text);border:1px solid var(--border);margin-bottom:18px;border-radius:20px}
     .google-btn svg{width:20px;height:20px;flex:0 0 20px}
-
-    .login-divider{
-      display:flex;
-      align-items:center;
-      gap:12px;
-      color:var(--muted);
-      font-size:.78rem;
-      margin:2px 0 18px;
-    }
-
-    .login-divider::before,.login-divider::after{
-      content:"";
-      height:1px;
-      background:var(--border);
-      flex:1;
-    }
-
-    .error{
-      color:var(--danger);
-      font-size:.88rem;
-      margin-top:12px;
-      min-height:20px;
-    }
-
-    header{
-      display:flex;
-      align-items:center;
-      justify-content:space-between;
-      gap:20px;
-      margin-bottom:20px;
-      padding-bottom:18px;
-      border-bottom:1px solid var(--border);
-    }
-
-    .brand h1{
-      margin:0;
-      font-size:1.45rem;
-      font-weight:600;
-      letter-spacing:-.02em;
-    }
-
+    .login-divider{display:flex;align-items:center;gap:12px;color:var(--muted);font-size:.78rem;margin:2px 0 18px}
+    .login-divider::before,.login-divider::after{content:"";height:1px;background:var(--border);flex:1}
+    .error{color:var(--danger);font-size:.88rem;margin-top:12px;min-height:20px}
+    header{display:flex;align-items:center;justify-content:space-between;gap:20px;margin-bottom:20px;padding-bottom:18px;border-bottom:1px solid var(--border)}
+    .brand h1{margin:0;font-size:1.45rem;font-weight:600;letter-spacing:-.02em}
     .brand p{margin:4px 0 0;color:var(--muted);font-size:.9rem}
-
-    .userbox{
-      display:flex;
-      gap:10px;
-      align-items:center;
-    }
-
-    .header-actions{
-      display:flex;
-      gap:8px;
-      align-items:center;
-      margin-left:6px;
-    }
-
-    .avatar{
-      width:40px;
-      height:40px;
-      border-radius:50%;
-      display:grid;
-      place-items:center;
-      background:var(--primary-container);
-      color:var(--on-primary-container);
-      font-weight:600;
-    }
-
+    .userbox{display:flex;gap:10px;align-items:center}
+    .header-actions{display:flex;gap:8px;align-items:center;margin-left:6px}
+    .avatar{width:40px;height:40px;border-radius:50%;display:grid;place-items:center;background:var(--primary-container);color:var(--on-primary-container);font-weight:600}
     .user-meta strong,.user-meta span{display:block}
     .user-meta strong{font-weight:500}
     .user-meta span{color:var(--muted);font-size:.8rem;margin-top:2px}
-
-    .notice{
-      padding:12px 14px;
-      border:1px solid var(--border);
-      background:var(--surface-container);
-      border-radius:12px;
-      color:var(--text);
-      margin-bottom:18px;
-      font-size:.9rem;
-    }
-
-    .hero{
-      background:var(--surface);
-      border:1px solid var(--border);
-      border-radius:16px;
-      padding:26px;
-      text-align:left;
-      margin-bottom:20px;
-      box-shadow:var(--shadow);
-    }
-
-    .eyebrow{
-      color:var(--muted);
-      font-weight:500;
-      font-size:.78rem;
-      margin-bottom:6px;
-    }
-
-    .next-name{
-      font-size:clamp(2rem,5vw,3.25rem);
-      line-height:1.1;
-      font-weight:500;
-      letter-spacing:-.03em;
-      margin:4px 0 8px;
-    }
-
-    .queue-text{
-      color:var(--muted);
-      margin-bottom:20px;
-      line-height:1.45;
-    }
-
+    .notice{padding:12px 14px;border:1px solid var(--border);background:var(--surface-container);border-radius:12px;color:var(--text);margin-bottom:18px;font-size:.9rem}
+    .hero{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:26px;text-align:left;margin-bottom:20px;box-shadow:var(--shadow)}
+    .eyebrow{color:var(--muted);font-weight:500;font-size:.78rem;margin-bottom:6px}
+    .next-name{font-size:clamp(2rem,5vw,3.25rem);line-height:1.1;font-weight:500;letter-spacing:-.03em;margin:4px 0 8px}
+    .queue-text{color:var(--muted);margin-bottom:20px;line-height:1.45}
     .hero-actions{display:flex;gap:10px;flex-wrap:wrap}
-
     .ranking-card{margin-top:20px}
-    .ranking-note{
-      margin:-5px 0 16px;
-      color:var(--muted);
-      font-size:.82rem;
-      line-height:1.45
-    }
-    .podium{
-      display:grid;
-      grid-template-columns:repeat(3,1fr);
-      gap:10px;
-      margin-bottom:14px
-    }
-    .podium-place{
-      border:1px solid var(--border);
-      border-radius:12px;
-      padding:14px;
-      background:var(--surface-container);
-      text-align:center
-    }
+    .ranking-note{margin:-5px 0 16px;color:var(--muted);font-size:.82rem;line-height:1.45}
+    .podium{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:14px}
+    .podium-place{border:1px solid var(--border);border-radius:12px;padding:14px;background:var(--surface-container);text-align:center}
     .podium-place strong{display:block;font-size:.94rem;margin:5px 0 3px}
     .podium-position{font-size:.75rem;color:var(--muted);font-weight:500}
     .podium-score{font-size:.8rem;color:var(--muted)}
-    .shame-wall{
-      border-top:1px solid var(--border);
-      padding-top:12px
-    }
-    .shame-wall-title{
-      font-size:.82rem;
-      font-weight:500;
-      margin-bottom:8px
-    }
-    .rank-row{
-      display:flex;
-      justify-content:space-between;
-      gap:12px;
-      padding:7px 0;
-      font-size:.84rem
-    }
-    .xp-badge{
-      display:inline-flex;
-      align-items:center;
-      border-radius:999px;
-      padding:3px 7px;
-      background:var(--primary-container);
-      color:var(--on-primary-container);
-      font-size:.7rem;
-      font-weight:500;
-      margin-left:6px
-    }
-
-    .shop-balance{
-      padding:12px 14px;
-      border-radius:10px;
-      background:var(--primary-container);
-      color:var(--on-primary-container);
-      margin:12px 0 16px;
-      font-weight:500
-    }
+    .shame-wall{border-top:1px solid var(--border);padding-top:12px}
+    .shame-wall-title{font-size:.82rem;font-weight:500;margin-bottom:8px}
+    .rank-row{display:flex;justify-content:space-between;gap:12px;padding:7px 0;font-size:.84rem}
+    .xp-badge{display:inline-flex;align-items:center;border-radius:999px;padding:3px 7px;background:var(--primary-container);color:var(--on-primary-container);font-size:.7rem;font-weight:500;margin-left:6px}
+    .shop-balance{padding:12px 14px;border-radius:10px;background:var(--primary-container);color:var(--on-primary-container);margin:12px 0 16px;font-weight:500}
     .shop-grid{display:grid;gap:10px}
-    .shop-item{
-      display:grid;
-      grid-template-columns:1fr auto;
-      gap:12px;
-      align-items:center;
-      border:1px solid var(--border);
-      border-radius:10px;
-      padding:12px
-    }
+    .shop-item{display:grid;grid-template-columns:1fr auto;gap:12px;align-items:center;border:1px solid var(--border);border-radius:10px;padding:12px}
     .shop-item strong{display:block;font-weight:500}
     .shop-item span{display:block;color:var(--muted);font-size:.8rem;margin-top:3px}
     .shop-price{font-weight:500;white-space:nowrap}
     .shop-owned{color:var(--success);font-size:.8rem;font-weight:500}
-
-    .grid{
-      display:grid;
-      grid-template-columns:.9fr 1.1fr;
-      gap:20px;
-    }
-
-    .card{
-      background:var(--surface);
-      border:1px solid var(--border);
-      border-radius:16px;
-      padding:20px;
-      box-shadow:var(--shadow);
-    }
-
-    .card h2{
-      font-size:1rem;
-      font-weight:500;
-      margin:0 0 15px;
-    }
-
+    .grid{display:grid;grid-template-columns:.9fr 1.1fr;gap:20px}
+    .card{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:20px;box-shadow:var(--shadow)}
+    .card h2{font-size:1rem;font-weight:500;margin:0 0 15px}
     .queue-list,.history{display:grid;gap:8px}
-
-    .person{
-      display:grid;
-      grid-template-columns:1fr auto;
-      gap:10px;
-      align-items:center;
-      padding:12px 13px;
-      border-radius:10px;
-      border:1px solid var(--border);
-      background:var(--surface);
-    }
-
-    .person.current{
-      background:var(--primary-container);
-      border-color:var(--primary);
-    }
-
-    .person-name{
-      display:flex;
-      align-items:center;
-      gap:8px;
-      font-weight:500;
-    }
-
-    .current-label{
-      color:var(--on-primary-container);
-      font-size:.72rem;
-      font-weight:500;
-      border:1px solid color-mix(in srgb,var(--on-primary-container) 35%,transparent);
-      border-radius:999px;
-      padding:2px 7px;
-    }
-
+    .person{display:grid;grid-template-columns:1fr auto;gap:10px;align-items:center;padding:12px 13px;border-radius:10px;border:1px solid var(--border);background:var(--surface)}
+    .person.current{background:var(--primary-container);border-color:var(--primary)}
+    .person-name{display:flex;align-items:center;gap:8px;font-weight:500}
+    .current-label{color:var(--on-primary-container);font-size:.72rem;font-weight:500;border:1px solid color-mix(in srgb,var(--on-primary-container) 35%,transparent);border-radius:999px;padding:2px 7px}
     .person-sub{color:var(--muted);font-size:.8rem;margin-top:3px}
-
-    .badge{
-      border-radius:999px;
-      padding:5px 9px;
-      font-size:.72rem;
-      font-weight:500;
-    }
-
+    .badge{border-radius:999px;padding:5px 9px;font-size:.72rem;font-weight:500}
     .available{background:var(--success-bg);color:var(--success)}
     .busy{background:var(--warning-bg);color:var(--warning)}
     .lunch{background:#fef7e0;color:#8a4f00}
@@ -457,86 +139,39 @@
     .offline{background:var(--surface-container-high);color:var(--muted)}
     .status-control{display:grid;grid-template-columns:1fr minmax(180px,260px);gap:14px;align-items:center}
     .status-control p{margin:4px 0 0;color:var(--muted);font-size:.82rem}
-    .status-select{
-      width:100%;border:1px solid var(--border-strong);background:var(--surface);
-      color:var(--text);border-radius:8px;padding:10px 12px
-    }
+    .status-select{width:100%;border:1px solid var(--border-strong);background:var(--surface);color:var(--text);border-radius:8px;padding:10px 12px}
     .person-actions{display:flex;align-items:center;gap:8px}
-    .attention-btn{
-      border:1px solid var(--border);background:transparent;color:var(--primary);
-      border-radius:999px;padding:5px 9px;font-size:.72rem;font-weight:500
-    }
+    .attention-btn{border:1px solid var(--border);background:transparent;color:var(--primary);border-radius:999px;padding:5px 9px;font-size:.72rem;font-weight:500}
     .attention-btn:hover{background:var(--surface-container)}
-    .nudge-toast{
-      position:fixed;right:20px;bottom:20px;z-index:9999;
-      max-width:min(360px,calc(100% - 40px));padding:13px 15px;border-radius:10px;
-      background:var(--on-primary-container);color:var(--primary-container);
-      box-shadow:0 8px 24px rgba(0,0,0,.2);font-size:.9rem
-    }
-    @keyframes msnNudge{
-      0%,100%{transform:translateX(0)}
-      15%{transform:translateX(-10px)}
-      30%{transform:translateX(10px)}
-      45%{transform:translateX(-8px)}
-      60%{transform:translateX(8px)}
-      75%{transform:translateX(-4px)}
-      90%{transform:translateX(4px)}
-    }
+    .nudge-toast{position:fixed;right:20px;bottom:20px;z-index:9999;max-width:min(360px,calc(100% - 40px));padding:13px 15px;border-radius:10px;background:var(--on-primary-container);color:var(--primary-container);box-shadow:0 8px 24px rgba(0,0,0,.2);font-size:.9rem}
+    .attention-modal-content{background:var(--surface);color:var(--text);border:1px solid var(--border);border-radius:20px;box-shadow:0 18px 60px rgba(0,0,0,.35);overflow:hidden}
+    .attention-modal-header{display:flex;align-items:center;gap:14px;padding:20px 22px;border-bottom:1px solid var(--border);background:var(--warning-bg)}
+    .attention-modal-icon{width:48px;height:48px;flex:0 0 48px;display:grid;place-items:center;border-radius:50%;background:var(--danger-bg);font-size:1.55rem}
+    .attention-modal-title{margin:0;font-size:1.2rem;font-weight:600}
+    .attention-modal-subtitle{margin:3px 0 0;color:var(--muted);font-size:.84rem}
+    .attention-modal-body{padding:24px 22px;text-align:center}
+    .attention-modal-message{font-size:clamp(1.15rem,4vw,1.65rem);font-weight:600;line-height:1.3;overflow-wrap:anywhere}
+    .attention-modal-footer{display:flex;justify-content:center;padding:0 22px 22px}
+    #attentionModal .modal-dialog{max-width:520px}
+    #attentionModal .btn{min-width:150px}
+    @keyframes msnNudge{0%,100%{transform:translateX(0)}15%{transform:translateX(-10px)}30%{transform:translateX(10px)}45%{transform:translateX(-8px)}60%{transform:translateX(8px)}75%{transform:translateX(-4px)}90%{transform:translateX(4px)}}
     body.nudged{animation:msnNudge .55s ease}
-
-    .open-ticket{
-      border:1px solid var(--border);
-      background:var(--warning-bg);
-      color:var(--text);
-      border-radius:14px;
-      padding:16px;
-      margin-bottom:18px;
-    }
-
+    .open-ticket{border:1px solid var(--border);background:var(--warning-bg);color:var(--text);border-radius:14px;padding:16px;margin-bottom:18px}
     .open-ticket h3{margin:0 0 4px;font-weight:500}
     .open-ticket p{margin:0 0 12px;color:var(--muted)}
     .open-ticket-actions{display:flex;gap:10px;flex-wrap:wrap}
-    .queued-client{
-      display:grid;grid-template-columns:1fr auto;gap:12px;align-items:center;
-      padding:12px 13px;border:1px solid var(--border);border-radius:10px;background:var(--surface)
-    }
+    .queued-client{display:grid;grid-template-columns:1fr auto;gap:12px;align-items:center;padding:12px 13px;border:1px solid var(--border);border-radius:10px;background:var(--surface)}
     .queued-client strong{display:block;font-weight:500}
     .queued-client span{display:block;color:var(--muted);font-size:.8rem;margin-top:3px}
-
-    .history-item{
-      border:1px solid var(--border);
-      border-radius:10px;
-      padding:12px 13px;
-      background:var(--surface);
-    }
-
-    .history-title-row{
-      display:flex;
-      align-items:center;
-      justify-content:space-between;
-      gap:12px;
-    }
-
+    .history-item{border:1px solid var(--border);border-radius:10px;padding:12px 13px;background:var(--surface)}
+    .history-title-row{display:flex;align-items:center;justify-content:space-between;gap:12px}
     .history-title{font-weight:500}
-
-    .history-state{
-      border-radius:999px;
-      padding:4px 8px;
-      font-size:.7rem;
-      white-space:nowrap;
-      font-weight:500;
-    }
-
+    .history-state{border-radius:999px;padding:4px 8px;font-size:.7rem;white-space:nowrap;font-weight:500}
     .history-state.done{background:var(--success-bg);color:var(--success)}
     .history-state.open{background:var(--warning-bg);color:var(--warning)}
     .history-state.queued{background:var(--primary-container);color:var(--on-primary-container)}
-
     .complexity-options{display:grid;gap:8px}
-    .complexity-option{
-      display:flex;align-items:flex-start;gap:10px;
-      border:1px solid var(--border);border-radius:10px;padding:11px 12px;
-      background:var(--surface);cursor:pointer
-    }
+    .complexity-option{display:flex;align-items:flex-start;gap:10px;border:1px solid var(--border);border-radius:10px;padding:11px 12px;background:var(--surface);cursor:pointer}
     .complexity-option input{width:auto;margin-top:3px}
     .complexity-copy{display:grid;gap:2px}
     .complexity-copy strong{font-size:.88rem;font-weight:500}
@@ -545,2254 +180,175 @@
     .complexity-standard .complexity-dot{background:#1e8e3e}
     .complexity-moderate .complexity-dot{background:#f9ab00}
     .complexity-critical .complexity-dot{background:#d93025}
-    .complexity-badge{
-      display:inline-flex;align-items:center;gap:6px;border-radius:999px;
-      padding:4px 8px;font-size:.7rem;font-weight:500;margin-left:6px
-    }
+    .complexity-badge{display:inline-flex;align-items:center;gap:6px;border-radius:999px;padding:4px 8px;font-size:.7rem;font-weight:500;margin-left:6px}
     .complexity-badge.standard{background:#e6f4ea;color:#137333}
     .complexity-badge.moderate{background:#fef7e0;color:#8a4f00}
     .complexity-badge.critical{background:#fce8e6;color:#b3261e}
-
     .history-meta{color:var(--muted);font-size:.78rem;margin-top:4px}
-
-    .history-details{
-      margin-top:10px;
-      padding-top:10px;
-      border-top:1px solid var(--border);
-      color:var(--text);
-      font-size:.88rem;
-      line-height:1.5;
-    }
-
+    .history-details{margin-top:10px;padding-top:10px;border-top:1px solid var(--border);color:var(--text);font-size:.88rem;line-height:1.5}
     .empty{color:var(--muted);padding:10px 0;font-size:.9rem}
     .admin-row{display:flex;justify-content:flex-end;margin-top:18px}
-
-    dialog{
-      width:min(520px,calc(100% - 24px));
-      border:1px solid var(--border);
-      border-radius:16px;
-      background:var(--surface);
-      color:var(--text);
-      padding:0;
-      box-shadow:0 8px 28px rgba(0,0,0,.22);
-    }
-
+    dialog{width:min(520px,calc(100% - 24px));border:1px solid var(--border);border-radius:16px;background:var(--surface);color:var(--text);padding:0;box-shadow:0 8px 28px rgba(0,0,0,.22)}
     dialog::backdrop{background:rgba(32,33,36,.55)}
-
     .dialog-body{padding:22px}
     .dialog-body h2{margin:0 0 6px;font-size:1.25rem;font-weight:500}
     .dialog-body>p{margin:0 0 18px;color:var(--muted);line-height:1.45}
     .dialog-actions{display:flex;justify-content:flex-end;gap:10px;margin-top:18px}
-
-    .config-warning{
-      border:1px solid var(--border);
-      background:var(--warning-bg);
-      padding:12px;
-      border-radius:10px;
-      color:var(--warning);
-      margin-bottom:16px;
-      font-size:.88rem;
-    }
-
-    @media(max-width:800px){
-      .grid{grid-template-columns:1fr}
-      header{align-items:flex-start;flex-direction:column}
-      .userbox{width:100%;flex-wrap:wrap}
-      .header-actions{margin-left:auto}
-      .hero{padding:22px 18px}
-    }
-
-    @media(max-width:520px){
-      .shell{width:min(100% - 20px,1120px);padding-top:14px}
-      .login-wrap{padding:14px}
-      .login-card{padding:22px}
-      .user-meta{min-width:120px;flex:1}
-      .header-actions{width:100%;margin-left:0}
-      .header-actions .btn,.header-actions .theme-btn{flex:1}
-    }
-
-
-    .alert-permission-card{
-      display:flex;
-      align-items:center;
-      justify-content:space-between;
-      gap:14px;
-      padding:13px 14px;
-      margin:-4px 0 18px;
-      border:1px solid var(--border);
-      border-radius:12px;
-      background:var(--primary-container);
-      color:var(--on-primary-container);
-    }
+    .config-warning{border:1px solid var(--border);background:var(--warning-bg);padding:12px;border-radius:10px;color:var(--warning);margin-bottom:16px;font-size:.88rem}
+    @media(max-width:800px){.grid{grid-template-columns:1fr}header{align-items:flex-start;flex-direction:column}.userbox{width:100%;flex-wrap:wrap}.header-actions{margin-left:auto}.hero{padding:22px 18px}}
+    @media(max-width:520px){.shell{width:min(100% - 20px,1120px);padding-top:14px}.login-wrap{padding:14px}.login-card{padding:22px}.user-meta{min-width:120px;flex:1}.header-actions{width:100%;margin-left:0}.header-actions .btn,.header-actions .theme-btn{flex:1}}
+    .alert-permission-card{display:flex;align-items:center;justify-content:space-between;gap:14px;padding:13px 14px;margin:-4px 0 18px;border:1px solid var(--border);border-radius:12px;background:var(--primary-container);color:var(--on-primary-container)}
     .alert-permission-card strong,.alert-permission-card span{display:block}
     .alert-permission-card strong{font-size:.9rem;font-weight:500}
     .alert-permission-card span{font-size:.8rem;margin-top:3px;line-height:1.4}
-    body.attention-flash::before{
-      content:"";
-      position:fixed;
-      inset:0;
-      z-index:9998;
-      pointer-events:none;
-      border:5px solid var(--primary);
-      animation:attentionBorder .8s steps(1,end) infinite;
-    }
-    @keyframes attentionBorder{
-      0%,100%{opacity:1}
-      50%{opacity:.1}
-    }
-    @media(max-width:720px){
-      .alert-permission-card{align-items:stretch;flex-direction:column}
-      .alert-permission-card .btn{width:100%}
-    }
-
+    body.attention-flash::before{content:"";position:fixed;inset:0;z-index:9998;pointer-events:none;border:5px solid var(--primary);animation:attentionBorder .8s steps(1,end) infinite}
+    @keyframes attentionBorder{0%,100%{opacity:1}50%{opacity:.1}}
+    @media(max-width:720px){.alert-permission-card{align-items:stretch;flex-direction:column}.alert-permission-card .btn{width:100%}}
     .header-heading{min-width:0}
-    .mobile-menu-btn{
-      display:none;
-      width:44px;
-      height:44px;
-      padding:0;
-      border:1px solid var(--border);
-      border-radius:14px;
-      background:var(--surface);
-      color:var(--text);
-      align-items:center;
-      justify-content:center;
-      flex-direction:column;
-      gap:5px;
-      cursor:pointer;
-      box-shadow:var(--shadow);
-    }
-    .mobile-menu-btn span{
-      display:block;
-      width:20px;
-      height:2px;
-      border-radius:2px;
-      background:currentColor;
-      transition:transform .18s ease,opacity .18s ease;
-    }
+    .mobile-menu-btn{display:none;width:44px;height:44px;padding:0;border:1px solid var(--border);border-radius:14px;background:var(--surface);color:var(--text);align-items:center;justify-content:center;flex-direction:column;gap:5px;cursor:pointer;box-shadow:var(--shadow)}
+    .mobile-menu-btn span{display:block;width:20px;height:2px;border-radius:2px;background:currentColor;transition:transform .18s ease,opacity .18s ease}
     .mobile-menu-btn.open span:nth-child(1){transform:translateY(7px) rotate(45deg)}
     .mobile-menu-btn.open span:nth-child(2){opacity:0}
     .mobile-menu-btn.open span:nth-child(3){transform:translateY(-7px) rotate(-45deg)}
-
-    /* Responsividade geral */
     html,body{max-width:100%;overflow-x:hidden}
     img,svg{max-width:100%}
     button,input,select,textarea{max-width:100%}
-
-    @media(max-width:900px){
-      .shell{width:min(100% - 24px,1120px)}
-      .grid{grid-template-columns:1fr}
-      .status-control{grid-template-columns:1fr}
-      .podium{grid-template-columns:repeat(3,minmax(0,1fr))}
-      .shop-item{grid-template-columns:1fr}
-      .shop-item>div:last-child{justify-self:start}
-    }
-
-    @media(max-width:720px){
-      .app-header{display:block;padding-bottom:14px;margin-bottom:14px;border-bottom:1px solid var(--border)}
-      .header-heading{display:flex;align-items:center;justify-content:space-between;gap:12px}
-      .mobile-menu-btn{display:flex;flex:0 0 44px}
-      .brand h1{font-size:1.45rem}
-      .brand p{font-size:.9rem;margin-top:2px}
-      .userbox{
-        width:100%;
-        display:grid;
-        grid-template-columns:42px minmax(0,1fr);
-        gap:10px;
-        align-items:center;
-        margin-top:14px;
-      }
-      .avatar{width:42px;height:42px}
-      .user-meta strong{font-size:1rem}
-      .user-meta span{font-size:.82rem}
-      .header-actions{
-        grid-column:1/-1;
-        width:100%;
-        margin-left:0;
-        display:none;
-        grid-template-columns:1fr 1fr;
-        gap:8px;
-        padding-top:10px;
-        animation:mobileMenuIn .16s ease;
-      }
-      .header-actions.open{display:grid}
-      .header-actions .btn,.header-actions .theme-btn{
-        width:100%;
-        justify-content:center;
-        text-align:center;
-        min-width:0;
-        min-height:44px;
-      }
-      @keyframes mobileMenuIn{
-        from{opacity:0;transform:translateY(-4px)}
-        to{opacity:1;transform:translateY(0)}
-      }
-      .notice{margin-bottom:12px;padding:12px 14px}
-      .alert-permission-card{margin:0 0 14px;padding:12px;border-radius:14px}
-      .alert-permission-card strong{font-size:.95rem}
-      .alert-permission-card span{font-size:.82rem}
-      .hero{padding:18px 14px;border-radius:16px}
-      .hero .eyebrow{font-size:.78rem}
-      .hero-actions,.open-ticket-actions,.dialog-actions{flex-wrap:wrap}
-      .person{grid-template-columns:minmax(0,1fr) auto}
-      .person-name{min-width:0;flex-wrap:wrap}
-      .person-actions{flex-wrap:wrap;justify-content:flex-end}
-      .queued-client{grid-template-columns:1fr}
-      .queued-client .btn{width:100%}
-      .history-title-row{align-items:flex-start;flex-direction:column}
-      .history-state{white-space:normal}
-      .rank-row{align-items:flex-start;flex-wrap:wrap}
-      .nudge-toast{left:12px;right:12px;bottom:12px;max-width:none}
-      #eventToast{bottom:72px!important}
-      dialog{width:calc(100% - 20px);max-height:calc(100dvh - 20px);overflow:auto}
-      .dialog-body{padding:18px}
-    }
-
-    @media(max-width:520px){
-      .shell{width:calc(100% - 16px);padding-top:10px}
-      .login-wrap{padding:10px}
-      .login-card{padding:18px}
-      .brand h1{font-size:1.25rem}
-      .userbox{grid-template-columns:36px minmax(0,1fr)}
-      .avatar{width:36px;height:36px}
-      .header-actions{grid-template-columns:1fr 1fr}
-      .header-actions #logoutBtn{grid-column:1/-1}
-      .hero-actions,.open-ticket-actions,.dialog-actions{display:grid;grid-template-columns:1fr;width:100%}
-      .hero-actions .btn,.open-ticket-actions .btn,.dialog-actions .btn{width:100%}
-      .podium{grid-template-columns:1fr}
-      .card{padding:14px;border-radius:14px}
-      .status-select,input,textarea{font-size:16px}
-      .person{grid-template-columns:1fr}
-      .person-actions{justify-content:flex-start}
-      .attention-btn{min-height:38px}
-      .complexity-badge{margin-left:0;margin-top:6px}
-      .history-details{overflow-wrap:anywhere}
-      .queue-text{overflow-wrap:anywhere}
-      .next-name{font-size:clamp(1.8rem,12vw,2.7rem);overflow-wrap:anywhere}
-    }
-
+    @media(max-width:900px){.shell{width:min(100% - 24px,1120px)}.grid{grid-template-columns:1fr}.status-control{grid-template-columns:1fr}.podium{grid-template-columns:repeat(3,minmax(0,1fr))}.shop-item{grid-template-columns:1fr}.shop-item>div:last-child{justify-self:start}}
+    @media(max-width:720px){.app-header{display:block;padding-bottom:14px;margin-bottom:14px;border-bottom:1px solid var(--border)}.header-heading{display:flex;align-items:center;justify-content:space-between;gap:12px}.mobile-menu-btn{display:flex;flex:0 0 44px}.brand h1{font-size:1.45rem}.brand p{font-size:.9rem;margin-top:2px}.userbox{width:100%;display:grid;grid-template-columns:42px minmax(0,1fr);gap:10px;align-items:center;margin-top:14px}.avatar{width:42px;height:42px}.user-meta strong{font-size:1rem}.user-meta span{font-size:.82rem}.header-actions{grid-column:1/-1;width:100%;margin-left:0;display:none;grid-template-columns:1fr 1fr;gap:8px;padding-top:10px;animation:mobileMenuIn .16s ease}.header-actions.open{display:grid}.header-actions .btn,.header-actions .theme-btn{width:100%;justify-content:center;text-align:center;min-width:0;min-height:44px}@keyframes mobileMenuIn{from{opacity:0;transform:translateY(-4px)}to{opacity:1;transform:translateY(0)}}.notice{margin-bottom:12px;padding:12px 14px}.alert-permission-card{margin:0 0 14px;padding:12px;border-radius:14px}.alert-permission-card strong{font-size:.95rem}.alert-permission-card span{font-size:.82rem}.hero{padding:18px 14px;border-radius:16px}.hero .eyebrow{font-size:.78rem}.hero-actions,.open-ticket-actions,.dialog-actions{flex-wrap:wrap}.person{grid-template-columns:minmax(0,1fr) auto}.person-name{min-width:0;flex-wrap:wrap}.person-actions{flex-wrap:wrap;justify-content:flex-end}.queued-client{grid-template-columns:1fr}.queued-client .btn{width:100%}.history-title-row{align-items:flex-start;flex-direction:column}.history-state{white-space:normal}.rank-row{align-items:flex-start;flex-wrap:wrap}.nudge-toast{left:12px;right:12px;bottom:12px;max-width:none}#eventToast{bottom:72px!important}dialog{width:calc(100% - 20px);max-height:calc(100dvh - 20px);overflow:auto}.attention-modal-header{padding:18px}.attention-modal-body{padding:22px 18px}.attention-modal-footer{padding:0 18px 18px}#attentionModal .btn{width:100%}}
+    @media(max-width:520px){.shell{width:calc(100% - 16px);padding-top:10px}.login-wrap{padding:10px}.login-card{padding:18px}.brand h1{font-size:1.25rem}.userbox{grid-template-columns:36px minmax(0,1fr)}.avatar{width:36px;height:36px}.header-actions{grid-template-columns:1fr 1fr}.header-actions #logoutBtn{grid-column:1/-1}.hero-actions,.open-ticket-actions,.dialog-actions{display:grid;grid-template-columns:1fr;width:100%}.hero-actions .btn,.open-ticket-actions .btn,.dialog-actions .btn{width:100%}.podium{grid-template-columns:1fr}.card{padding:14px;border-radius:14px}.status-select,input,textarea{font-size:16px}.person{grid-template-columns:1fr}.person-actions{justify-content:flex-start}.attention-btn{min-height:38px}.complexity-badge{margin-left:0;margin-top:6px}.history-details{overflow-wrap:anywhere}.queue-text{overflow-wrap:anywhere}.next-name{font-size:clamp(1.8rem,12vw,2.7rem);overflow-wrap:anywhere}}
   </style>
 </head>
 <body>
-
   <section id="loginView" class="login-wrap">
     <div class="login-card">
-      <div class="login-topbar">
-        <div class="logo">TechQueue</div>
-        <button class="theme-btn" type="button" data-theme-toggle>Modo escuro</button>
-      </div>
+      <div class="login-topbar"><div class="logo">TechQueue</div><button class="theme-btn" type="button" data-theme-toggle>Modo escuro</button></div>
       <p class="subtitle">Acesso interno da equipe de suporte</p>
-
-      <div id="configWarning" class="config-warning hidden">
-        Firebase ainda não configurado. Preencha <strong>firebaseConfig</strong> no final do index.html antes de publicar.
-      </div>
-
+      <div id="configWarning" class="config-warning hidden">Firebase ainda não configurado. Preencha <strong>firebaseConfig</strong> no final do index.html antes de publicar.</div>
       <button id="googleLoginBtn" class="btn google-btn" type="button">
-        <svg viewBox="0 0 24 24" aria-hidden="true">
-          <path fill="#4285F4" d="M21.6 12.23c0-.71-.06-1.4-.18-2.07H12v3.92h5.38a4.6 4.6 0 0 1-2 3.02v2.51h3.24c1.9-1.75 2.98-4.33 2.98-7.38Z"/>
-          <path fill="#34A853" d="M12 22c2.7 0 4.97-.9 6.62-2.39l-3.24-2.51c-.9.6-2.05.96-3.38.96-2.61 0-4.82-1.76-5.61-4.13H3.04v2.59A10 10 0 0 0 12 22Z"/>
-          <path fill="#FBBC05" d="M6.39 13.93A6.02 6.02 0 0 1 6.08 12c0-.67.11-1.32.31-1.93V7.48H3.04A10 10 0 0 0 2 12c0 1.61.38 3.14 1.04 4.52l3.35-2.59Z"/>
-          <path fill="#EA4335" d="M12 5.94c1.47 0 2.79.51 3.83 1.5l2.87-2.87A9.64 9.64 0 0 0 12 2 10 10 0 0 0 3.04 7.48l3.35 2.59C7.18 7.7 9.39 5.94 12 5.94Z"/>
-        </svg>
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path fill="#4285F4" d="M21.6 12.23c0-.71-.06-1.4-.18-2.07H12v3.92h5.38a4.6 4.6 0 0 1-2 3.02v2.51h3.24c1.9-1.75 2.98-4.33 2.98-7.38Z"/><path fill="#34A853" d="M12 22c2.7 0 4.97-.9 6.62-2.39l-3.24-2.51c-.9.6-2.05.96-3.38.96-2.61 0-4.82-1.76-5.61-4.13H3.04v2.59A10 10 0 0 0 12 22Z"/><path fill="#FBBC05" d="M6.39 13.93A6.02 6.02 0 0 1 6.08 12c0-.67.11-1.32.31-1.93V7.48H3.04A10 10 0 0 0 2 12c0 1.61.38 3.14 1.04 4.52l3.35-2.59Z"/><path fill="#EA4335" d="M12 5.94c1.47 0 2.79.51 3.83 1.5l2.87-2.87A9.64 9.64 0 0 0 12 2 10 10 0 0 0 3.04 7.48l3.35 2.59C7.18 7.7 9.39 5.94 12 5.94Z"/></svg>
         Continuar com Google
       </button>
-
       <div id="loginError" class="error" role="alert" aria-live="polite"></div>
     </div>
   </section>
 
   <main id="appView" class="shell hidden">
     <header class="app-header">
-      <div class="header-heading">
-        <div class="brand">
-          <h1>TechQueue</h1>
-          <p>Rodízio interno de atendimento</p>
-        </div>
-
-        <button id="mobileMenuBtn" class="mobile-menu-btn" type="button"
-          aria-label="Abrir menu" aria-expanded="false" aria-controls="mobileHeaderMenu">
-          <span></span><span></span><span></span>
-        </button>
-      </div>
-
-      <div class="userbox">
-        <div class="avatar" id="avatar">?</div>
-        <div class="user-meta">
-          <strong id="loggedName">-</strong>
-          <span id="loggedShift">-</span>
-        </div>
-        <div id="mobileHeaderMenu" class="header-actions">
-          <button id="shopBtn" class="btn btn-secondary" type="button">Lojinha <span id="walletXp">0 XP</span></button>
-          <a class="btn btn-secondary" href="./games.html" style="text-decoration:none;display:inline-flex;align-items:center">Sala da Descompressão</a>
-          <button class="theme-btn" type="button" data-theme-toggle>Modo escuro</button>
-          <button id="logoutBtn" class="btn btn-secondary">Sair</button>
-        </div>
-      </div>
+      <div class="header-heading"><div class="brand"><h1>TechQueue</h1><p>Rodízio interno de atendimento</p></div><button id="mobileMenuBtn" class="mobile-menu-btn" type="button" aria-label="Abrir menu" aria-expanded="false" aria-controls="mobileHeaderMenu"><span></span><span></span><span></span></button></div>
+      <div class="userbox"><div class="avatar" id="avatar">?</div><div class="user-meta"><strong id="loggedName">-</strong><span id="loggedShift">-</span></div><div id="mobileHeaderMenu" class="header-actions"><button id="shopBtn" class="btn btn-secondary" type="button">Lojinha <span id="walletXp">0 XP</span></button><a class="btn btn-secondary" href="./games.html" style="text-decoration:none;display:inline-flex;align-items:center">Sala da Descompressão</a><button class="theme-btn" type="button" data-theme-toggle>Modo escuro</button><button id="logoutBtn" class="btn btn-secondary">Sair</button></div></div>
     </header>
-
     <div id="systemNotice" class="notice">Carregando fila...</div>
-
-    <div id="alertPermissionCard" class="alert-permission-card hidden">
-      <div>
-        <strong>Ative os alertas do TechQueue</strong>
-        <span id="alertPermissionText">Permita notificações e som para receber chamadas mesmo quando esta aba estiver em segundo plano.</span>
-      </div>
-      <button id="enableAlertsBtn" class="btn btn-primary" type="button">Ativar notificações e som</button>
-    </div>
-
-    <section class="hero">
-      <div class="eyebrow">Próximo atendimento</div>
-      <div id="nextName" class="next-name">—</div>
-      <div id="queueText" class="queue-text">Aguardando técnicos entrarem na fila</div>
-      <div class="hero-actions">
-        <button id="takeBtn" class="btn btn-primary" disabled>Atendi agora</button>
-        <button id="passTurnBtn" class="btn btn-secondary" disabled>Passar a vez</button>
-      </div>
-    </section>
-
-    <section class="grid">
-      <div>
-        <div id="myOpenTicket" class="open-ticket hidden">
-          <div class="eyebrow">Seu atendimento em andamento</div>
-          <h3 id="openClient">-</h3>
-          <p id="openStarted">-</p>
-          <div class="open-ticket-actions">
-            <button id="finishBtn" class="btn btn-primary">Finalizei o atendimento</button>
-            <button id="queueClientBtn" class="btn btn-secondary">Enviar para fila</button>
-          </div>
-        </div>
-
-        <div class="card" style="margin-bottom:20px">
-          <div class="status-control">
-            <div>
-              <h2 style="margin-bottom:0">Meu status</h2>
-              <p>Ao sair como disponível, você é removido temporariamente do rodízio.</p>
-            </div>
-            <select id="statusSelect" class="status-select">
-              <option value="available">Disponível</option>
-              <option value="offline">Offline</option>
-              <option value="lunch">Almoço</option>
-              <option value="smoke">Vou PITAR</option>
-              <option value="bathroom">Segura aí na moral, vou no banheiro</option>
-              <option value="paid_bathroom">Cagada remunerada</option>
-              <option value="away">Vou ali e já volto</option>
-            </select>
-          </div>
-        </div>
-
-        <div class="card" style="margin-bottom:20px">
-          <h2>Clientes encaminhados</h2>
-          <div id="queuedClientsList" class="queue-list"></div>
-        </div>
-
-        <div class="card">
-          <h2>Fila da equipe</h2>
-          <div id="queueList" class="queue-list"></div>
-        </div>
-      </div>
-
-      <div class="card">
-        <h2>Histórico de hoje</h2>
-        <div id="history" class="history"></div>
-      </div>
-    </section>
-
-    <section class="card ranking-card">
-      <h2>Ranking de atendimentos</h2>
-      <p class="ranking-note">
-        Este ranking conta somente atendimentos registrados via chat no TechQueue.
-        Ele não mede produtividade nem significa que um técnico trabalhou mais que outro:
-        existem demandas, análises e atividades que não passam pelo chat.
-      </p>
-      <div id="podium" class="podium"></div>
-      <div id="shameWall" class="shame-wall"></div>
-    </section>
-
-    <div id="adminRow" class="admin-row hidden">
-      <button id="resetDayBtn" class="btn btn-danger">Limpar histórico</button>
-    </div>
+    <div id="alertPermissionCard" class="alert-permission-card hidden"><div><strong>Ative os alertas do TechQueue</strong><span id="alertPermissionText">Permita notificações e som para receber chamadas mesmo quando esta aba estiver em segundo plano.</span></div><button id="enableAlertsBtn" class="btn btn-primary" type="button">Ativar notificações e som</button></div>
+    <section class="hero"><div class="eyebrow">Próximo atendimento</div><div id="nextName" class="next-name">—</div><div id="queueText" class="queue-text">Aguardando técnicos entrarem na fila</div><div class="hero-actions"><button id="takeBtn" class="btn btn-primary" disabled>Atendi agora</button><button id="passTurnBtn" class="btn btn-secondary" disabled>Passar a vez</button></div></section>
+    <section class="grid"><div><div id="myOpenTicket" class="open-ticket hidden"><div class="eyebrow">Seu atendimento em andamento</div><h3 id="openClient">-</h3><p id="openStarted">-</p><div class="open-ticket-actions"><button id="finishBtn" class="btn btn-primary">Finalizei o atendimento</button><button id="queueClientBtn" class="btn btn-secondary">Enviar para fila</button></div></div><div class="card" style="margin-bottom:20px"><div class="status-control"><div><h2 style="margin-bottom:0">Meu status</h2><p>Ao sair como disponível, você é removido temporariamente do rodízio.</p></div><select id="statusSelect" class="status-select"><option value="available">Disponível</option><option value="offline">Offline</option><option value="lunch">Almoço</option><option value="smoke">Vou PITAR</option><option value="bathroom">Segura aí na moral, vou no banheiro</option><option value="paid_bathroom">Cagada remunerada</option><option value="away">Vou ali e já volto</option></select></div></div><div class="card" style="margin-bottom:20px"><h2>Clientes encaminhados</h2><div id="queuedClientsList" class="queue-list"></div></div><div class="card"><h2>Fila da equipe</h2><div id="queueList" class="queue-list"></div></div></div><div class="card"><h2>Histórico de hoje</h2><div id="history" class="history"></div></div></section>
+    <section class="card ranking-card"><h2>Ranking de atendimentos</h2><p class="ranking-note">Este ranking conta somente atendimentos registrados via chat no TechQueue. Ele não mede produtividade nem significa que um técnico trabalhou mais que outro: existem demandas, análises e atividades que não passam pelo chat.</p><div id="podium" class="podium"></div><div id="shameWall" class="shame-wall"></div></section>
+    <div id="adminRow" class="admin-row hidden"><button id="resetDayBtn" class="btn btn-danger">Limpar histórico</button></div>
   </main>
 
   <div id="nudgeToast" class="nudge-toast hidden" role="status" aria-live="polite"></div>
   <div id="eventToast" class="nudge-toast hidden" style="bottom:76px" role="status" aria-live="polite"></div>
 
-  <dialog id="shopDialog">
-    <div class="dialog-body">
-      <h2>Lojinha do TechQueue</h2>
-      <p>Use o XP dos atendimentos para liberar sons e extras de zoeira. Compras ficam vinculadas à sua conta Google.</p>
-      <div id="shopBalance" class="shop-balance">Saldo: 0 XP</div>
-      <div id="shopItems" class="shop-grid"></div>
-      <div class="dialog-actions">
-        <button type="button" class="btn btn-secondary" data-close="shopDialog">Fechar</button>
-      </div>
-    </div>
-  </dialog>
+  <div class="modal fade" id="attentionModal" tabindex="-1" aria-labelledby="attentionModalTitle" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
+    <div class="modal-dialog modal-dialog-centered"><div class="modal-content attention-modal-content"><div class="attention-modal-header"><div class="attention-modal-icon" aria-hidden="true">🚨</div><div><h2 id="attentionModalTitle" class="attention-modal-title">Chamando sua atenção</h2><p id="attentionModalFrom" class="attention-modal-subtitle">Outro técnico chamou você.</p></div></div><div class="attention-modal-body"><div id="attentionModalMessage" class="attention-modal-message">Precisa da sua atenção no TechQueue.</div></div><div class="attention-modal-footer"><button id="attentionAcknowledgeBtn" type="button" class="btn btn-primary" data-bs-dismiss="modal">Entendi</button></div></div></div>
+  </div>
 
-  <dialog id="nudgeDialog">
-    <form id="nudgeForm" class="dialog-body">
-      <h2>Chamar atenção</h2>
-      <p id="nudgeTargetText">Escolha como chamar a atenção.</p>
-      <div class="field">
-        <label for="nudgeSound">Som</label>
-        <select id="nudgeSound" class="status-select"></select>
-      </div>
-      <div id="customMessageField" class="field hidden">
-        <label for="nudgeMessage">Mensagem</label>
-        <input id="nudgeMessage" maxlength="90" placeholder="Ex.: Ô meu patrão, olha aqui" />
-      </div>
-      <div id="reactionField" class="field hidden">
-        <label for="nudgeReaction">Reação</label>
-        <select id="nudgeReaction" class="status-select">
-          <option value="">Sem reação</option>
-          <option value="👍">👍</option>
-          <option value="😂">😂</option>
-          <option value="👀">👀</option>
-          <option value="🔥">🔥</option>
-          <option value="😴">😴</option>
-          <option value="🤡">🤡</option>
-        </select>
-      </div>
-      <div id="stickerField" class="field hidden">
-        <label for="nudgeSticker">Figurinha</label>
-        <select id="nudgeSticker" class="status-select">
-          <option value="">Sem figurinha</option>
-          <option value="BORA">BORA</option>
-          <option value="OLHA A FILAAAA">OLHA A FILAAAA</option>
-          <option value="CALMA AÍ">CALMA AÍ</option>
-          <option value="ACORDA">ACORDA</option>
-          <option value="LÁ ELE">LÁ ELE</option>
-        </select>
-      </div>
-      <div class="dialog-actions">
-        <button type="button" class="btn btn-secondary" data-close="nudgeDialog">Cancelar</button>
-        <button type="submit" class="btn btn-primary">Enviar</button>
-      </div>
-    </form>
-  </dialog>
+  <dialog id="shopDialog"><div class="dialog-body"><h2>Lojinha do TechQueue</h2><p>Use o XP dos atendimentos para liberar sons e extras de zoeira. Compras ficam vinculadas à sua conta Google.</p><div id="shopBalance" class="shop-balance">Saldo: 0 XP</div><div id="shopItems" class="shop-grid"></div><div class="dialog-actions"><button type="button" class="btn btn-secondary" data-close="shopDialog">Fechar</button></div></div></dialog>
+  <dialog id="nudgeDialog"><form id="nudgeForm" class="dialog-body"><h2>Chamar atenção</h2><p id="nudgeTargetText">Escolha como chamar a atenção.</p><div class="field"><label for="nudgeSound">Som</label><select id="nudgeSound" class="status-select"></select></div><div id="customMessageField" class="field hidden"><label for="nudgeMessage">Mensagem</label><input id="nudgeMessage" maxlength="90" placeholder="Ex.: Ô meu patrão, olha aqui" /></div><div id="reactionField" class="field hidden"><label for="nudgeReaction">Reação</label><select id="nudgeReaction" class="status-select"><option value="">Sem reação</option><option value="👍">👍</option><option value="😂">😂</option><option value="👀">👀</option><option value="🔥">🔥</option><option value="😴">😴</option><option value="🤡">🤡</option></select></div><div id="stickerField" class="field hidden"><label for="nudgeSticker">Figurinha</label><select id="nudgeSticker" class="status-select"><option value="">Sem figurinha</option><option value="BORA">BORA</option><option value="OLHA A FILAAAA">OLHA A FILAAAA</option><option value="CALMA AÍ">CALMA AÍ</option><option value="ACORDA">ACORDA</option><option value="LÁ ELE">LÁ ELE</option></select></div><div class="dialog-actions"><button type="button" class="btn btn-secondary" data-close="nudgeDialog">Cancelar</button><button type="submit" class="btn btn-primary">Enviar</button></div></form></dialog>
+  <dialog id="takeDialog"><form id="takeForm" class="dialog-body"><h2>Atendi agora</h2><p>Informe apenas o nome do cliente que você assumiu.</p><div class="field"><label for="clientName">Cliente</label><input id="clientName" required autofocus placeholder="Ex.: Casa do Requeijão" /></div><div class="dialog-actions"><button type="button" class="btn btn-secondary" data-close="takeDialog">Cancelar</button><button type="submit" class="btn btn-primary">Confirmar atendimento</button></div></form></dialog>
+  <dialog id="finishDialog"><form id="finishForm" class="dialog-body"><h2>Finalizar atendimento</h2><p>Registre o problema e a solução de forma curta. Os campos aceitam texto livre.</p><div class="field"><label for="problem">Problema</label><textarea id="problem" required placeholder="Ex.: PDV sem comunicação com servidor"></textarea></div><div class="field"><label for="solution">Solução</label><textarea id="solution" required placeholder="Ex.: Reiniciado serviço pdv_server"></textarea></div><div class="field"><label>Nível de complexidade</label><div class="complexity-options"><label class="complexity-option complexity-standard"><input type="radio" name="complexity" value="standard" checked /><span class="complexity-dot"></span><span class="complexity-copy"><strong>Padrão</strong><span>Atendimento rápido e recorrente, como PDV, TEF ou ajuste simples.</span></span></label><label class="complexity-option complexity-moderate"><input type="radio" name="complexity" value="moderate" /><span class="complexity-dot"></span><span class="complexity-copy"><strong>Moderado</strong><span>Exigiu mais tempo ou análise, mas dentro de situações conhecidas.</span></span></label><label class="complexity-option complexity-critical"><input type="radio" name="complexity" value="critical" /><span class="complexity-dot"></span><span class="complexity-copy"><strong>Alta complexidade</strong><span>Problema crítico, complexo ou com risco de parar a operação do cliente.</span></span></label></div></div><div class="dialog-actions"><button type="button" class="btn btn-secondary" data-close="finishDialog">Cancelar</button><button type="submit" class="btn btn-primary">Finalizar</button></div></form></dialog>
 
-  <dialog id="takeDialog">
-    <form id="takeForm" class="dialog-body">
-      <h2>Atendi agora</h2>
-      <p>Informe apenas o nome do cliente que você assumiu.</p>
-      <div class="field">
-        <label for="clientName">Cliente</label>
-        <input id="clientName" required autofocus placeholder="Ex.: Casa do Requeijão" />
-      </div>
-      <div class="dialog-actions">
-        <button type="button" class="btn btn-secondary" data-close="takeDialog">Cancelar</button>
-        <button type="submit" class="btn btn-primary">Confirmar atendimento</button>
-      </div>
-    </form>
-  </dialog>
-
-  <dialog id="finishDialog">
-    <form id="finishForm" class="dialog-body">
-      <h2>Finalizar atendimento</h2>
-      <p>Registre o problema e a solução de forma curta. Os campos aceitam texto livre.</p>
-      <div class="field">
-        <label for="problem">Problema</label>
-        <textarea id="problem" required placeholder="Ex.: PDV sem comunicação com servidor"></textarea>
-      </div>
-      <div class="field">
-        <label for="solution">Solução</label>
-        <textarea id="solution" required placeholder="Ex.: Reiniciado serviço pdv_server"></textarea>
-      </div>
-
-      <div class="field">
-        <label>Nível de complexidade</label>
-        <div class="complexity-options">
-          <label class="complexity-option complexity-standard">
-            <input type="radio" name="complexity" value="standard" checked />
-            <span class="complexity-dot"></span>
-            <span class="complexity-copy">
-              <strong>Padrão</strong>
-              <span>Atendimento rápido e recorrente, como PDV, TEF ou ajuste simples.</span>
-            </span>
-          </label>
-          <label class="complexity-option complexity-moderate">
-            <input type="radio" name="complexity" value="moderate" />
-            <span class="complexity-dot"></span>
-            <span class="complexity-copy">
-              <strong>Moderado</strong>
-              <span>Exigiu mais tempo ou análise, mas dentro de situações conhecidas.</span>
-            </span>
-          </label>
-          <label class="complexity-option complexity-critical">
-            <input type="radio" name="complexity" value="critical" />
-            <span class="complexity-dot"></span>
-            <span class="complexity-copy">
-              <strong>Alta complexidade</strong>
-              <span>Problema crítico, complexo ou com risco de parar a operação do cliente.</span>
-            </span>
-          </label>
-        </div>
-      </div>
-
-      <div class="dialog-actions">
-        <button type="button" class="btn btn-secondary" data-close="finishDialog">Cancelar</button>
-        <button type="submit" class="btn btn-primary">Finalizar</button>
-      </div>
-    </form>
-  </dialog>
-
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"></script>
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-app.js";
-    import {
-      getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged
-    } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-auth.js";
-    import {
-      getFirestore, doc, getDoc, setDoc, collection, onSnapshot, serverTimestamp,
-      runTransaction, getDocs, writeBatch, addDoc, increment
-    } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-firestore.js";
+    import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-auth.js";
+    import { getFirestore, doc, getDoc, setDoc, collection, onSnapshot, serverTimestamp, runTransaction, getDocs, writeBatch, addDoc, increment } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-firestore.js";
 
-    /*
-      COLE AQUI a configuração gerada em:
-      Firebase Console > Project settings > Your apps > Web app
-
-      A apiKey do Firebase Web NÃO é uma senha do projeto.
-      A segurança real deste app fica no Firebase Authentication + Firestore Security Rules.
-    */
-    const firebaseConfig = {
-      apiKey: "AIzaSyDVHhF1LcLxqdb4xJDONkCoNhLS8HC7OxY",
-      authDomain: "filaarius.firebaseapp.com",
-      projectId: "filaarius",
-      storageBucket: "filaarius.firebasestorage.app",
-      messagingSenderId: "515606001825",
-      appId: "1:515606001825:web:977a8fddeb1d025ec758e0"
-    };
-
+    const firebaseConfig = {apiKey:"AIzaSyDVHhF1LcLxqdb4xJDONkCoNhLS8HC7OxY",authDomain:"filaarius.firebaseapp.com",projectId:"filaarius",storageBucket:"filaarius.firebasestorage.app",messagingSenderId:"515606001825",appId:"1:515606001825:web:977a8fddeb1d025ec758e0"};
     const isConfigured = !Object.values(firebaseConfig).some(v => v === "COLE_AQUI");
     document.querySelector("#configWarning").classList.toggle("hidden", isConfigured);
-
     const THEME_KEY = "techqueue-theme";
-
-    function applyTheme(theme) {
-      document.documentElement.dataset.theme = theme;
-      localStorage.setItem(THEME_KEY, theme);
-      document.querySelectorAll("[data-theme-toggle]").forEach(button => {
-        button.textContent = theme === "dark" ? "Modo claro" : "Modo escuro";
-        button.setAttribute("aria-label", theme === "dark" ? "Ativar modo claro" : "Ativar modo escuro");
-      });
-    }
-
-    applyTheme(localStorage.getItem(THEME_KEY) || "light");
-
-    document.querySelectorAll("[data-theme-toggle]").forEach(button => {
-      button.addEventListener("click", () => {
-        const current = document.documentElement.dataset.theme || "light";
-        applyTheme(current === "dark" ? "light" : "dark");
-      });
-    });
-
-    const loginView = document.querySelector("#loginView");
-    const appView = document.querySelector("#appView");
-    const googleLoginBtn = document.querySelector("#googleLoginBtn");
-    const loginError = document.querySelector("#loginError");
-    const logoutBtn = document.querySelector("#logoutBtn");
-    const mobileMenuBtn = document.querySelector("#mobileMenuBtn");
-    const mobileHeaderMenu = document.querySelector("#mobileHeaderMenu");
-    const loggedName = document.querySelector("#loggedName");
-    const loggedShift = document.querySelector("#loggedShift");
-    const avatar = document.querySelector("#avatar");
-    const systemNotice = document.querySelector("#systemNotice");
-    const nextName = document.querySelector("#nextName");
-    const queueText = document.querySelector("#queueText");
-    const queueList = document.querySelector("#queueList");
-    const queuedClientsList = document.querySelector("#queuedClientsList");
-    const historyEl = document.querySelector("#history");
-    const takeBtn = document.querySelector("#takeBtn");
-    const passTurnBtn = document.querySelector("#passTurnBtn");
-    const finishBtn = document.querySelector("#finishBtn");
-    const queueClientBtn = document.querySelector("#queueClientBtn");
-    const myOpenTicket = document.querySelector("#myOpenTicket");
-    const openClient = document.querySelector("#openClient");
-    const openStarted = document.querySelector("#openStarted");
-    const adminRow = document.querySelector("#adminRow");
-    const resetDayBtn = document.querySelector("#resetDayBtn");
-    const alertPermissionCard = document.querySelector("#alertPermissionCard");
-    const alertPermissionText = document.querySelector("#alertPermissionText");
-    const enableAlertsBtn = document.querySelector("#enableAlertsBtn");
-    const shopBtn = document.querySelector("#shopBtn");
-    const walletXp = document.querySelector("#walletXp");
-    const shopDialog = document.querySelector("#shopDialog");
-    const shopBalance = document.querySelector("#shopBalance");
-    const shopItems = document.querySelector("#shopItems");
-    const nudgeDialog = document.querySelector("#nudgeDialog");
-    const nudgeForm = document.querySelector("#nudgeForm");
-    const nudgeSound = document.querySelector("#nudgeSound");
-    const nudgeMessage = document.querySelector("#nudgeMessage");
-    const nudgeTargetText = document.querySelector("#nudgeTargetText");
-    const customMessageField = document.querySelector("#customMessageField");
-    const reactionField = document.querySelector("#reactionField");
-    const nudgeReaction = document.querySelector("#nudgeReaction");
-    const stickerField = document.querySelector("#stickerField");
-    const nudgeSticker = document.querySelector("#nudgeSticker");
-    const podium = document.querySelector("#podium");
-    const shameWall = document.querySelector("#shameWall");
-    const statusSelect = document.querySelector("#statusSelect");
-    const nudgeToast = document.querySelector("#nudgeToast");
-    const eventToast = document.querySelector("#eventToast");
-    const takeDialog = document.querySelector("#takeDialog");
-    const finishDialog = document.querySelector("#finishDialog");
-    const takeForm = document.querySelector("#takeForm");
-    const finishForm = document.querySelector("#finishForm");
-    const clientNameInput = document.querySelector("#clientName");
-    const problemInput = document.querySelector("#problem");
-    const solutionInput = document.querySelector("#solution");
-
-    function setMobileMenu(open) {
-      if (!mobileMenuBtn || !mobileHeaderMenu) return;
-      mobileMenuBtn.classList.toggle("open", open);
-      mobileHeaderMenu.classList.toggle("open", open);
-      mobileMenuBtn.setAttribute("aria-expanded", String(open));
-      mobileMenuBtn.setAttribute("aria-label", open ? "Fechar menu" : "Abrir menu");
-    }
-
-    mobileMenuBtn?.addEventListener("click", () => {
-      setMobileMenu(!mobileHeaderMenu?.classList.contains("open"));
-    });
-
-    mobileHeaderMenu?.addEventListener("click", event => {
-      if (event.target.closest("a,button") && window.innerWidth <= 720) {
-        setMobileMenu(false);
-      }
-    });
-
-    window.addEventListener("resize", () => {
-      if (window.innerWidth > 720) setMobileMenu(false);
-    });
-
-    let app, auth, db;
-    let authUser = null;
-    let profile = null;
-    let dayState = null;
-    let todayAttendances = [];
-    let queuedClients = [];
-    let unsubDay = null;
-    let unsubHistory = null;
-    let unsubNudges = null;
-    let unsubEvents = null;
-    let unsubQueuedClients = null;
-    let nudgesReady = false;
-    let lastSeenPassEventId = null;
-    let lastSeenPresenceEventId = null;
-    let isSigningOut = false;
-    let openAttendance = null;
-    let userProfileDoc = null;
-    let unsubProfile = null;
-    let pendingNudgeTarget = null;
-    let alertsActivated = false;
-    let attentionFlashTimer = null;
-    let activeDayId = null;
-    let dayRolloverTimer = null;
-    let attentionFlashState = false;
-    const normalDocumentTitle = document.title;
-    const alertPlayer = new Audio();
-
-    if (isConfigured) {
-      app = initializeApp(firebaseConfig);
-      auth = getAuth(app);
-      db = getFirestore(app);
-      onAuthStateChanged(auth, handleAuthState);
-    }
-
-    const TEAM_TIMEZONE = "America/Bahia";
-
-    const SOUND_CATALOG = [
-      { id: "msn", label: "MSN - nova mensagem", file: "./assets/sounds/new-message-msn.mp3", price: 0 },
-      { id: "dbz", label: "Kakaroto, você é uma besta", file: "./assets/sounds/dbz-pt-br-kakaroto-voce-e-uma-besta.mp3", price: 20 },
-      { id: "problema", label: "Tu sai de problema", file: "./assets/sounds/tu-sai-de-problema.mp3", price: 25 },
-      { id: "grosso", label: "Vai entrar o grosso", file: "./assets/sounds/luladrao-vai-entrar-o-grosso.mp3", price: 35 }
-    ];
-
-    const SHOP_ITEMS = [
-      ...SOUND_CATALOG.filter(item => item.price > 0).map(item => ({
-        id: "sound:" + item.id,
-        type: "sound",
-        soundId: item.id,
-        label: item.label,
-        description: "Compra 1 uso deste áudio no botão Chamar atenção.",
-        price: item.price
-      })),
-      {
-        id: "message_pack",
-        type: "feature",
-        label: "Mensagem personalizada",
-        description: "Libera uma mensagem curta junto com o alerta.",
-        price: 20
-      },
-      {
-        id: "reaction_pack",
-        type: "feature",
-        label: "Pacote de reações",
-        description: "Libera reações rápidas para enviar junto com o alerta.",
-        price: 15
-      },
-      {
-        id: "sticker_pack",
-        type: "feature",
-        label: "Pacote de figurinhas",
-        description: "Libera figurinhas de texto para mandar junto com o alerta.",
-        price: 30
-      }
-    ];
-
-    const REACTIONS = ["", "👍", "😂", "👀", "🔥", "😴", "🤡"];
-
-    function bahiaParts(date = new Date()) {
-      const parts = new Intl.DateTimeFormat("en-CA", {
-        timeZone: TEAM_TIMEZONE,
-        year: "numeric", month: "2-digit", day: "2-digit",
-        hour: "2-digit", minute: "2-digit", hour12: false
-      }).formatToParts(date);
-      const map = Object.fromEntries(parts.map(p => [p.type, p.value]));
-      return {
-        dateId: `${map.year}-${map.month}-${map.day}`,
-        minutes: Number(map.hour) * 60 + Number(map.minute),
-        time: `${map.hour}:${map.minute}`
-      };
-    }
-
-    function formatTimestamp(ts) {
-      if (!ts?.toDate) return "agora";
-      return new Intl.DateTimeFormat("pt-BR", {
-        timeZone: TEAM_TIMEZONE,
-        hour: "2-digit", minute: "2-digit"
-      }).format(ts.toDate());
-    }
-
-    function memberOf(uid) {
-      return dayState?.members?.[uid] || null;
-    }
-
-    function setViews(logged) {
-      loginView.classList.toggle("hidden", logged);
-      appView.classList.toggle("hidden", !logged);
-    }
-
-    googleLoginBtn?.addEventListener("click", async () => {
-      if (!isConfigured) {
-        if (loginError) loginError.textContent = "Configure o Firebase antes de usar o login.";
-        return;
-      }
-
-      if (loginError) loginError.textContent = "";
-      googleLoginBtn.disabled = true;
-
-      try {
-        const provider = new GoogleAuthProvider();
-        provider.setCustomParameters({ prompt: "select_account" });
-        await signInWithPopup(auth, provider);
-      } catch (err) {
-        console.error(err);
-
-        if (err.code === "auth/popup-closed-by-user") {
-          if (loginError) loginError.textContent = "Login com Google cancelado.";
-        } else if (err.code === "auth/unauthorized-domain") {
-          if (loginError) loginError.textContent = "Este domínio ainda não foi autorizado no Firebase.";
-        } else if (err.code === "auth/operation-not-allowed") {
-          if (loginError) loginError.textContent = "Ative o provedor Google no Firebase Authentication.";
-        } else {
-          if (loginError) loginError.textContent = "Não foi possível entrar com o Google.";
-        }
-      } finally {
-        googleLoginBtn.disabled = false;
-      }
-    });
-
-
-    async function handleAuthState(user) {
-      clearSubscriptions();
-
-      if (!user) {
-        authUser = null; profile = null; dayState = null; openAttendance = null;
-        isSigningOut = false;
-        logoutBtn.disabled = false;
-        setViews(false);
-        return;
-      }
-
-      try {
-        isSigningOut = false;
-        logoutBtn.disabled = false;
-        authUser = user;
-
-        const googleName = (user.displayName || user.email?.split("@")[0] || "Técnico").trim();
-
-        const email = (user.email || "").toLowerCase();
-        const isAdmin = email === "leandro3dejesus@gmail.com";
-
-        profile = {
-          uid: user.uid,
-          name: googleName,
-          email,
-          enabled: true,
-          role: isAdmin ? "admin" : "tech"
-        };
-
-        loggedName.textContent = profile.name;
-        loggedShift.textContent = "Fila liberada 24h";
-        avatar.textContent = (profile.name || "?").slice(0,1).toUpperCase();
-        adminRow.classList.toggle("hidden", profile.role !== "admin");
-
-        setViews(true);
-        refreshAlertPermissionUI();
-
-        // A fila é o recurso principal: ela deve continuar funcionando mesmo
-        // se a carteira/lojinha ainda não tiver permissão no Firestore.
-        await joinToday();
-        subscribeToday();
-
-        try {
-          await ensureUserProfile();
-          subscribeUserProfile();
-        } catch (walletErr) {
-          console.error("Falha ao iniciar carteira/lojinha:", walletErr);
-          userProfileDoc = { xpBalance: 0, unlockedItems: [], audioCredits: {} };
-          renderWalletAndShop();
-          walletXp.textContent = "XP indisponível";
-          shopBalance.textContent = "Saldo indisponível — verifique as regras do Firestore.";
-        }
-
-      } catch (err) {
-        console.error(err);
-        loginError.textContent = "Não foi possível iniciar sua sessão.";
-      }
-    }
-
-    function walletRef() {
-      // A carteira fica em um documento persistente dentro de /days,
-      // caminho que o TechQueue já usa com sucesso para a fila.
-      return doc(db, "days", "_wallets");
-    }
-
-    function defaultWallet(oldData = null) {
-      const oldBalance = Number(oldData?.xpBalance || 0);
-      return {
-        name: profile.name,
-        email: profile.email,
-        xpBalance: Math.max(35, oldBalance),
-        welcomeBonus35Granted: true,
-        welcomeBonusAmount: 35,
-        audioCredits: { ...(oldData?.audioCredits || {}) },
-        unlockedItems: Array.isArray(oldData?.unlockedItems) ? oldData.unlockedItems : [],
-        updatedAtMs: Date.now()
-      };
-    }
-
-    async function ensureUserProfile() {
-      const ref = walletRef();
-      let legacyProfile = null;
-
-      // Migração oportunista: se /profiles estiver acessível, preserva saldo e itens.
-      // Se estiver bloqueado pelas regras antigas, a carteira nova continua funcionando.
-      try {
-        const legacySnap = await getDoc(doc(db, "profiles", authUser.uid));
-        if (legacySnap.exists()) legacyProfile = legacySnap.data();
-      } catch (legacyErr) {
-        console.warn("Perfil legado indisponível; usando carteira em /days/_wallets.", legacyErr);
-      }
-
-      await runTransaction(db, async tx => {
-        const snap = await tx.get(ref);
-        const data = snap.exists() ? snap.data() : {};
-        const wallets = { ...(data.wallets || {}) };
-        const existing = wallets[authUser.uid];
-
-        if (!existing) {
-          wallets[authUser.uid] = defaultWallet(legacyProfile);
-        } else {
-          wallets[authUser.uid] = {
-            ...existing,
-            name: profile.name,
-            email: profile.email,
-            xpBalance: Math.max(35, Number(existing.xpBalance || 0)),
-            welcomeBonus35Granted: true,
-            welcomeBonusAmount: 35,
-            audioCredits: { ...(existing.audioCredits || {}) },
-            unlockedItems: Array.isArray(existing.unlockedItems) ? existing.unlockedItems : [],
-            updatedAtMs: Date.now()
-          };
-        }
-
-        tx.set(ref, {
-          type: "techqueue_wallets",
-          wallets,
-          updatedAt: serverTimestamp()
-        }, { merge: true });
-      });
-    }
-
-    function subscribeUserProfile() {
-      if (unsubProfile) unsubProfile();
-      const ref = walletRef();
-
-      unsubProfile = onSnapshot(ref, snap => {
-        const wallets = snap.exists() ? (snap.data().wallets || {}) : {};
-        userProfileDoc = wallets[authUser.uid] || null;
-        renderWalletAndShop();
-      }, err => {
-        console.error("Falha ao sincronizar carteira de XP:", err);
-        userProfileDoc = null;
-        renderWalletAndShop();
-        walletXp.textContent = "XP indisponível";
-        shopBalance.textContent = "Carteira indisponível.";
-      });
-    }
-
-    function unlockedItems() {
-      return new Set(userProfileDoc?.unlockedItems || []);
-    }
-
-    function audioCredits() {
-      return { ...(userProfileDoc?.audioCredits || {}) };
-    }
-
-    function renderWalletAndShop() {
-      const balance = Number(userProfileDoc?.xpBalance || 0);
-      walletXp.textContent = `${balance} XP`;
-      shopBalance.textContent = `Saldo: ${balance} XP`;
-
-      const unlocked = unlockedItems();
-      const credits = audioCredits();
-
-      shopItems.innerHTML = SHOP_ITEMS.map(item => {
-        const isSound = item.type === "sound";
-        const owned = !isSound && unlocked.has(item.id);
-        const creditCount = isSound ? Number(credits[item.soundId] || 0) : 0;
-
-        return `
-          <div class="shop-item">
-            <div>
-              <strong>${escapeHtml(item.label)}</strong>
-              <span>${escapeHtml(item.description)}</span>
-              ${isSound && creditCount > 0 ? `<span class="shop-owned">Créditos disponíveis: ${creditCount}</span>` : ""}
-            </div>
-            <div>
-              ${owned
-                ? '<span class="shop-owned">Liberado</span>'
-                : `<button class="btn btn-secondary" type="button" data-buy-item="${item.id}" ${balance < item.price ? "disabled" : ""}>${isSound ? "Comprar 1 uso" : "Comprar"} · ${item.price} XP</button>`
-              }
-            </div>
-          </div>
-        `;
-      }).join("");
-    }
-
-    shopBtn.addEventListener("click", () => {
-      renderWalletAndShop();
-      shopDialog.showModal();
-    });
-
-    shopItems.addEventListener("click", async event => {
-      const button = event.target.closest("[data-buy-item]");
-      if (!button || !authUser) return;
-
-      const item = SHOP_ITEMS.find(candidate => candidate.id === button.dataset.buyItem);
-      if (!item) return;
-
-      button.disabled = true;
-      const ref = walletRef();
-
-      try {
-        await runTransaction(db, async tx => {
-          const snap = await tx.get(ref);
-          if (!snap.exists()) throw new Error("Carteira de XP não encontrada.");
-
-          const data = snap.data();
-          const wallets = { ...(data.wallets || {}) };
-          const wallet = { ...(wallets[authUser.uid] || defaultWallet()) };
-          const balance = Number(wallet.xpBalance || 0);
-          const unlocked = new Set(wallet.unlockedItems || []);
-          const credits = { ...(wallet.audioCredits || {}) };
-
-          if (balance < item.price) throw new Error("XP insuficiente.");
-
-          if (item.type === "sound") {
-            credits[item.soundId] = Number(credits[item.soundId] || 0) + 1;
-            wallet.xpBalance = balance - item.price;
-            wallet.audioCredits = credits;
-          } else {
-            if (unlocked.has(item.id)) return;
-            unlocked.add(item.id);
-            wallet.xpBalance = balance - item.price;
-            wallet.unlockedItems = [...unlocked];
-          }
-
-          wallet.updatedAtMs = Date.now();
-          wallets[authUser.uid] = wallet;
-
-          tx.set(ref, {
-            wallets,
-            updatedAt: serverTimestamp()
-          }, { merge: true });
-        });
-      } catch (err) {
-        console.error(err);
-        alert(err.message || "Não foi possível comprar este item.");
-      } finally {
-        button.disabled = false;
-      }
-    });
-
-    function clearSubscriptions() {
-      if (unsubDay) unsubDay();
-      if (unsubHistory) unsubHistory();
-      if (unsubNudges) unsubNudges();
-      if (unsubQueuedClients) unsubQueuedClients();
-      if (unsubProfile) unsubProfile();
-      unsubDay = null;
-      unsubHistory = null;
-      unsubNudges = null;
-      unsubEvents = null;
-      unsubQueuedClients = null;
-      unsubProfile = null;
-      userProfileDoc = null;
-      nudgesReady = false;
-      lastSeenPassEventId = null;
-      lastSeenPresenceEventId = null;
-      activeDayId = null;
-      if (dayRolloverTimer) clearInterval(dayRolloverTimer);
-      dayRolloverTimer = null;
-    }
-
-    async function joinToday() {
-      if (isSigningOut || !authUser || !profile) return;
-      const now = bahiaParts();
-      const dayRef = doc(db, "days", now.dateId);
-
-      await runTransaction(db, async tx => {
-        const snap = await tx.get(dayRef);
-        const existing = snap.exists() ? snap.data() : null;
-        const initial = existing || {
-          dateId: now.dateId,
-          status: "open",
-          queue: [],
-          currentUid: null,
-          members: {},
-          lastAttendanceUid: null,
-          passedSinceLastAttendance: []
-        };
-
-        const members = { ...(initial.members || {}) };
-        const existingMember = members[authUser.uid];
-        const isNewPresence = !existingMember;
-
-        // Preserva estados temporários e atendimento em andamento ao recarregar.
-        if (["busy", "offline", "lunch", "smoke", "bathroom", "paid_bathroom", "away"].includes(existingMember?.status)) return;
-
-        members[authUser.uid] = {
-          ...existingMember,
-          name: profile.name,
-          status: "available",
-          joinedAtMs: existingMember?.joinedAtMs || Date.now(),
-          currentAttendanceId: null
-        };
-
-        const queue = [...(initial.queue || [])];
-        if (!queue.includes(authUser.uid)) queue.push(authUser.uid);
-
-        const payload = {
-          ...initial,
-          status: "open",
-          members,
-          queue,
-          currentUid: initial.currentUid || queue[0] || null,
-          updatedAt: serverTimestamp()
-        };
-
-        if (isNewPresence) {
-          payload.lastPresenceEvent = {
-            id: Date.now() + "-" + authUser.uid + "-join",
-            type: "join",
-            uid: authUser.uid,
-            name: profile.name,
-            createdAtMs: Date.now()
-          };
-        }
-
-        if (!existing) payload.createdAt = serverTimestamp();
-
-        tx.set(dayRef, payload);
-      });
-    }
-
-    function subscribeToday() {
-      const now = bahiaParts();
-      activeDayId = now.dateId;
-
-      if (dayRolloverTimer) clearInterval(dayRolloverTimer);
-      dayRolloverTimer = setInterval(() => {
-        if (bahiaParts().dateId !== activeDayId) {
-          location.reload();
-        }
-      }, 60000);
-
-      const dayRef = doc(db, "days", now.dateId);
-      const attendanceCol = collection(db, "days", now.dateId, "attendances");
-      const nudgesCol = collection(db, "days", now.dateId, "nudges");
-      const queuedClientsCol = collection(db, "days", now.dateId, "queuedClients");
-
-      unsubDay = onSnapshot(dayRef, async snap => {
-        const nextState = snap.exists() ? snap.data() : null;
-        const passEvent = nextState?.lastPassEvent || null;
-        const presenceEvent = nextState?.lastPresenceEvent || null;
-
-        if (passEvent?.id && passEvent.id !== lastSeenPassEventId) {
-          const shouldNotify = lastSeenPassEventId !== null && passEvent.fromUid !== authUser?.uid;
-          lastSeenPassEventId = passEvent.id;
-
-          if (shouldNotify) {
-            eventToast.textContent = `${passEvent.fromName || "Alguém"} passou a vez. Agora é a vez de ${passEvent.nextName || "outro técnico"}.`;
-            eventToast.classList.remove("hidden");
-            setTimeout(() => eventToast.classList.add("hidden"), 4000);
-          }
-        }
-
-        if (presenceEvent?.id && presenceEvent.id !== lastSeenPresenceEventId) {
-          const shouldNotify =
-            lastSeenPresenceEventId !== null &&
-            presenceEvent.uid !== authUser?.uid;
-
-          lastSeenPresenceEventId = presenceEvent.id;
-
-          if (shouldNotify) {
-            const actionText = presenceEvent.type === "leave" ? "saiu do TechQueue" : "entrou no TechQueue";
-            const message = `${presenceEvent.name || "Usuário"} ${actionText}.`;
-
-            eventToast.textContent = message;
-            eventToast.classList.remove("hidden");
-            setTimeout(() => eventToast.classList.add("hidden"), 8000);
-
-            if (document.hidden && "Notification" in window && Notification.permission === "granted") {
-              try {
-                new Notification("TechQueue", {
-                  body: message,
-                  tag: "techqueue-presence",
-                  renotify: true,
-                  silent: true
-                });
-              } catch (err) {
-                console.warn("Falha ao mostrar notificação de presença:", err);
-              }
-            }
-          }
-        }
-
-        dayState = nextState;
-        await loadMyOpenAttendance();
-        render();
-      }, err => {
-        console.error("Erro ao sincronizar fila:", err);
-        systemNotice.textContent = err?.code === "permission-denied"
-          ? "O Firebase bloqueou a sincronização da fila. Atualize as regras do Firestore."
-          : "Não foi possível sincronizar a fila agora.";
-      });
-
-      unsubHistory = onSnapshot(attendanceCol, snap => {
-        todayAttendances = snap.docs.map(d => ({ id: d.id, ...d.data() }))
-          .sort((a,b) => (b.startedAtMs || 0) - (a.startedAtMs || 0));
-        renderHistory();
-        renderRanking();
-      }, err => {
-        console.error("Erro ao carregar histórico:", err);
-      });
-
-      unsubQueuedClients = onSnapshot(queuedClientsCol, snap => {
-        queuedClients = snap.docs
-          .map(d => ({ id: d.id, ...d.data() }))
-          .sort((a,b) => (a.createdAtMs || 0) - (b.createdAtMs || 0));
-        renderQueuedClients();
-      }, err => {
-        console.error("Erro ao carregar clientes encaminhados:", err);
-      });
-
-
-      unsubNudges = onSnapshot(nudgesCol, snap => {
-        if (!nudgesReady) {
-          nudgesReady = true;
-          return;
-        }
-
-        for (const change of snap.docChanges()) {
-          if (change.type !== "added") continue;
-          const nudge = change.doc.data();
-          if (nudge.targetUid === authUser?.uid) {
-            showNudge(nudge);
-          }
-        }
-      });
-    }
-
-    async function loadMyOpenAttendance() {
-      openAttendance = null;
-      const member = memberOf(authUser?.uid);
-      const attendanceId = member?.currentAttendanceId;
-      if (!attendanceId) return;
-
-      const ref = doc(db, "days", bahiaParts().dateId, "attendances", attendanceId);
-      const snap = await getDoc(ref);
-      if (snap.exists() && snap.data().status === "open") {
-        openAttendance = { id: snap.id, ...snap.data() };
-      }
-    }
-
-    function render() {
-      if (!profile || !dayState) return;
-
-      const current = dayState.currentUid ? dayState.members?.[dayState.currentUid] : null;
-      const me = memberOf(authUser.uid);
-
-      nextName.textContent = current?.name || "—";
-
-      if (me?.status === "busy") {
-        systemNotice.textContent = "Você está em atendimento. Finalize para voltar ao final da fila.";
-      } else if (dayState.currentUid === authUser.uid) {
-        systemNotice.textContent = "É a sua vez de assumir o próximo cliente.";
-      } else {
-        systemNotice.textContent = "A fila está liberada e sincronizada em tempo real, a qualquer hora.";
-      }
-
-      const names = (dayState.queue || [])
-        .map(uid => dayState.members?.[uid]?.name)
-        .filter(Boolean);
-      queueText.textContent = names.length ? names.join(" → ") : "Nenhum técnico disponível na fila";
-
-      takeBtn.disabled =
-        dayState.currentUid !== authUser.uid ||
-        me?.status !== "available";
-
-      passTurnBtn.disabled =
-        dayState.currentUid !== authUser.uid ||
-        me?.status !== "available" ||
-        (dayState.queue || []).length <= 1;
-
-      if (statusSelect) {
-        const editableStatus = ["available", "offline", "lunch", "smoke", "bathroom", "paid_bathroom", "away"].includes(me?.status) ? me.status : "available";
-        statusSelect.value = editableStatus;
-        statusSelect.disabled = me?.status === "busy";
-      }
-
-      renderQueue();
-
-      if (openAttendance) {
-        myOpenTicket.classList.remove("hidden");
-        openClient.textContent = openAttendance.clientName;
-        openStarted.textContent = `Iniciado às ${formatTimestamp(openAttendance.startedAt)}`;
-      } else {
-        myOpenTicket.classList.add("hidden");
-      }
-
-      const canReset = profile.role === "admin";
-      resetDayBtn.disabled = !canReset;
-      resetDayBtn.title = canReset ? "" : "Disponível somente para o administrador";
-    }
-
-    function renderQueue() {
-      const members = dayState?.members || {};
-      const queue = dayState?.queue || [];
-      const seen = new Set();
-      const ordered = [];
-
-      for (const uid of queue) {
-        if (members[uid]) {
-          ordered.push([uid, members[uid]]);
-          seen.add(uid);
-        }
-      }
-      for (const [uid, member] of Object.entries(members)) {
-        if (!seen.has(uid)) ordered.push([uid, member]);
-      }
-
-      if (!ordered.length) {
-        queueList.innerHTML = `<div class="empty">Ninguém entrou na fila ainda.</div>`;
-        return;
-      }
-
-      queueList.innerHTML = ordered.map(([uid,m]) => {
-        const current = uid === dayState.currentUid;
-        const status = m.status || "offline";
-        const statusLabel =
-          status === "available" ? "Disponível" :
-          status === "busy" ? "Em atendimento" :
-          status === "offline" ? "Offline" :
-          status === "lunch" ? "Almoço" :
-          status === "smoke" ? "Vou PITAR" :
-          status === "bathroom" ? "Segura aí na moral, vou no banheiro" :
-          status === "paid_bathroom" ? "Cagada remunerada" :
-          status === "away" ? "Vou ali e já volto" :
-          "Fora da fila";
-        return `
-          <div class="person ${current ? "current" : ""}">
-            <div>
-              <div class="person-name">
-                ${escapeHtml(m.name)}
-                ${current ? '<span class="current-label">Próximo</span>' : ""}
-              </div>
-              <div class="person-sub">${uid === authUser.uid ? "Você" : (status === "available" || status === "busy" ? "Na fila" : "Fora do rodízio")}</div>
-            </div>
-            <div class="person-actions">
-              ${uid !== authUser.uid && status !== "offline"
-                ? `<button class="attention-btn" type="button" data-nudge-uid="${uid}" data-nudge-name="${escapeHtml(m.name)}">Chamar atenção</button>`
-                : ""}
-              <span class="badge ${status}">${statusLabel}</span>
-            </div>
-          </div>
-        `;
-      }).join("");
-    }
-
-    queueList.addEventListener("click", event => {
-      const button = event.target.closest("[data-nudge-uid]");
-      if (!button || !authUser) return;
-
-      pendingNudgeTarget = {
-        uid: button.dataset.nudgeUid,
-        name: button.dataset.nudgeName
-      };
-
-      const unlocked = unlockedItems();
-      const credits = audioCredits();
-      const unlockedSounds = SOUND_CATALOG.filter(sound =>
-        sound.id === "msn" || Number(credits[sound.id] || 0) > 0
-      );
-
-      nudgeSound.innerHTML = unlockedSounds
-        .map(sound => `<option value="${sound.id}">${escapeHtml(sound.label)}</option>`)
-        .join("");
-
-      customMessageField.classList.toggle("hidden", !unlocked.has("message_pack"));
-      reactionField.classList.toggle("hidden", !unlocked.has("reaction_pack"));
-      stickerField.classList.toggle("hidden", !unlocked.has("sticker_pack"));
-      nudgeMessage.value = "";
-      nudgeReaction.value = "";
-      nudgeSticker.value = "";
-      nudgeTargetText.textContent = `Chamar a atenção de ${pendingNudgeTarget.name}.`;
-      nudgeDialog.showModal();
-    });
-
-    function refreshAlertPermissionUI() {
-      if (!alertPermissionCard || !authUser) {
-        alertPermissionCard?.classList.add("hidden");
-        return;
-      }
-
-      const supportsNotifications = "Notification" in window;
-      const permission = supportsNotifications ? Notification.permission : "unsupported";
-
-      if (alertsActivated && permission === "granted") {
-        alertPermissionCard.classList.add("hidden");
-        return;
-      }
-
-      alertPermissionCard.classList.remove("hidden");
-
-      if (!supportsNotifications) {
-        alertPermissionText.textContent = "Este navegador não oferece notificações do sistema. Você ainda pode ativar o som dos alertas.";
-        enableAlertsBtn.textContent = "Ativar som";
-      } else if (permission === "denied") {
-        alertPermissionText.textContent = "As notificações estão bloqueadas nas configurações do navegador. O som ainda pode ser ativado nesta sessão.";
-        enableAlertsBtn.textContent = alertsActivated ? "Som ativado" : "Ativar som";
-        enableAlertsBtn.disabled = alertsActivated;
-      } else if (permission === "granted") {
-        alertPermissionText.textContent = "Notificações permitidas. Ative o som desta sessão para os chamados de atenção.";
-        enableAlertsBtn.textContent = "Ativar som";
-      } else {
-        alertPermissionText.textContent = "Permita notificações e som para receber chamadas mesmo quando esta aba estiver em segundo plano.";
-        enableAlertsBtn.textContent = "Ativar notificações e som";
-      }
-    }
-
-    async function activateAlerts() {
-      enableAlertsBtn.disabled = true;
-
-      try {
-        // Os dois pedidos são disparados pelo clique do usuário para respeitar
-        // as políticas de permissão e autoplay dos navegadores.
-        const notificationPromise =
-          "Notification" in window && Notification.permission === "default"
-            ? Notification.requestPermission()
-            : Promise.resolve("Notification" in window ? Notification.permission : "unsupported");
-
-        alertPlayer.src = SOUND_CATALOG[0].file;
-        alertPlayer.volume = 0;
-        const audioPromise = alertPlayer.play()
-          .then(() => {
-            alertPlayer.pause();
-            alertPlayer.currentTime = 0;
-            alertPlayer.volume = 0.9;
-            alertsActivated = true;
-          })
-          .catch(err => {
-            console.warn("Não foi possível liberar o áudio automaticamente:", err);
-            alertsActivated = true;
-          });
-
-        await Promise.allSettled([notificationPromise, audioPromise]);
-        localStorage.setItem("techqueue-alerts-activated", "1");
-      } finally {
-        enableAlertsBtn.disabled = false;
-        refreshAlertPermissionUI();
-      }
-    }
-
-    enableAlertsBtn?.addEventListener("click", activateAlerts);
-
-    function stopAttentionFlash() {
-      if (attentionFlashTimer) clearInterval(attentionFlashTimer);
-      attentionFlashTimer = null;
-      attentionFlashState = false;
-      document.title = normalDocumentTitle;
-      document.body.classList.remove("attention-flash");
-    }
-
-    function startAttentionFlash(fromName) {
-      stopAttentionFlash();
-      document.body.classList.add("attention-flash");
-
-      const attentionTitle = `ATENÇÃO - ${fromName} chamou você`;
-      document.title = attentionTitle;
-
-      attentionFlashTimer = setInterval(() => {
-        attentionFlashState = !attentionFlashState;
-        document.title = attentionFlashState ? attentionTitle : normalDocumentTitle;
-      }, 750);
-    }
-
-    window.addEventListener("focus", stopAttentionFlash);
-    document.addEventListener("visibilitychange", () => {
-      if (!document.hidden) stopAttentionFlash();
-    });
-
-    function showSystemNotification(nudge) {
-      if (!("Notification" in window) || Notification.permission !== "granted") return;
-
-      const fromName = nudge.fromName || "Outro técnico";
-      const extras = [nudge.reaction, nudge.sticker ? "[" + nudge.sticker + "]" : "", nudge.message]
-        .filter(Boolean)
-        .join(" ");
-
-      try {
-        const notification = new Notification("TechQueue - chamada de atenção", {
-          body: extras ? `${fromName}: ${extras}` : `${fromName} está chamando sua atenção.`,
-          tag: "techqueue-nudge",
-          renotify: true,
-          silent: true
-        });
-
-        notification.onclick = () => {
-          window.focus();
-          stopAttentionFlash();
-          notification.close();
-        };
-      } catch (err) {
-        console.warn("Falha ao mostrar notificação do sistema:", err);
-      }
-    }
-
-    nudgeForm.addEventListener("submit", async event => {
-      event.preventDefault();
-      if (!pendingNudgeTarget || !authUser) return;
-
-      const submitButton = nudgeForm.querySelector('button[type="submit"]');
-      submitButton.disabled = true;
-
-      const soundId = nudgeSound.value || "msn";
-      const soundInfo = SOUND_CATALOG.find(item => item.id === soundId) || SOUND_CATALOG[0];
-      const dayId = bahiaParts().dateId;
-      const nudgeRef = doc(collection(db, "days", dayId, "nudges"));
-      const profileRef = walletRef();
-
-      try {
-        await runTransaction(db, async tx => {
-          if (soundInfo.price > 0) {
-            const profileSnap = await tx.get(profileRef);
-            if (!profileSnap.exists()) throw new Error("Carteira de XP não encontrada.");
-
-            const data = profileSnap.data();
-            const wallets = { ...(data.wallets || {}) };
-            const wallet = { ...(wallets[authUser.uid] || defaultWallet()) };
-            const credits = { ...(wallet.audioCredits || {}) };
-            const available = Number(credits[soundId] || 0);
-
-            if (available <= 0) {
-              throw new Error("Você não tem crédito para este áudio. Compre 1 uso na lojinha.");
-            }
-
-            credits[soundId] = available - 1;
-            wallet.audioCredits = credits;
-            wallet.updatedAtMs = Date.now();
-            wallets[authUser.uid] = wallet;
-
-            tx.set(profileRef, {
-              wallets,
-              updatedAt: serverTimestamp()
-            }, { merge: true });
-          }
-
-          tx.set(nudgeRef, {
-            fromUid: authUser.uid,
-            fromName: profile.name,
-            targetUid: pendingNudgeTarget.uid,
-            targetName: pendingNudgeTarget.name,
-            sound: soundId,
-            message: customMessageField.classList.contains("hidden") ? "" : nudgeMessage.value.trim(),
-            reaction: reactionField.classList.contains("hidden") ? "" : nudgeReaction.value,
-            sticker: stickerField.classList.contains("hidden") ? "" : nudgeSticker.value,
-            createdAt: serverTimestamp(),
-            createdAtMs: Date.now()
-          });
-        });
-
-        nudgeDialog.close();
-      } catch (err) {
-        console.error(err);
-        if (err?.code === "permission-denied") {
-          alert("O Firebase bloqueou o alerta. Publique a versão mais recente das regras do Firestore.");
-        } else {
-          alert(err?.message || `Não foi possível chamar a atenção deste técnico. ${err?.code || ""}`.trim());
-        }
-      } finally {
-        submitButton.disabled = false;
-      }
-    });
-
-    function showNudge(nudge) {
-      const fromName = nudge.fromName || "Outro técnico";
-      document.body.classList.remove("nudged");
-      void document.body.offsetWidth;
-      document.body.classList.add("nudged");
-
-      const extras = [nudge.reaction, nudge.sticker ? "[" + nudge.sticker + "]" : "", nudge.message].filter(Boolean).join(" ");
-      nudgeToast.textContent = extras
-        ? `${fromName}: ${extras}`
-        : `${fromName} está chamando sua atenção.`;
-
-      nudgeToast.classList.remove("hidden");
-      setTimeout(() => nudgeToast.classList.add("hidden"), 4500);
-
-      const isInBackground = document.hidden || !document.hasFocus();
-      if (isInBackground) {
-        startAttentionFlash(fromName);
-        showSystemNotification(nudge);
-        if (navigator.vibrate) {
-          try { navigator.vibrate([180, 80, 180]); } catch (_) {}
-        }
-      }
-
-      const sound = SOUND_CATALOG.find(item => item.id === (nudge.sound || "msn")) || SOUND_CATALOG[0];
-      alertPlayer.pause();
-      alertPlayer.src = sound.file;
-      alertPlayer.currentTime = 0;
-      alertPlayer.volume = 0.9;
-      alertPlayer.play().catch(() => playFallbackNudge());
-    }
-
-    function playFallbackNudge() {
-      try {
-        const AudioCtx = window.AudioContext || window.webkitAudioContext;
-        if (!AudioCtx) return;
-        const ctx = new AudioCtx();
-        const oscillator = ctx.createOscillator();
-        const gain = ctx.createGain();
-        oscillator.frequency.value = 660;
-        gain.gain.value = 0.05;
-        oscillator.connect(gain);
-        gain.connect(ctx.destination);
-        oscillator.start();
-        oscillator.stop(ctx.currentTime + 0.12);
-      } catch (_) {}
-    }
-
-    function renderQueuedClients() {
-      if (!queuedClientsList) return;
-
-      if (!queuedClients.length) {
-        queuedClientsList.innerHTML = '<div class="empty">Nenhum cliente encaminhado no momento.</div>';
-        return;
-      }
-
-      const canAssume =
-        dayState?.currentUid === authUser?.uid &&
-        memberOf(authUser?.uid)?.status === "available" &&
-        !openAttendance;
-
-      queuedClientsList.innerHTML = queuedClients.map(item => `
-        <div class="queued-client">
-          <div>
-            <strong>${escapeHtml(item.clientName)}</strong>
-            <span>Enviado por ${escapeHtml(item.fromName || "Técnico")} às ${formatTimestamp(item.createdAt)}</span>
-          </div>
-          <button
-            class="btn btn-secondary"
-            type="button"
-            data-assume-client="${item.id}"
-            ${canAssume ? "" : "disabled"}
-          >Assumir</button>
-        </div>
-      `).join("");
-    }
-
-    queuedClientsList.addEventListener("click", async event => {
-      const button = event.target.closest("[data-assume-client]");
-      if (!button) return;
-      await assumeQueuedClient(button.dataset.assumeClient);
-    });
-
-    async function assumeQueuedClient(queueId) {
-      if (!authUser || !dayState) return;
-
-      const now = bahiaParts();
-      const dayRef = doc(db, "days", now.dateId);
-      const queuedRef = doc(db, "days", now.dateId, "queuedClients", queueId);
-      const attendanceRef = doc(collection(db, "days", now.dateId, "attendances"));
-
-      try {
-        await runTransaction(db, async tx => {
-          const daySnap = await tx.get(dayRef);
-          const queuedSnap = await tx.get(queuedRef);
-
-          if (!daySnap.exists() || !queuedSnap.exists()) {
-            throw new Error("Este cliente não está mais na fila.");
-          }
-
-          const state = daySnap.data();
-          const item = queuedSnap.data();
-          const member = state.members?.[authUser.uid];
-
-          if (state.currentUid !== authUser.uid || member?.status !== "available") {
-            throw new Error("Somente o próximo técnico disponível pode assumir este cliente.");
-          }
-
-          const currentQueue = [...(state.queue || [])];
-          const otherAvailable = currentQueue.filter(uid =>
-            uid !== authUser.uid &&
-            state.members?.[uid]?.status === "available"
-          );
-
-          if (state.lastAttendanceUid === authUser.uid && otherAvailable.length) {
-            const passed = new Set(state.passedSinceLastAttendance || []);
-            const everyoneElsePassed = otherAvailable.every(uid => passed.has(uid));
-
-            if (!everyoneElsePassed) {
-              throw new Error("Você acabou de atender. Outro técnico da fila precisa atender ou passar a vez antes de você pegar outro cliente.");
-            }
-          }
-
-          const queue = currentQueue.filter(uid => uid !== authUser.uid);
-          const members = { ...state.members };
-          members[authUser.uid] = {
-            ...member,
-            status: "busy",
-            currentAttendanceId: attendanceRef.id
-          };
-
-          tx.set(attendanceRef, {
-            technicianUid: authUser.uid,
-            technicianName: profile.name,
-            clientName: item.clientName,
-            status: "open",
-            startedAt: serverTimestamp(),
-            startedAtMs: Date.now(),
-            problem: "",
-            solution: "",
-            source: "forwarded",
-            forwardedByUid: item.fromUid || null,
-            forwardedByName: item.fromName || "",
-            finishedAt: null
-          });
-
-          tx.delete(queuedRef);
-
-          tx.update(dayRef, {
-            queue,
-            members,
-            currentUid: queue[0] || null,
-            lastAttendanceUid: authUser.uid,
-            passedSinceLastAttendance: [],
-            updatedAt: serverTimestamp()
-          });
-        });
-      } catch (err) {
-        console.error(err);
-        alert(err.message || "Não foi possível assumir o cliente.");
-      }
-    }
-
-    function renderHistory() {
-      if (!historyEl) return;
-      if (!todayAttendances.length) {
-        historyEl.innerHTML = `<div class="empty">Nenhum atendimento registrado hoje.</div>`;
-        return;
-      }
-
-      historyEl.innerHTML = todayAttendances.map(a => {
-        const done = a.status === "finished";
-        const queued = a.status === "queued";
-        const stateLabel = done ? "Concluído" : queued ? "Enviado para fila" : "Em atendimento";
-        const stateClass = done ? "done" : queued ? "queued" : "open";
-        return `
-          <article class="history-item">
-            <div class="history-title-row">
-              <div class="history-title">
-                ${escapeHtml(a.clientName)} — ${escapeHtml(a.technicianName)}
-                ${done ? complexityBadge(a.complexity) : ""}
-              </div>
-              <span class="history-state ${stateClass}">${stateLabel}</span>
-            </div>
-            <div class="history-meta">
-              Início ${formatTimestamp(a.startedAt)}
-              ${done
-                ? ` • fim ${formatTimestamp(a.finishedAt)}`
-                : queued
-                  ? ` • enviado para fila ${formatTimestamp(a.queuedAt)}`
-                  : " • em atendimento"}
-            </div>
-            ${done ? `
-              <div class="history-details">
-                <strong>Problema:</strong> ${escapeHtml(a.problem || "-")}<br>
-                <strong>Solução:</strong> ${escapeHtml(a.solution || "-")}<br>
-                <strong>XP:</strong> +${Number(a.xpAwarded ?? xpForComplexity(a.complexity))} XP
-              </div>
-            ` : ""}
-          </article>
-        `;
-      }).join("");
-    }
-
-    function xpForComplexity(value) {
-      if (value === "critical") return 35;
-      if (value === "moderate") return 20;
-      return 10;
-    }
-
-    function renderRanking() {
-      if (!podium || !shameWall) return;
-
-      const stats = new Map();
-
-      for (const attendance of todayAttendances) {
-        if (attendance.status !== "finished") continue;
-
-        const uid = attendance.technicianUid || attendance.technicianName;
-        if (!stats.has(uid)) {
-          stats.set(uid, {
-            name: attendance.technicianName || "Técnico",
-            count: 0,
-            xp: 0
-          });
-        }
-
-        const item = stats.get(uid);
-        item.count += 1;
-        item.xp += Number(attendance.xpAwarded ?? xpForComplexity(attendance.complexity));
-      }
-
-      const ranking = [...stats.values()]
-        .sort((a,b) => b.count - a.count || b.xp - a.xp || a.name.localeCompare(b.name));
-
-      if (!ranking.length) {
-        podium.innerHTML = '<div class="empty" style="grid-column:1/-1">O pódio ainda está vazio.</div>';
-        shameWall.innerHTML = "";
-        return;
-      }
-
-      const labels = ["1º lugar", "2º lugar", "3º lugar"];
-      podium.innerHTML = ranking.slice(0,3).map((item,index) => `
-        <div class="podium-place">
-          <div class="podium-position">${labels[index]}</div>
-          <strong>${escapeHtml(item.name)}</strong>
-          <div class="podium-score">
-            ${item.count} atendimento${item.count === 1 ? "" : "s"}
-            <span class="xp-badge">${item.xp} XP</span>
-          </div>
-        </div>
-      `).join("");
-
-      const rest = ranking.slice(3);
-      shameWall.innerHTML = rest.length
-        ? `
-          <div class="shame-wall-title">Mural da vergonha</div>
-          ${rest.map((item,index) => `
-            <div class="rank-row">
-              <span>${index + 4}º — ${escapeHtml(item.name)}</span>
-              <span>${item.count} atend. <span class="xp-badge">${item.xp} XP</span></span>
-            </div>
-          `).join("")}
-        `
-        : "";
-    }
-
-    statusSelect.addEventListener("change", async () => {
-      if (!authUser || !dayState) return;
-
-      const newStatus = statusSelect.value;
-      const dayRef = doc(db, "days", bahiaParts().dateId);
-
-      try {
-        await runTransaction(db, async tx => {
-          const snap = await tx.get(dayRef);
-          if (!snap.exists()) return;
-
-          const state = snap.data();
-          const members = { ...(state.members || {}) };
-          const member = members[authUser.uid];
-
-          if (!member || member.status === "busy") {
-            throw new Error("Finalize seu atendimento antes de alterar o status.");
-          }
-
-          let queue = [...(state.queue || [])];
-
-          if (newStatus === "available") {
-            members[authUser.uid] = { ...member, status: "available" };
-            if (!queue.includes(authUser.uid)) queue.push(authUser.uid);
-          } else {
-            members[authUser.uid] = { ...member, status: newStatus };
-            queue = queue.filter(uid => uid !== authUser.uid);
-          }
-
-          tx.update(dayRef, {
-            members,
-            queue,
-            currentUid: state.currentUid === authUser.uid
-              ? (queue[0] || null)
-              : (state.currentUid || queue[0] || null),
-            updatedAt: serverTimestamp()
-          });
-        });
-      } catch (err) {
-        console.error(err);
-        alert(err.message || "Não foi possível alterar seu status.");
-        render();
-      }
-    });
-
-    passTurnBtn.addEventListener("click", async () => {
-      if (!authUser || !dayState) return;
-
-      const dayId = bahiaParts().dateId;
-      const dayRef = doc(db, "days", dayId);
-
-      try {
-        await runTransaction(db, async tx => {
-          const snap = await tx.get(dayRef);
-          if (!snap.exists()) throw new Error("Fila indisponível. Recarregue a página.");
-
-          const state = snap.data();
-          const member = state.members?.[authUser.uid];
-          const queue = [...(state.queue || [])];
-
-          if (state.currentUid !== authUser.uid || member?.status !== "available") {
-            throw new Error("A vez já passou para outro técnico.");
-          }
-
-          if (queue.length <= 1) {
-            throw new Error("Você está sozinho na fila. Não há para quem passar a vez.");
-          }
-
-          const nextQueue = queue.filter(uid => uid !== authUser.uid);
-          nextQueue.push(authUser.uid);
-
-          const passed = new Set(state.passedSinceLastAttendance || []);
-          passed.add(authUser.uid);
-
-          const nextUid = nextQueue[0] || null;
-          const nextName = nextUid ? (state.members?.[nextUid]?.name || "outro técnico") : "ninguém";
-
-          tx.update(dayRef, {
-            queue: nextQueue,
-            currentUid: nextUid,
-            passedSinceLastAttendance: [...passed],
-            lastPassEvent: {
-              id: Date.now() + "-" + authUser.uid,
-              type: "turn_pass",
-              fromUid: authUser.uid,
-              fromName: profile.name,
-              nextUid,
-              nextName,
-              createdAtMs: Date.now()
-            },
-            updatedAt: serverTimestamp()
-          });
-        });
-      } catch (err) {
-        console.error(err);
-        alert(err.message || "Não foi possível passar a vez.");
-      }
-    });
-
-    takeBtn.addEventListener("click", () => {
-      clientNameInput.value = "";
-      takeDialog.showModal();
-      setTimeout(() => clientNameInput.focus(), 30);
-    });
-
-    takeForm.addEventListener("submit", async e => {
-      e.preventDefault();
-      const clientName = clientNameInput.value.trim();
-      if (!clientName) return;
-
-      const now = bahiaParts();
-      const dayRef = doc(db, "days", now.dateId);
-      const attendanceRef = doc(collection(db, "days", now.dateId, "attendances"));
-
-      try {
-        await runTransaction(db, async tx => {
-          const daySnap = await tx.get(dayRef);
-          if (!daySnap.exists()) throw new Error("Fila indisponível. Recarregue a página.");
-
-          const state = daySnap.data();
-          const member = state.members?.[authUser.uid];
-
-          if (state.currentUid !== authUser.uid) throw new Error("A vez já passou para outro técnico.");
-          if (member?.status !== "available") throw new Error("Você não está disponível na fila.");
-
-          const currentQueue = [...(state.queue || [])];
-          const otherAvailable = currentQueue.filter(uid =>
-            uid !== authUser.uid &&
-            state.members?.[uid]?.status === "available"
-          );
-
-          if (state.lastAttendanceUid === authUser.uid && otherAvailable.length) {
-            const passed = new Set(state.passedSinceLastAttendance || []);
-            const everyoneElsePassed = otherAvailable.every(uid => passed.has(uid));
-
-            if (!everyoneElsePassed) {
-              throw new Error("Você acabou de atender. Outro técnico da fila precisa atender ou passar a vez antes de você pegar outro cliente.");
-            }
-          }
-
-          const queue = currentQueue.filter(uid => uid !== authUser.uid);
-          const members = { ...state.members };
-          members[authUser.uid] = {
-            ...member,
-            status: "busy",
-            currentAttendanceId: attendanceRef.id
-          };
-
-          tx.set(attendanceRef, {
-            technicianUid: authUser.uid,
-            technicianName: profile.name,
-            clientName,
-            status: "open",
-            startedAt: serverTimestamp(),
-            startedAtMs: Date.now(),
-            problem: "",
-            solution: "",
-            finishedAt: null
-          });
-
-          tx.update(dayRef, {
-            queue,
-            members,
-            currentUid: queue[0] || null,
-            lastAttendanceUid: authUser.uid,
-            passedSinceLastAttendance: [],
-            updatedAt: serverTimestamp()
-          });
-        });
-
-        takeDialog.close();
-      } catch (err) {
-        console.error(err);
-        alert(err.message || "Não foi possível registrar o atendimento.");
-      }
-    });
-
-    queueClientBtn.addEventListener("click", async () => {
-      if (!openAttendance || !authUser) return;
-
-      const ok = confirm(`Enviar ${openAttendance.clientName} para a fila e voltar a ficar disponível?`);
-      if (!ok) return;
-
-      const now = bahiaParts();
-      const dayRef = doc(db, "days", now.dateId);
-      const attendanceRef = doc(db, "days", now.dateId, "attendances", openAttendance.id);
-      const queuedRef = doc(collection(db, "days", now.dateId, "queuedClients"));
-
-      try {
-        await runTransaction(db, async tx => {
-          const [daySnap, attSnap] = await Promise.all([
-            tx.get(dayRef),
-            tx.get(attendanceRef)
-          ]);
-
-          if (!daySnap.exists() || !attSnap.exists()) throw new Error("Atendimento não encontrado.");
-
-          const state = daySnap.data();
-          const attendance = attSnap.data();
-
-          if (attendance.technicianUid !== authUser.uid || attendance.status !== "open") {
-            throw new Error("Este atendimento não pode mais ser encaminhado.");
-          }
-
-          const members = { ...state.members };
-          const member = members[authUser.uid];
-          members[authUser.uid] = {
-            ...member,
-            status: "available",
-            currentAttendanceId: null
-          };
-
-          const queue = [...(state.queue || [])];
-          if (!queue.includes(authUser.uid)) queue.push(authUser.uid);
-
-          tx.update(attendanceRef, {
-            status: "queued",
-            queuedAt: serverTimestamp()
-          });
-
-          tx.set(queuedRef, {
-            clientName: attendance.clientName,
-            fromUid: authUser.uid,
-            fromName: profile.name,
-            createdAt: serverTimestamp(),
-            createdAtMs: Date.now()
-          });
-
-          tx.update(dayRef, {
-            members,
-            queue,
-            currentUid: state.currentUid || queue[0] || null,
-            updatedAt: serverTimestamp()
-          });
-        });
-      } catch (err) {
-        console.error(err);
-        alert(err.message || "Não foi possível enviar o cliente para a fila.");
-      }
-    });
-
-    finishBtn.addEventListener("click", () => {
-      problemInput.value = "";
-      solutionInput.value = "";
-      const defaultComplexity = finishForm.querySelector('input[name="complexity"][value="standard"]');
-      if (defaultComplexity) defaultComplexity.checked = true;
-      finishDialog.showModal();
-      setTimeout(() => problemInput.focus(), 30);
-    });
-
-    finishForm.addEventListener("submit", async e => {
-      e.preventDefault();
-      if (!openAttendance) return;
-
-      const problem = problemInput.value.trim();
-      const solution = solutionInput.value.trim();
-      const complexity = finishForm.querySelector('input[name="complexity"]:checked')?.value || "standard";
-      const xpAwarded = xpForComplexity(complexity);
-      if (!problem || !solution) return;
-
-      const now = bahiaParts();
-      const dayRef = doc(db, "days", now.dateId);
-      const attendanceRef = doc(db, "days", now.dateId, "attendances", openAttendance.id);
-      const profileRef = walletRef();
-
-      try {
-        await runTransaction(db, async tx => {
-          const [daySnap, attSnap, profileSnap] = await Promise.all([
-            tx.get(dayRef),
-            tx.get(attendanceRef),
-            tx.get(profileRef)
-          ]);
-
-          if (!daySnap.exists() || !attSnap.exists()) throw new Error("Atendimento não encontrado.");
-          const state = daySnap.data();
-          const attendance = attSnap.data();
-
-          if (attendance.technicianUid !== authUser.uid) throw new Error("Este atendimento pertence a outro técnico.");
-          if (attendance.status !== "open") throw new Error("Este atendimento já foi finalizado.");
-
-          const members = { ...state.members };
-          const member = members[authUser.uid];
-          members[authUser.uid] = {
-            ...member,
-            status: "available",
-            currentAttendanceId: null
-          };
-
-          let queue = [...(state.queue || [])];
-          if (!queue.includes(authUser.uid)) queue.push(authUser.uid);
-
-          tx.update(attendanceRef, {
-            status: "finished",
-            problem,
-            solution,
-            complexity,
-            xpAwarded,
-            finishedAt: serverTimestamp()
-          });
-
-          tx.update(dayRef, {
-            members,
-            queue,
-            currentUid: state.currentUid || queue[0] || null,
-            updatedAt: serverTimestamp()
-          });
-
-          const walletDoc = profileSnap.exists() ? profileSnap.data() : {};
-          const wallets = { ...(walletDoc.wallets || {}) };
-          const wallet = { ...(wallets[authUser.uid] || defaultWallet()) };
-          wallet.xpBalance = Number(wallet.xpBalance || 0) + xpAwarded;
-          wallet.updatedAtMs = Date.now();
-          wallets[authUser.uid] = wallet;
-
-          tx.set(profileRef, {
-            wallets,
-            updatedAt: serverTimestamp()
-          }, { merge: true });
-        });
-
-        finishDialog.close();
-      } catch (err) {
-        console.error(err);
-        alert(err.message || "Não foi possível finalizar.");
-      }
-    });
-
-    logoutBtn.addEventListener("click", async () => {
-      const me = memberOf(authUser?.uid);
-      if (me?.status === "busy") {
-        alert("Finalize seu atendimento antes de sair.");
-        return;
-      }
-
-      isSigningOut = true;
-      logoutBtn.disabled = true;
-
-      try {
-        await leaveQueue();
-        await signOut(auth);
-      } catch (err) {
-        console.error(err);
-        isSigningOut = false;
-        logoutBtn.disabled = false;
-        alert("Não foi possível sair agora. Tente novamente.");
-      }
-    });
-
-    async function leaveQueue() {
-      if (!authUser) return;
-
-      const now = bahiaParts();
-      const dayRef = doc(db, "days", now.dateId);
-      const leavingUid = authUser.uid;
-      const leavingName = profile?.name || authUser.displayName || "Usuário";
-
-      await runTransaction(db, async tx => {
-        const snap = await tx.get(dayRef);
-        if (!snap.exists()) return;
-
-        const state = snap.data();
-        const member = state.members?.[leavingUid];
-        if (!member) return;
-        if (member.status === "busy") {
-          throw new Error("Finalize seu atendimento antes de sair.");
-        }
-
-        const queue = (state.queue || []).filter(uid => uid !== leavingUid);
-        const members = { ...(state.members || {}) };
-
-        // Ao sair, o usuário deixa de existir na lista do dia. Assim não fica
-        // acumulando cartões "Fora da fila" e não participa mais do rodízio.
-        delete members[leavingUid];
-
-        const passedSinceLastAttendance = (state.passedSinceLastAttendance || [])
-          .filter(uid => uid !== leavingUid);
-
-        const nextCurrentUid =
-          state.currentUid === leavingUid
-            ? (queue[0] || null)
-            : (queue.includes(state.currentUid) ? state.currentUid : (queue[0] || null));
-
-        tx.update(dayRef, {
-          queue,
-          members,
-          currentUid: nextCurrentUid,
-          passedSinceLastAttendance,
-          lastPresenceEvent: {
-            id: Date.now() + "-" + leavingUid + "-leave",
-            type: "leave",
-            uid: leavingUid,
-            name: leavingName,
-            createdAtMs: Date.now()
-          },
-          updatedAt: serverTimestamp()
-        });
-      });
-    }
-
-    resetDayBtn.addEventListener("click", async () => {
-      const now = bahiaParts();
-      if (profile?.role !== "admin") return;
-
-      const ok = confirm("Limpar todos os atendimentos do dia e zerar a fila? Esta ação não pode ser desfeita.");
-      if (!ok) return;
-
-      try {
-        const collectionsToClear = ["attendances", "queuedClients", "nudges", "events"];
-
-        for (const collectionName of collectionsToClear) {
-          const snap = await getDocs(collection(db, "days", now.dateId, collectionName));
-          const docs = snap.docs;
-
-          for (let i = 0; i < docs.length; i += 400) {
-            const batch = writeBatch(db);
-            docs.slice(i, i + 400).forEach(d => batch.delete(d.ref));
-            await batch.commit();
-          }
-        }
-
-        await setDoc(doc(db, "days", now.dateId), {
-          dateId: now.dateId,
-          status: "open",
-          queue: [],
-          currentUid: null,
-          members: {},
-          lastAttendanceUid: null,
-          passedSinceLastAttendance: [],
-          clearedAt: serverTimestamp(),
-          updatedAt: serverTimestamp()
-        }, { merge: true });
-
-      } catch (err) {
-        console.error(err);
-        if (err?.code === "permission-denied") {
-          alert("O Firebase bloqueou a limpeza. Publique a versão mais recente das regras do Firestore e confirme que você está logado como leandro3dejesus@gmail.com.");
-        } else {
-          alert(`Não foi possível limpar o dia. ${err?.code || err?.message || ""}`.trim());
-        }
-      }
-    });
-
-    document.querySelectorAll("[data-close]").forEach(btn => {
-      btn.addEventListener("click", () => document.getElementById(btn.dataset.close).close());
-    });
-
-    function complexityBadge(value) {
-      const map = {
-        standard: ["standard", "Padrão"],
-        moderate: ["moderate", "Moderado"],
-        critical: ["critical", "Alta complexidade"]
-      };
-      const item = map[value] || map.standard;
-      return `<span class="complexity-badge ${item[0]}">${item[1]}</span>`;
-    }
-
-    function escapeHtml(value) {
-      return String(value ?? "")
-        .replaceAll("&","&amp;")
-        .replaceAll("<","&lt;")
-        .replaceAll(">","&gt;")
-        .replaceAll('"',"&quot;")
-        .replaceAll("'","&#039;");
-    }
-
-    // Mantém a presença na fila sincronizada mesmo após uma limpeza administrativa.
-    setInterval(async () => {
-      if (!authUser || !profile || isSigningOut) return;
-      try { await joinToday(); } catch (err) { console.error(err); }
-    }, 30000);
+    function applyTheme(theme){document.documentElement.dataset.theme=theme;localStorage.setItem(THEME_KEY,theme);document.querySelectorAll("[data-theme-toggle]").forEach(button=>{button.textContent=theme==="dark"?"Modo claro":"Modo escuro";button.setAttribute("aria-label",theme==="dark"?"Ativar modo claro":"Ativar modo escuro")})}
+    applyTheme(localStorage.getItem(THEME_KEY)||"light");
+    document.querySelectorAll("[data-theme-toggle]").forEach(button=>button.addEventListener("click",()=>{const current=document.documentElement.dataset.theme||"light";applyTheme(current==="dark"?"light":"dark")}));
+
+    const loginView=document.querySelector("#loginView"),appView=document.querySelector("#appView"),googleLoginBtn=document.querySelector("#googleLoginBtn"),loginError=document.querySelector("#loginError"),logoutBtn=document.querySelector("#logoutBtn"),mobileMenuBtn=document.querySelector("#mobileMenuBtn"),mobileHeaderMenu=document.querySelector("#mobileHeaderMenu"),loggedName=document.querySelector("#loggedName"),loggedShift=document.querySelector("#loggedShift"),avatar=document.querySelector("#avatar"),systemNotice=document.querySelector("#systemNotice"),nextName=document.querySelector("#nextName"),queueText=document.querySelector("#queueText"),queueList=document.querySelector("#queueList"),queuedClientsList=document.querySelector("#queuedClientsList"),historyEl=document.querySelector("#history"),takeBtn=document.querySelector("#takeBtn"),passTurnBtn=document.querySelector("#passTurnBtn"),finishBtn=document.querySelector("#finishBtn"),queueClientBtn=document.querySelector("#queueClientBtn"),myOpenTicket=document.querySelector("#myOpenTicket"),openClient=document.querySelector("#openClient"),openStarted=document.querySelector("#openStarted"),adminRow=document.querySelector("#adminRow"),resetDayBtn=document.querySelector("#resetDayBtn"),alertPermissionCard=document.querySelector("#alertPermissionCard"),alertPermissionText=document.querySelector("#alertPermissionText"),enableAlertsBtn=document.querySelector("#enableAlertsBtn"),shopBtn=document.querySelector("#shopBtn"),walletXp=document.querySelector("#walletXp"),shopDialog=document.querySelector("#shopDialog"),shopBalance=document.querySelector("#shopBalance"),shopItems=document.querySelector("#shopItems"),nudgeDialog=document.querySelector("#nudgeDialog"),nudgeForm=document.querySelector("#nudgeForm"),nudgeSound=document.querySelector("#nudgeSound"),nudgeMessage=document.querySelector("#nudgeMessage"),nudgeTargetText=document.querySelector("#nudgeTargetText"),customMessageField=document.querySelector("#customMessageField"),reactionField=document.querySelector("#reactionField"),nudgeReaction=document.querySelector("#nudgeReaction"),stickerField=document.querySelector("#stickerField"),nudgeSticker=document.querySelector("#nudgeSticker"),podium=document.querySelector("#podium"),shameWall=document.querySelector("#shameWall"),statusSelect=document.querySelector("#statusSelect"),nudgeToast=document.querySelector("#nudgeToast"),eventToast=document.querySelector("#eventToast"),attentionModal=document.querySelector("#attentionModal"),attentionModalFrom=document.querySelector("#attentionModalFrom"),attentionModalMessage=document.querySelector("#attentionModalMessage"),attentionAcknowledgeBtn=document.querySelector("#attentionAcknowledgeBtn"),takeDialog=document.querySelector("#takeDialog"),finishDialog=document.querySelector("#finishDialog"),takeForm=document.querySelector("#takeForm"),finishForm=document.querySelector("#finishForm"),clientNameInput=document.querySelector("#clientName"),problemInput=document.querySelector("#problem"),solutionInput=document.querySelector("#solution");
+
+    function setMobileMenu(open){if(!mobileMenuBtn||!mobileHeaderMenu)return;mobileMenuBtn.classList.toggle("open",open);mobileHeaderMenu.classList.toggle("open",open);mobileMenuBtn.setAttribute("aria-expanded",String(open));mobileMenuBtn.setAttribute("aria-label",open?"Fechar menu":"Abrir menu")}
+    mobileMenuBtn?.addEventListener("click",()=>setMobileMenu(!mobileHeaderMenu?.classList.contains("open")));
+    mobileHeaderMenu?.addEventListener("click",event=>{if(event.target.closest("a,button")&&window.innerWidth<=720)setMobileMenu(false)});
+    window.addEventListener("resize",()=>{if(window.innerWidth>720)setMobileMenu(false)});
+
+    let app,auth,db,authUser=null,profile=null,dayState=null,todayAttendances=[],queuedClients=[],unsubDay=null,unsubHistory=null,unsubNudges=null,unsubEvents=null,unsubQueuedClients=null,nudgesReady=false,lastSeenPassEventId=null,lastSeenPresenceEventId=null,isSigningOut=false,openAttendance=null,userProfileDoc=null,unsubProfile=null,pendingNudgeTarget=null;
+    let alertsActivated=localStorage.getItem("techqueue-alerts-activated")==="1",attentionFlashTimer=null,activeDayId=null,dayRolloverTimer=null,attentionFlashState=false;
+    const normalDocumentTitle=document.title,alertPlayer=new Audio();
+    if(isConfigured){app=initializeApp(firebaseConfig);auth=getAuth(app);db=getFirestore(app);onAuthStateChanged(auth,handleAuthState)}
+    const TEAM_TIMEZONE="America/Bahia";
+    const SOUND_CATALOG=[{id:"msn",label:"MSN - nova mensagem",file:"./assets/sounds/new-message-msn.mp3",price:0},{id:"dbz",label:"Kakaroto, você é uma besta",file:"./assets/sounds/dbz-pt-br-kakaroto-voce-e-uma-besta.mp3",price:20},{id:"problema",label:"Tu sai de problema",file:"./assets/sounds/tu-sai-de-problema.mp3",price:25},{id:"grosso",label:"Vai entrar o grosso",file:"./assets/sounds/luladrao-vai-entrar-o-grosso.mp3",price:35}];
+    const SHOP_ITEMS=[...SOUND_CATALOG.filter(item=>item.price>0).map(item=>({id:"sound:"+item.id,type:"sound",soundId:item.id,label:item.label,description:"Compra 1 uso deste áudio no botão Chamar atenção.",price:item.price})),{id:"message_pack",type:"feature",label:"Mensagem personalizada",description:"Libera uma mensagem curta junto com o alerta.",price:20},{id:"reaction_pack",type:"feature",label:"Pacote de reações",description:"Libera reações rápidas para enviar junto com o alerta.",price:15},{id:"sticker_pack",type:"feature",label:"Pacote de figurinhas",description:"Libera figurinhas de texto para mandar junto com o alerta.",price:30}];
+    const REACTIONS=["","👍","😂","👀","🔥","😴","🤡"];
+
+    function bahiaParts(date=new Date()){const parts=new Intl.DateTimeFormat("en-CA",{timeZone:TEAM_TIMEZONE,year:"numeric",month:"2-digit",day:"2-digit",hour:"2-digit",minute:"2-digit",hour12:false}).formatToParts(date);const map=Object.fromEntries(parts.map(p=>[p.type,p.value]));return{dateId:`${map.year}-${map.month}-${map.day}`,minutes:Number(map.hour)*60+Number(map.minute),time:`${map.hour}:${map.minute}`}}
+    function formatTimestamp(ts){if(!ts?.toDate)return"agora";return new Intl.DateTimeFormat("pt-BR",{timeZone:TEAM_TIMEZONE,hour:"2-digit",minute:"2-digit"}).format(ts.toDate())}
+    function memberOf(uid){return dayState?.members?.[uid]||null}
+    function setViews(logged){loginView.classList.toggle("hidden",logged);appView.classList.toggle("hidden",!logged)}
+
+    googleLoginBtn?.addEventListener("click",async()=>{if(!isConfigured){if(loginError)loginError.textContent="Configure o Firebase antes de usar o login.";return}if(loginError)loginError.textContent="";googleLoginBtn.disabled=true;try{const provider=new GoogleAuthProvider();provider.setCustomParameters({prompt:"select_account"});await signInWithPopup(auth,provider)}catch(err){console.error(err);if(err.code==="auth/popup-closed-by-user")loginError.textContent="Login com Google cancelado.";else if(err.code==="auth/unauthorized-domain")loginError.textContent="Este domínio ainda não foi autorizado no Firebase.";else if(err.code==="auth/operation-not-allowed")loginError.textContent="Ative o provedor Google no Firebase Authentication.";else loginError.textContent="Não foi possível entrar com o Google."}finally{googleLoginBtn.disabled=false}});
+
+    async function handleAuthState(user){clearSubscriptions();if(!user){authUser=null;profile=null;dayState=null;openAttendance=null;isSigningOut=false;logoutBtn.disabled=false;setViews(false);return}try{isSigningOut=false;logoutBtn.disabled=false;authUser=user;const googleName=(user.displayName||user.email?.split("@")[0]||"Técnico").trim();const email=(user.email||"").toLowerCase();const isAdmin=email==="leandro3dejesus@gmail.com";profile={uid:user.uid,name:googleName,email,enabled:true,role:isAdmin?"admin":"tech"};loggedName.textContent=profile.name;loggedShift.textContent="Fila liberada 24h";avatar.textContent=(profile.name||"?").slice(0,1).toUpperCase();adminRow.classList.toggle("hidden",profile.role!=="admin");setViews(true);refreshAlertPermissionUI();await joinToday();subscribeToday();try{await ensureUserProfile();subscribeUserProfile()}catch(walletErr){console.error("Falha ao iniciar carteira/lojinha:",walletErr);userProfileDoc={xpBalance:0,unlockedItems:[],audioCredits:{}};renderWalletAndShop();walletXp.textContent="XP indisponível";shopBalance.textContent="Saldo indisponível — verifique as regras do Firestore."}}catch(err){console.error(err);loginError.textContent="Não foi possível iniciar sua sessão."}}
+
+    function walletRef(){return doc(db,"days","_wallets")}
+    function defaultWallet(oldData=null){const oldBalance=Number(oldData?.xpBalance||0);return{name:profile.name,email:profile.email,xpBalance:Math.max(35,oldBalance),welcomeBonus35Granted:true,welcomeBonusAmount:35,audioCredits:{...(oldData?.audioCredits||{})},unlockedItems:Array.isArray(oldData?.unlockedItems)?oldData.unlockedItems:[],updatedAtMs:Date.now()}}
+    async function ensureUserProfile(){const ref=walletRef();let legacyProfile=null;try{const legacySnap=await getDoc(doc(db,"profiles",authUser.uid));if(legacySnap.exists())legacyProfile=legacySnap.data()}catch(legacyErr){console.warn("Perfil legado indisponível; usando carteira em /days/_wallets.",legacyErr)}await runTransaction(db,async tx=>{const snap=await tx.get(ref),data=snap.exists()?snap.data():{},wallets={...(data.wallets||{})},existing=wallets[authUser.uid];if(!existing)wallets[authUser.uid]=defaultWallet(legacyProfile);else wallets[authUser.uid]={...existing,name:profile.name,email:profile.email,xpBalance:Math.max(35,Number(existing.xpBalance||0)),welcomeBonus35Granted:true,welcomeBonusAmount:35,audioCredits:{...(existing.audioCredits||{})},unlockedItems:Array.isArray(existing.unlockedItems)?existing.unlockedItems:[],updatedAtMs:Date.now()};tx.set(ref,{type:"techqueue_wallets",wallets,updatedAt:serverTimestamp()},{merge:true})})}
+    function subscribeUserProfile(){if(unsubProfile)unsubProfile();const ref=walletRef();unsubProfile=onSnapshot(ref,snap=>{const wallets=snap.exists()?(snap.data().wallets||{}):{};userProfileDoc=wallets[authUser.uid]||null;renderWalletAndShop()},err=>{console.error("Falha ao sincronizar carteira de XP:",err);userProfileDoc=null;renderWalletAndShop();walletXp.textContent="XP indisponível";shopBalance.textContent="Carteira indisponível."})}
+    function unlockedItems(){return new Set(userProfileDoc?.unlockedItems||[])}
+    function audioCredits(){return{...(userProfileDoc?.audioCredits||{})}}
+    function renderWalletAndShop(){const balance=Number(userProfileDoc?.xpBalance||0);walletXp.textContent=`${balance} XP`;shopBalance.textContent=`Saldo: ${balance} XP`;const unlocked=unlockedItems(),credits=audioCredits();shopItems.innerHTML=SHOP_ITEMS.map(item=>{const isSound=item.type==="sound",owned=!isSound&&unlocked.has(item.id),creditCount=isSound?Number(credits[item.soundId]||0):0;return `<div class="shop-item"><div><strong>${escapeHtml(item.label)}</strong><span>${escapeHtml(item.description)}</span>${isSound&&creditCount>0?`<span class="shop-owned">Créditos disponíveis: ${creditCount}</span>`:""}</div><div>${owned?'<span class="shop-owned">Liberado</span>':`<button class="btn btn-secondary" type="button" data-buy-item="${item.id}" ${balance<item.price?"disabled":""}>${isSound?"Comprar 1 uso":"Comprar"} · ${item.price} XP</button>`}</div></div>`}).join("")}
+    shopBtn.addEventListener("click",()=>{renderWalletAndShop();shopDialog.showModal()});
+    shopItems.addEventListener("click",async event=>{const button=event.target.closest("[data-buy-item]");if(!button||!authUser)return;const item=SHOP_ITEMS.find(candidate=>candidate.id===button.dataset.buyItem);if(!item)return;button.disabled=true;const ref=walletRef();try{await runTransaction(db,async tx=>{const snap=await tx.get(ref);if(!snap.exists())throw new Error("Carteira de XP não encontrada.");const data=snap.data(),wallets={...(data.wallets||{})},wallet={...(wallets[authUser.uid]||defaultWallet())},balance=Number(wallet.xpBalance||0),unlocked=new Set(wallet.unlockedItems||[]),credits={...(wallet.audioCredits||{})};if(balance<item.price)throw new Error("XP insuficiente.");if(item.type==="sound"){credits[item.soundId]=Number(credits[item.soundId]||0)+1;wallet.xpBalance=balance-item.price;wallet.audioCredits=credits}else{if(unlocked.has(item.id))return;unlocked.add(item.id);wallet.xpBalance=balance-item.price;wallet.unlockedItems=[...unlocked]}wallet.updatedAtMs=Date.now();wallets[authUser.uid]=wallet;tx.set(ref,{wallets,updatedAt:serverTimestamp()},{merge:true})})}catch(err){console.error(err);alert(err.message||"Não foi possível comprar este item.")}finally{button.disabled=false}});
+
+    function clearSubscriptions(){if(unsubDay)unsubDay();if(unsubHistory)unsubHistory();if(unsubNudges)unsubNudges();if(unsubQueuedClients)unsubQueuedClients();if(unsubProfile)unsubProfile();unsubDay=unsubHistory=unsubNudges=unsubEvents=unsubQueuedClients=unsubProfile=null;userProfileDoc=null;nudgesReady=false;lastSeenPassEventId=null;lastSeenPresenceEventId=null;activeDayId=null;if(dayRolloverTimer)clearInterval(dayRolloverTimer);dayRolloverTimer=null}
+    async function joinToday(){if(isSigningOut||!authUser||!profile)return;const now=bahiaParts(),dayRef=doc(db,"days",now.dateId);await runTransaction(db,async tx=>{const snap=await tx.get(dayRef),existing=snap.exists()?snap.data():null,initial=existing||{dateId:now.dateId,status:"open",queue:[],currentUid:null,members:{},lastAttendanceUid:null,passedSinceLastAttendance:[]},members={...(initial.members||{})},existingMember=members[authUser.uid],isNewPresence=!existingMember;if(["busy","offline","lunch","smoke","bathroom","paid_bathroom","away"].includes(existingMember?.status))return;members[authUser.uid]={...existingMember,name:profile.name,status:"available",joinedAtMs:existingMember?.joinedAtMs||Date.now(),currentAttendanceId:null};const queue=[...(initial.queue||[])];if(!queue.includes(authUser.uid))queue.push(authUser.uid);const payload={...initial,status:"open",members,queue,currentUid:initial.currentUid||queue[0]||null,updatedAt:serverTimestamp()};if(isNewPresence)payload.lastPresenceEvent={id:Date.now()+"-"+authUser.uid+"-join",type:"join",uid:authUser.uid,name:profile.name,createdAtMs:Date.now()};if(!existing)payload.createdAt=serverTimestamp();tx.set(dayRef,payload)})}
+
+    function subscribeToday(){const now=bahiaParts();activeDayId=now.dateId;if(dayRolloverTimer)clearInterval(dayRolloverTimer);dayRolloverTimer=setInterval(()=>{if(bahiaParts().dateId!==activeDayId)location.reload()},60000);const dayRef=doc(db,"days",now.dateId),attendanceCol=collection(db,"days",now.dateId,"attendances"),nudgesCol=collection(db,"days",now.dateId,"nudges"),queuedClientsCol=collection(db,"days",now.dateId,"queuedClients");unsubDay=onSnapshot(dayRef,async snap=>{const nextState=snap.exists()?snap.data():null,passEvent=nextState?.lastPassEvent||null,presenceEvent=nextState?.lastPresenceEvent||null;if(passEvent?.id&&passEvent.id!==lastSeenPassEventId){const shouldNotify=lastSeenPassEventId!==null&&passEvent.fromUid!==authUser?.uid;lastSeenPassEventId=passEvent.id;if(shouldNotify){eventToast.textContent=`${passEvent.fromName||"Alguém"} passou a vez. Agora é a vez de ${passEvent.nextName||"outro técnico"}.`;eventToast.classList.remove("hidden");setTimeout(()=>eventToast.classList.add("hidden"),4000)}}if(presenceEvent?.id&&presenceEvent.id!==lastSeenPresenceEventId){const shouldNotify=lastSeenPresenceEventId!==null&&presenceEvent.uid!==authUser?.uid;lastSeenPresenceEventId=presenceEvent.id;if(shouldNotify){const actionText=presenceEvent.type==="leave"?"saiu do TechQueue":"entrou no TechQueue",message=`${presenceEvent.name||"Usuário"} ${actionText}.`;eventToast.textContent=message;eventToast.classList.remove("hidden");setTimeout(()=>eventToast.classList.add("hidden"),8000);if(document.hidden&&"Notification" in window&&Notification.permission==="granted")try{new Notification("TechQueue",{body:message,tag:"techqueue-presence",renotify:true,silent:true})}catch(err){console.warn("Falha ao mostrar notificação de presença:",err)}}}dayState=nextState;await loadMyOpenAttendance();render()},err=>{console.error("Erro ao sincronizar fila:",err);systemNotice.textContent=err?.code==="permission-denied"?"O Firebase bloqueou a sincronização da fila. Atualize as regras do Firestore.":"Não foi possível sincronizar a fila agora."});unsubHistory=onSnapshot(attendanceCol,snap=>{todayAttendances=snap.docs.map(d=>({id:d.id,...d.data()})).sort((a,b)=>(b.startedAtMs||0)-(a.startedAtMs||0));renderHistory();renderRanking()},err=>console.error("Erro ao carregar histórico:",err));unsubQueuedClients=onSnapshot(queuedClientsCol,snap=>{queuedClients=snap.docs.map(d=>({id:d.id,...d.data()})).sort((a,b)=>(a.createdAtMs||0)-(b.createdAtMs||0));renderQueuedClients()},err=>console.error("Erro ao carregar clientes encaminhados:",err));unsubNudges=onSnapshot(nudgesCol,snap=>{if(!nudgesReady){nudgesReady=true;return}for(const change of snap.docChanges()){if(change.type!=="added")continue;const nudge=change.doc.data();if(nudge.targetUid===authUser?.uid)showNudge(nudge)}})}
+    async function loadMyOpenAttendance(){openAttendance=null;const member=memberOf(authUser?.uid),attendanceId=member?.currentAttendanceId;if(!attendanceId)return;const ref=doc(db,"days",bahiaParts().dateId,"attendances",attendanceId),snap=await getDoc(ref);if(snap.exists()&&snap.data().status==="open")openAttendance={id:snap.id,...snap.data()}}
+    function render(){if(!profile||!dayState)return;const current=dayState.currentUid?dayState.members?.[dayState.currentUid]:null,me=memberOf(authUser.uid);nextName.textContent=current?.name||"—";systemNotice.textContent=me?.status==="busy"?"Você está em atendimento. Finalize para voltar ao final da fila.":dayState.currentUid===authUser.uid?"É a sua vez de assumir o próximo cliente.":"A fila está liberada e sincronizada em tempo real, a qualquer hora.";const names=(dayState.queue||[]).map(uid=>dayState.members?.[uid]?.name).filter(Boolean);queueText.textContent=names.length?names.join(" → "):"Nenhum técnico disponível na fila";takeBtn.disabled=dayState.currentUid!==authUser.uid||me?.status!=="available";passTurnBtn.disabled=dayState.currentUid!==authUser.uid||me?.status!=="available"||(dayState.queue||[]).length<=1;if(statusSelect){const editableStatus=["available","offline","lunch","smoke","bathroom","paid_bathroom","away"].includes(me?.status)?me.status:"available";statusSelect.value=editableStatus;statusSelect.disabled=me?.status==="busy"}renderQueue();if(openAttendance){myOpenTicket.classList.remove("hidden");openClient.textContent=openAttendance.clientName;openStarted.textContent=`Iniciado às ${formatTimestamp(openAttendance.startedAt)}`}else myOpenTicket.classList.add("hidden");const canReset=profile.role==="admin";resetDayBtn.disabled=!canReset;resetDayBtn.title=canReset?"":"Disponível somente para o administrador"}
+    function renderQueue(){const members=dayState?.members||{},queue=dayState?.queue||[],seen=new Set(),ordered=[];for(const uid of queue)if(members[uid]){ordered.push([uid,members[uid]]);seen.add(uid)}for(const [uid,member] of Object.entries(members))if(!seen.has(uid))ordered.push([uid,member]);if(!ordered.length){queueList.innerHTML='<div class="empty">Ninguém entrou na fila ainda.</div>';return}queueList.innerHTML=ordered.map(([uid,m])=>{const current=uid===dayState.currentUid,status=m.status||"offline",statusLabel=status==="available"?"Disponível":status==="busy"?"Em atendimento":status==="offline"?"Offline":status==="lunch"?"Almoço":status==="smoke"?"Vou PITAR":status==="bathroom"?"Segura aí na moral, vou no banheiro":status==="paid_bathroom"?"Cagada remunerada":status==="away"?"Vou ali e já volto":"Fora da fila";return `<div class="person ${current?"current":""}"><div><div class="person-name">${escapeHtml(m.name)}${current?'<span class="current-label">Próximo</span>':""}</div><div class="person-sub">${uid===authUser.uid?"Você":status==="available"||status==="busy"?"Na fila":"Fora do rodízio"}</div></div><div class="person-actions">${uid!==authUser.uid&&status!=="offline"?`<button class="attention-btn" type="button" data-nudge-uid="${uid}" data-nudge-name="${escapeHtml(m.name)}">Chamar atenção</button>`:""}<span class="badge ${status}">${statusLabel}</span></div></div>`}).join("")}
+    queueList.addEventListener("click",event=>{const button=event.target.closest("[data-nudge-uid]");if(!button||!authUser)return;pendingNudgeTarget={uid:button.dataset.nudgeUid,name:button.dataset.nudgeName};const unlocked=unlockedItems(),credits=audioCredits(),unlockedSounds=SOUND_CATALOG.filter(sound=>sound.id==="msn"||Number(credits[sound.id]||0)>0);nudgeSound.innerHTML=unlockedSounds.map(sound=>`<option value="${sound.id}">${escapeHtml(sound.label)}</option>`).join("");customMessageField.classList.toggle("hidden",!unlocked.has("message_pack"));reactionField.classList.toggle("hidden",!unlocked.has("reaction_pack"));stickerField.classList.toggle("hidden",!unlocked.has("sticker_pack"));nudgeMessage.value=nudgeReaction.value=nudgeSticker.value="";nudgeTargetText.textContent=`Chamar a atenção de ${pendingNudgeTarget.name}.`;nudgeDialog.showModal()});
+
+    function refreshAlertPermissionUI(){if(!alertPermissionCard||!authUser){alertPermissionCard?.classList.add("hidden");return}const supportsNotifications="Notification" in window,permission=supportsNotifications?Notification.permission:"unsupported",alreadyHandled=localStorage.getItem("techqueue-alerts-activated")==="1";alertsActivated=alertsActivated||alreadyHandled;if((supportsNotifications&&permission!=="default")||alreadyHandled){alertPermissionCard.classList.add("hidden");return}alertPermissionCard.classList.remove("hidden");enableAlertsBtn.disabled=false;if(!supportsNotifications){alertPermissionText.textContent="Este navegador não oferece notificações do sistema. Ative o som dos alertas uma única vez.";enableAlertsBtn.textContent="Ativar som"}else{alertPermissionText.textContent="Permita notificações e som para receber chamadas mesmo quando esta aba estiver em segundo plano.";enableAlertsBtn.textContent="Ativar notificações e som"}}
+    async function activateAlerts(){enableAlertsBtn.disabled=true;try{const notificationPromise="Notification" in window&&Notification.permission==="default"?Notification.requestPermission():Promise.resolve("Notification" in window?Notification.permission:"unsupported");alertPlayer.src=SOUND_CATALOG[0].file;alertPlayer.volume=0;const audioPromise=alertPlayer.play().then(()=>{alertPlayer.pause();alertPlayer.currentTime=0;alertPlayer.volume=.9;alertsActivated=true}).catch(err=>{console.warn("Não foi possível liberar o áudio automaticamente:",err);alertsActivated=true});await Promise.allSettled([notificationPromise,audioPromise]);localStorage.setItem("techqueue-alerts-activated","1")}finally{enableAlertsBtn.disabled=false;refreshAlertPermissionUI()}}
+    enableAlertsBtn?.addEventListener("click",activateAlerts);
+    function stopAttentionFlash(){if(attentionFlashTimer)clearInterval(attentionFlashTimer);attentionFlashTimer=null;attentionFlashState=false;document.title=normalDocumentTitle;document.body.classList.remove("attention-flash")}
+    function startAttentionFlash(fromName){stopAttentionFlash();document.body.classList.add("attention-flash");const attentionTitle=`ATENÇÃO - ${fromName} chamou você`;document.title=attentionTitle;attentionFlashTimer=setInterval(()=>{attentionFlashState=!attentionFlashState;document.title=attentionFlashState?attentionTitle:normalDocumentTitle},750)}
+    window.addEventListener("focus",stopAttentionFlash);document.addEventListener("visibilitychange",()=>{if(!document.hidden)stopAttentionFlash()});
+    attentionAcknowledgeBtn?.addEventListener("click",()=>{stopAttentionFlash();nudgeToast.classList.add("hidden")});
+    function showSystemNotification(nudge){if(!("Notification" in window)||Notification.permission!=="granted")return;const fromName=nudge.fromName||"Outro técnico",extras=[nudge.reaction,nudge.sticker?"["+nudge.sticker+"]":"",nudge.message].filter(Boolean).join(" ");try{const notification=new Notification("TechQueue - chamada de atenção",{body:extras?`${fromName}: ${extras}`:`${fromName} está chamando sua atenção.`,tag:"techqueue-nudge",renotify:true,silent:true});notification.onclick=()=>{window.focus();stopAttentionFlash();notification.close()}}catch(err){console.warn("Falha ao mostrar notificação do sistema:",err)}}
+    nudgeForm.addEventListener("submit",async event=>{event.preventDefault();if(!pendingNudgeTarget||!authUser)return;const submitButton=nudgeForm.querySelector('button[type="submit"]');submitButton.disabled=true;const soundId=nudgeSound.value||"msn",soundInfo=SOUND_CATALOG.find(item=>item.id===soundId)||SOUND_CATALOG[0],dayId=bahiaParts().dateId,nudgeRef=doc(collection(db,"days",dayId,"nudges")),profileRef=walletRef();try{await runTransaction(db,async tx=>{if(soundInfo.price>0){const profileSnap=await tx.get(profileRef);if(!profileSnap.exists())throw new Error("Carteira de XP não encontrada.");const data=profileSnap.data(),wallets={...(data.wallets||{})},wallet={...(wallets[authUser.uid]||defaultWallet())},credits={...(wallet.audioCredits||{})},available=Number(credits[soundId]||0);if(available<=0)throw new Error("Você não tem crédito para este áudio. Compre 1 uso na lojinha.");credits[soundId]=available-1;wallet.audioCredits=credits;wallet.updatedAtMs=Date.now();wallets[authUser.uid]=wallet;tx.set(profileRef,{wallets,updatedAt:serverTimestamp()},{merge:true})}tx.set(nudgeRef,{fromUid:authUser.uid,fromName:profile.name,targetUid:pendingNudgeTarget.uid,targetName:pendingNudgeTarget.name,sound:soundId,message:customMessageField.classList.contains("hidden")?"":nudgeMessage.value.trim(),reaction:reactionField.classList.contains("hidden")?"":nudgeReaction.value,sticker:stickerField.classList.contains("hidden")?"":nudgeSticker.value,createdAt:serverTimestamp(),createdAtMs:Date.now()})});nudgeDialog.close()}catch(err){console.error(err);if(err?.code==="permission-denied")alert("O Firebase bloqueou o alerta. Publique a versão mais recente das regras do Firestore.");else alert(err?.message||`Não foi possível chamar a atenção deste técnico. ${err?.code||""}`.trim())}finally{submitButton.disabled=false}});
+
+    function showNudge(nudge){const fromName=nudge.fromName||"Outro técnico";document.body.classList.remove("nudged");void document.body.offsetWidth;document.body.classList.add("nudged");const extras=[nudge.reaction,nudge.sticker?"["+nudge.sticker+"]":"",nudge.message].filter(Boolean).join(" ");const message=extras||"Precisa da sua atenção no TechQueue.";if(attentionModal&&window.bootstrap?.Modal){attentionModalFrom.textContent=`${fromName} chamou sua atenção.`;attentionModalMessage.textContent=message;window.bootstrap.Modal.getOrCreateInstance(attentionModal,{backdrop:"static",keyboard:false}).show()}else{nudgeToast.textContent=extras?`${fromName}: ${extras}`:`${fromName} está chamando sua atenção.`;nudgeToast.classList.remove("hidden");setTimeout(()=>nudgeToast.classList.add("hidden"),4500)}const isInBackground=document.hidden||!document.hasFocus();if(isInBackground){startAttentionFlash(fromName);showSystemNotification(nudge);if(navigator.vibrate)try{navigator.vibrate([180,80,180])}catch(_){}}const sound=SOUND_CATALOG.find(item=>item.id===(nudge.sound||"msn"))||SOUND_CATALOG[0];alertPlayer.pause();alertPlayer.src=sound.file;alertPlayer.currentTime=0;alertPlayer.volume=.9;alertPlayer.play().catch(()=>playFallbackNudge())}
+    function playFallbackNudge(){try{const AudioCtx=window.AudioContext||window.webkitAudioContext;if(!AudioCtx)return;const ctx=new AudioCtx(),oscillator=ctx.createOscillator(),gain=ctx.createGain();oscillator.frequency.value=660;gain.gain.value=.05;oscillator.connect(gain);gain.connect(ctx.destination);oscillator.start();oscillator.stop(ctx.currentTime+.12)}catch(_){}}
+
+    function renderQueuedClients(){if(!queuedClientsList)return;if(!queuedClients.length){queuedClientsList.innerHTML='<div class="empty">Nenhum cliente encaminhado no momento.</div>';return}const canAssume=dayState?.currentUid===authUser?.uid&&memberOf(authUser?.uid)?.status==="available"&&!openAttendance;queuedClientsList.innerHTML=queuedClients.map(item=>`<div class="queued-client"><div><strong>${escapeHtml(item.clientName)}</strong><span>Enviado por ${escapeHtml(item.fromName||"Técnico")} às ${formatTimestamp(item.createdAt)}</span></div><button class="btn btn-secondary" type="button" data-assume-client="${item.id}" ${canAssume?"":"disabled"}>Assumir</button></div>`).join("")}
+    queuedClientsList.addEventListener("click",async event=>{const button=event.target.closest("[data-assume-client]");if(button)await assumeQueuedClient(button.dataset.assumeClient)});
+    async function assumeQueuedClient(queueId){if(!authUser||!dayState)return;const now=bahiaParts(),dayRef=doc(db,"days",now.dateId),queuedRef=doc(db,"days",now.dateId,"queuedClients",queueId),attendanceRef=doc(collection(db,"days",now.dateId,"attendances"));try{await runTransaction(db,async tx=>{const daySnap=await tx.get(dayRef),queuedSnap=await tx.get(queuedRef);if(!daySnap.exists()||!queuedSnap.exists())throw new Error("Este cliente não está mais na fila.");const state=daySnap.data(),item=queuedSnap.data(),member=state.members?.[authUser.uid];if(state.currentUid!==authUser.uid||member?.status!=="available")throw new Error("Somente o próximo técnico disponível pode assumir este cliente.");const currentQueue=[...(state.queue||[])],otherAvailable=currentQueue.filter(uid=>uid!==authUser.uid&&state.members?.[uid]?.status==="available");if(state.lastAttendanceUid===authUser.uid&&otherAvailable.length){const passed=new Set(state.passedSinceLastAttendance||[]),everyoneElsePassed=otherAvailable.every(uid=>passed.has(uid));if(!everyoneElsePassed)throw new Error("Você acabou de atender. Outro técnico da fila precisa atender ou passar a vez antes de você pegar outro cliente.")}const queue=currentQueue.filter(uid=>uid!==authUser.uid),members={...state.members};members[authUser.uid]={...member,status:"busy",currentAttendanceId:attendanceRef.id};tx.set(attendanceRef,{technicianUid:authUser.uid,technicianName:profile.name,clientName:item.clientName,status:"open",startedAt:serverTimestamp(),startedAtMs:Date.now(),problem:"",solution:"",source:"forwarded",forwardedByUid:item.fromUid||null,forwardedByName:item.fromName||"",finishedAt:null});tx.delete(queuedRef);tx.update(dayRef,{queue,members,currentUid:queue[0]||null,lastAttendanceUid:authUser.uid,passedSinceLastAttendance:[],updatedAt:serverTimestamp()})})}catch(err){console.error(err);alert(err.message||"Não foi possível assumir o cliente.")}}
+    function renderHistory(){if(!historyEl)return;if(!todayAttendances.length){historyEl.innerHTML='<div class="empty">Nenhum atendimento registrado hoje.</div>';return}historyEl.innerHTML=todayAttendances.map(a=>{const done=a.status==="finished",queued=a.status==="queued",stateLabel=done?"Concluído":queued?"Enviado para fila":"Em atendimento",stateClass=done?"done":queued?"queued":"open";return `<article class="history-item"><div class="history-title-row"><div class="history-title">${escapeHtml(a.clientName)} — ${escapeHtml(a.technicianName)} ${done?complexityBadge(a.complexity):""}</div><span class="history-state ${stateClass}">${stateLabel}</span></div><div class="history-meta">Início ${formatTimestamp(a.startedAt)}${done?` • fim ${formatTimestamp(a.finishedAt)}`:queued?` • enviado para fila ${formatTimestamp(a.queuedAt)}`:" • em atendimento"}</div>${done?`<div class="history-details"><strong>Problema:</strong> ${escapeHtml(a.problem||"-")}<br><strong>Solução:</strong> ${escapeHtml(a.solution||"-")}<br><strong>XP:</strong> +${Number(a.xpAwarded??xpForComplexity(a.complexity))} XP</div>`:""}</article>`}).join("")}
+    function xpForComplexity(value){if(value==="critical")return 35;if(value==="moderate")return 20;return 10}
+    function renderRanking(){if(!podium||!shameWall)return;const stats=new Map();for(const attendance of todayAttendances){if(attendance.status!=="finished")continue;const uid=attendance.technicianUid||attendance.technicianName;if(!stats.has(uid))stats.set(uid,{name:attendance.technicianName||"Técnico",count:0,xp:0});const item=stats.get(uid);item.count+=1;item.xp+=Number(attendance.xpAwarded??xpForComplexity(attendance.complexity))}const ranking=[...stats.values()].sort((a,b)=>b.count-a.count||b.xp-a.xp||a.name.localeCompare(b.name));if(!ranking.length){podium.innerHTML='<div class="empty" style="grid-column:1/-1">O pódio ainda está vazio.</div>';shameWall.innerHTML="";return}const labels=["1º lugar","2º lugar","3º lugar"];podium.innerHTML=ranking.slice(0,3).map((item,index)=>`<div class="podium-place"><div class="podium-position">${labels[index]}</div><strong>${escapeHtml(item.name)}</strong><div class="podium-score">${item.count} atendimento${item.count===1?"":"s"}<span class="xp-badge">${item.xp} XP</span></div></div>`).join("");const rest=ranking.slice(3);shameWall.innerHTML=rest.length?`<div class="shame-wall-title">Mural da vergonha</div>${rest.map((item,index)=>`<div class="rank-row"><span>${index+4}º — ${escapeHtml(item.name)}</span><span>${item.count} atend. <span class="xp-badge">${item.xp} XP</span></span></div>`).join("")}`:""}
+
+    statusSelect.addEventListener("change",async()=>{if(!authUser||!dayState)return;const newStatus=statusSelect.value,dayRef=doc(db,"days",bahiaParts().dateId);try{await runTransaction(db,async tx=>{const snap=await tx.get(dayRef);if(!snap.exists())return;const state=snap.data(),members={...(state.members||{})},member=members[authUser.uid];if(!member||member.status==="busy")throw new Error("Finalize seu atendimento antes de alterar o status.");let queue=[...(state.queue||[])];if(newStatus==="available"){members[authUser.uid]={...member,status:"available"};if(!queue.includes(authUser.uid))queue.push(authUser.uid)}else{members[authUser.uid]={...member,status:newStatus};queue=queue.filter(uid=>uid!==authUser.uid)}tx.update(dayRef,{members,queue,currentUid:state.currentUid===authUser.uid?(queue[0]||null):(state.currentUid||queue[0]||null),updatedAt:serverTimestamp()})})}catch(err){console.error(err);alert(err.message||"Não foi possível alterar seu status.");render()}});
+    passTurnBtn.addEventListener("click",async()=>{if(!authUser||!dayState)return;const dayId=bahiaParts().dateId,dayRef=doc(db,"days",dayId);try{await runTransaction(db,async tx=>{const snap=await tx.get(dayRef);if(!snap.exists())throw new Error("Fila indisponível. Recarregue a página.");const state=snap.data(),member=state.members?.[authUser.uid],queue=[...(state.queue||[])];if(state.currentUid!==authUser.uid||member?.status!=="available")throw new Error("A vez já passou para outro técnico.");if(queue.length<=1)throw new Error("Você está sozinho na fila. Não há para quem passar a vez.");const nextQueue=queue.filter(uid=>uid!==authUser.uid);nextQueue.push(authUser.uid);const passed=new Set(state.passedSinceLastAttendance||[]);passed.add(authUser.uid);const nextUid=nextQueue[0]||null,nextName=nextUid?(state.members?.[nextUid]?.name||"outro técnico"):"ninguém";tx.update(dayRef,{queue:nextQueue,currentUid:nextUid,passedSinceLastAttendance:[...passed],lastPassEvent:{id:Date.now()+"-"+authUser.uid,type:"turn_pass",fromUid:authUser.uid,fromName:profile.name,nextUid,nextName,createdAtMs:Date.now()},updatedAt:serverTimestamp()})})}catch(err){console.error(err);alert(err.message||"Não foi possível passar a vez.")}});
+    takeBtn.addEventListener("click",()=>{clientNameInput.value="";takeDialog.showModal();setTimeout(()=>clientNameInput.focus(),30)});
+    takeForm.addEventListener("submit",async e=>{e.preventDefault();const clientName=clientNameInput.value.trim();if(!clientName)return;const now=bahiaParts(),dayRef=doc(db,"days",now.dateId),attendanceRef=doc(collection(db,"days",now.dateId,"attendances"));try{await runTransaction(db,async tx=>{const daySnap=await tx.get(dayRef);if(!daySnap.exists())throw new Error("Fila indisponível. Recarregue a página.");const state=daySnap.data(),member=state.members?.[authUser.uid];if(state.currentUid!==authUser.uid)throw new Error("A vez já passou para outro técnico.");if(member?.status!=="available")throw new Error("Você não está disponível na fila.");const currentQueue=[...(state.queue||[])],otherAvailable=currentQueue.filter(uid=>uid!==authUser.uid&&state.members?.[uid]?.status==="available");if(state.lastAttendanceUid===authUser.uid&&otherAvailable.length){const passed=new Set(state.passedSinceLastAttendance||[]),everyoneElsePassed=otherAvailable.every(uid=>passed.has(uid));if(!everyoneElsePassed)throw new Error("Você acabou de atender. Outro técnico da fila precisa atender ou passar a vez antes de você pegar outro cliente.")}const queue=currentQueue.filter(uid=>uid!==authUser.uid),members={...state.members};members[authUser.uid]={...member,status:"busy",currentAttendanceId:attendanceRef.id};tx.set(attendanceRef,{technicianUid:authUser.uid,technicianName:profile.name,clientName,status:"open",startedAt:serverTimestamp(),startedAtMs:Date.now(),problem:"",solution:"",finishedAt:null});tx.update(dayRef,{queue,members,currentUid:queue[0]||null,lastAttendanceUid:authUser.uid,passedSinceLastAttendance:[],updatedAt:serverTimestamp()})});takeDialog.close()}catch(err){console.error(err);alert(err.message||"Não foi possível registrar o atendimento.")}});
+    queueClientBtn.addEventListener("click",async()=>{if(!openAttendance||!authUser)return;const ok=confirm(`Enviar ${openAttendance.clientName} para a fila e voltar a ficar disponível?`);if(!ok)return;const now=bahiaParts(),dayRef=doc(db,"days",now.dateId),attendanceRef=doc(db,"days",now.dateId,"attendances",openAttendance.id),queuedRef=doc(collection(db,"days",now.dateId,"queuedClients"));try{await runTransaction(db,async tx=>{const [daySnap,attSnap]=await Promise.all([tx.get(dayRef),tx.get(attendanceRef)]);if(!daySnap.exists()||!attSnap.exists())throw new Error("Atendimento não encontrado.");const state=daySnap.data(),attendance=attSnap.data();if(attendance.technicianUid!==authUser.uid||attendance.status!=="open")throw new Error("Este atendimento não pode mais ser encaminhado.");const members={...state.members},member=members[authUser.uid];members[authUser.uid]={...member,status:"available",currentAttendanceId:null};const queue=[...(state.queue||[])];if(!queue.includes(authUser.uid))queue.push(authUser.uid);tx.update(attendanceRef,{status:"queued",queuedAt:serverTimestamp()});tx.set(queuedRef,{clientName:attendance.clientName,fromUid:authUser.uid,fromName:profile.name,createdAt:serverTimestamp(),createdAtMs:Date.now()});tx.update(dayRef,{members,queue,currentUid:state.currentUid||queue[0]||null,updatedAt:serverTimestamp()})})}catch(err){console.error(err);alert(err.message||"Não foi possível enviar o cliente para a fila.")}});
+    finishBtn.addEventListener("click",()=>{problemInput.value=solutionInput.value="";const defaultComplexity=finishForm.querySelector('input[name="complexity"][value="standard"]');if(defaultComplexity)defaultComplexity.checked=true;finishDialog.showModal();setTimeout(()=>problemInput.focus(),30)});
+    finishForm.addEventListener("submit",async e=>{e.preventDefault();if(!openAttendance)return;const problem=problemInput.value.trim(),solution=solutionInput.value.trim(),complexity=finishForm.querySelector('input[name="complexity"]:checked')?.value||"standard",xpAwarded=xpForComplexity(complexity);if(!problem||!solution)return;const now=bahiaParts(),dayRef=doc(db,"days",now.dateId),attendanceRef=doc(db,"days",now.dateId,"attendances",openAttendance.id),profileRef=walletRef();try{await runTransaction(db,async tx=>{const [daySnap,attSnap,profileSnap]=await Promise.all([tx.get(dayRef),tx.get(attendanceRef),tx.get(profileRef)]);if(!daySnap.exists()||!attSnap.exists())throw new Error("Atendimento não encontrado.");const state=daySnap.data(),attendance=attSnap.data();if(attendance.technicianUid!==authUser.uid)throw new Error("Este atendimento pertence a outro técnico.");if(attendance.status!=="open")throw new Error("Este atendimento já foi finalizado.");const members={...state.members},member=members[authUser.uid];members[authUser.uid]={...member,status:"available",currentAttendanceId:null};let queue=[...(state.queue||[])];if(!queue.includes(authUser.uid))queue.push(authUser.uid);tx.update(attendanceRef,{status:"finished",problem,solution,complexity,xpAwarded,finishedAt:serverTimestamp()});tx.update(dayRef,{members,queue,currentUid:state.currentUid||queue[0]||null,updatedAt:serverTimestamp()});const walletDoc=profileSnap.exists()?profileSnap.data():{},wallets={...(walletDoc.wallets||{})},wallet={...(wallets[authUser.uid]||defaultWallet())};wallet.xpBalance=Number(wallet.xpBalance||0)+xpAwarded;wallet.updatedAtMs=Date.now();wallets[authUser.uid]=wallet;tx.set(profileRef,{wallets,updatedAt:serverTimestamp()},{merge:true})});finishDialog.close()}catch(err){console.error(err);alert(err.message||"Não foi possível finalizar.")}});
+    logoutBtn.addEventListener("click",async()=>{const me=memberOf(authUser?.uid);if(me?.status==="busy"){alert("Finalize seu atendimento antes de sair.");return}isSigningOut=true;logoutBtn.disabled=true;try{await leaveQueue();await signOut(auth)}catch(err){console.error(err);isSigningOut=false;logoutBtn.disabled=false;alert("Não foi possível sair agora. Tente novamente.")}});
+    async function leaveQueue(){if(!authUser)return;const now=bahiaParts(),dayRef=doc(db,"days",now.dateId),leavingUid=authUser.uid,leavingName=profile?.name||authUser.displayName||"Usuário";await runTransaction(db,async tx=>{const snap=await tx.get(dayRef);if(!snap.exists())return;const state=snap.data(),member=state.members?.[leavingUid];if(!member)return;if(member.status==="busy")throw new Error("Finalize seu atendimento antes de sair.");const queue=(state.queue||[]).filter(uid=>uid!==leavingUid),members={...(state.members||{})};delete members[leavingUid];const passedSinceLastAttendance=(state.passedSinceLastAttendance||[]).filter(uid=>uid!==leavingUid),nextCurrentUid=state.currentUid===leavingUid?(queue[0]||null):(queue.includes(state.currentUid)?state.currentUid:(queue[0]||null));tx.update(dayRef,{queue,members,currentUid:nextCurrentUid,passedSinceLastAttendance,lastPresenceEvent:{id:Date.now()+"-"+leavingUid+"-leave",type:"leave",uid:leavingUid,name:leavingName,createdAtMs:Date.now()},updatedAt:serverTimestamp()})})}
+    resetDayBtn.addEventListener("click",async()=>{const now=bahiaParts();if(profile?.role!=="admin")return;const ok=confirm("Limpar todos os atendimentos do dia e zerar a fila? Esta ação não pode ser desfeita.");if(!ok)return;try{const collectionsToClear=["attendances","queuedClients","nudges","events"];for(const collectionName of collectionsToClear){const snap=await getDocs(collection(db,"days",now.dateId,collectionName)),docs=snap.docs;for(let i=0;i<docs.length;i+=400){const batch=writeBatch(db);docs.slice(i,i+400).forEach(d=>batch.delete(d.ref));await batch.commit()}}await setDoc(doc(db,"days",now.dateId),{dateId:now.dateId,status:"open",queue:[],currentUid:null,members:{},lastAttendanceUid:null,passedSinceLastAttendance:[],clearedAt:serverTimestamp(),updatedAt:serverTimestamp()},{merge:true})}catch(err){console.error(err);if(err?.code==="permission-denied")alert("O Firebase bloqueou a limpeza. Publique a versão mais recente das regras do Firestore e confirme que você está logado como leandro3dejesus@gmail.com.");else alert(`Não foi possível limpar o dia. ${err?.code||err?.message||""}`.trim())}});
+    document.querySelectorAll("[data-close]").forEach(btn=>btn.addEventListener("click",()=>document.getElementById(btn.dataset.close).close()));
+    function complexityBadge(value){const map={standard:["standard","Padrão"],moderate:["moderate","Moderado"],critical:["critical","Alta complexidade"]},item=map[value]||map.standard;return `<span class="complexity-badge ${item[0]}">${item[1]}</span>`}
+    function escapeHtml(value){return String(value??"").replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;").replaceAll('"',"&quot;").replaceAll("'","&#039;")}
+    setInterval(async()=>{if(!authUser||!profile||isSigningOut)return;try{await joinToday()}catch(err){console.error(err)}},30000);
   </script>
 </body>
 </html>
