@@ -1555,7 +1555,7 @@
 
             eventToast.textContent = message;
             eventToast.classList.remove("hidden");
-            setTimeout(() => eventToast.classList.add("hidden"), 4500);
+            setTimeout(() => eventToast.classList.add("hidden"), 8000);
 
             if (document.hidden && "Notification" in window && Notification.permission === "granted") {
               try {
