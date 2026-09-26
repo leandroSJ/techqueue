@@ -724,7 +724,9 @@
         </svg>
         Continuar com Google
       </button>
-      
+
+      <div id="loginError" class="error" role="alert" aria-live="polite"></div>
+    </div>
   </section>
 
   <main id="appView" class="shell hidden">
@@ -953,7 +955,7 @@
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-app.js";
     import {
-      getAuth, GoogleAuthProvider, signInWithPopup, signInWithEmailAndPassword, signOut, onAuthStateChanged
+      getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged
     } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-auth.js";
     import {
       getFirestore, doc, getDoc, setDoc, collection, onSnapshot, serverTimestamp,
@@ -1001,11 +1003,8 @@
 
     const loginView = document.querySelector("#loginView");
     const appView = document.querySelector("#appView");
-    const loginForm = document.querySelector("#loginForm");
     const googleLoginBtn = document.querySelector("#googleLoginBtn");
     const loginError = document.querySelector("#loginError");
-    const emailInput = document.querySelector("#email");
-    const passwordInput = document.querySelector("#password");
     const logoutBtn = document.querySelector("#logoutBtn");
     const loggedName = document.querySelector("#loggedName");
     const loggedShift = document.querySelector("#loggedShift");
@@ -1162,13 +1161,13 @@
       appView.classList.toggle("hidden", !logged);
     }
 
-    googleLoginBtn.addEventListener("click", async () => {
+    googleLoginBtn?.addEventListener("click", async () => {
       if (!isConfigured) {
-        loginError.textContent = "Configure o Firebase antes de usar o login.";
+        if (loginError) loginError.textContent = "Configure o Firebase antes de usar o login.";
         return;
       }
 
-      loginError.textContent = "";
+      if (loginError) loginError.textContent = "";
       googleLoginBtn.disabled = true;
 
       try {
@@ -1179,34 +1178,19 @@
         console.error(err);
 
         if (err.code === "auth/popup-closed-by-user") {
-          loginError.textContent = "Login com Google cancelado.";
+          if (loginError) loginError.textContent = "Login com Google cancelado.";
         } else if (err.code === "auth/unauthorized-domain") {
-          loginError.textContent = "Este domínio ainda não foi autorizado no Firebase.";
+          if (loginError) loginError.textContent = "Este domínio ainda não foi autorizado no Firebase.";
         } else if (err.code === "auth/operation-not-allowed") {
-          loginError.textContent = "Ative o provedor Google no Firebase Authentication.";
+          if (loginError) loginError.textContent = "Ative o provedor Google no Firebase Authentication.";
         } else {
-          loginError.textContent = "Não foi possível entrar com o Google.";
+          if (loginError) loginError.textContent = "Não foi possível entrar com o Google.";
         }
       } finally {
         googleLoginBtn.disabled = false;
       }
     });
 
-    loginForm.addEventListener("submit", async (e) => {
-      e.preventDefault();
-      if (!isConfigured) {
-        loginError.textContent = "Configure o Firebase antes de usar o login.";
-        return;
-      }
-      loginError.textContent = "";
-      try {
-        await signInWithEmailAndPassword(auth, emailInput.value.trim(), passwordInput.value);
-        passwordInput.value = "";
-      } catch (err) {
-        console.error(err);
-        loginError.textContent = "E-mail ou senha inválidos.";
-      }
-    });
 
     async function handleAuthState(user) {
       clearSubscriptions();
