@@ -718,9 +718,12 @@
     async function joinRoom(id){
       const joinedRoom=await mutateRoom(id,room=>{
         const players={...(room.players||{})},order=[...(room.playerOrder||[])];
-        if(!order.includes(user.uid)){
+        const alreadyMember=order.includes(user.uid);
+
+        if(!alreadyMember){
           if(order.length>=(room.maxPlayers||2))throw new Error("Sala lotada.");
-          players[user.uid]=displayName();order.push(user.uid);
+          players[user.uid]=displayName();
+          order.push(user.uid);
         }
 
         room.players=players;
@@ -730,10 +733,17 @@
         const enoughPlayers=order.length>=requiredPlayers;
 
         if(room.game==="ludo"){
-          room.state=initLudo(order,requiredPlayers,room.state);
-          const selected=room.state.colorsByUid||{};
+          const setupPhase=!room.state||room.state.phase==="color";
+          if(!alreadyMember||setupPhase){
+            room.state=initLudo(order,requiredPlayers,room.state);
+          }
+
+          const selected=room.state?.colorsByUid||{};
           const colorsReady=enoughPlayers&&order.slice(0,requiredPlayers).every(uid=>selected[uid]);
-          room.status=colorsReady?"playing":"waiting";
+
+          if(room.state?.winnerUid)room.status="finished";
+          else room.status=colorsReady?"playing":"waiting";
+
           return room;
         }
 
