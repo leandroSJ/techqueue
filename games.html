@@ -23,15 +23,21 @@
     *{box-sizing:border-box}
     body{margin:0;min-height:100vh;background:var(--bg);color:var(--text);font-family:Roboto,Arial,sans-serif}
     button,input,select{font:inherit}button{cursor:pointer}.hidden{display:none!important}
-    .shell{width:min(1180px,calc(100% - 28px));margin:0 auto;padding:20px 0 48px}
+    .shell{width:min(1260px,calc(100% - 28px));margin:0 auto;padding:20px 0 48px}
     header{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:0 0 18px;border-bottom:1px solid var(--border);margin-bottom:20px}
     .brand h1{margin:0;font-size:1.5rem}.brand p{margin:4px 0 0;color:var(--muted)}
     .actions{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
     .btn{min-height:40px;border-radius:20px;padding:9px 16px;border:1px solid var(--border);background:var(--surface);color:var(--primary);font-weight:500}
     .btn.primary{background:var(--primary);color:var(--on-primary);border-color:transparent}.btn.danger{color:var(--danger)}.btn:disabled{opacity:.4;cursor:not-allowed}
     .card{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:18px;box-shadow:var(--shadow)}
-    .games-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin-bottom:20px}
-    .game-card{display:grid;gap:8px}.game-card h3{margin:0;font-size:1rem}.game-card p{margin:0;color:var(--muted);font-size:.84rem;line-height:1.4}
+    .games-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;margin-bottom:20px;align-items:stretch}
+    .game-card{display:flex;flex-direction:column;gap:10px;min-width:0;height:100%}
+    .game-card h3{margin:0;font-size:1rem}
+    .game-card p{margin:0;color:var(--muted);font-size:.84rem;line-height:1.4;flex:1}
+    .game-card-actions{display:grid;gap:8px;margin-top:auto;min-width:0}
+    .game-card-actions.two{grid-template-columns:repeat(2,minmax(0,1fr))}
+    .game-card-actions.three{grid-template-columns:repeat(3,minmax(0,1fr))}
+    .game-card-actions .btn{width:100%;min-width:0;padding:9px 8px;white-space:normal;line-height:1.15;text-align:center}
     .two-col{display:grid;grid-template-columns:.8fr 1.2fr;gap:20px}.room-list{display:grid;gap:8px}
     .room-row{display:flex;justify-content:space-between;align-items:center;gap:12px;border:1px solid var(--border);border-radius:10px;padding:11px}
     .muted{color:var(--muted)}.small{font-size:.82rem}.error{color:var(--danger);margin:0 0 12px;line-height:1.4}
@@ -127,13 +133,13 @@
     .square{aspect-ratio:1;border:0;border-radius:0;padding:0;display:grid;place-items:center;background:#ede7d9}.square.dark{background:#7b6855}.piece{width:72%;height:72%;border-radius:50%;border:3px solid rgba(255,255,255,.55)}
     .piece.red{background:#c5221f}.piece.black{background:#202124}.piece.king::after{content:"K";color:#fff;font-size:.75rem;font-weight:600}.square.selected{outline:3px solid #f9ab00;outline-offset:-3px}.square.capture-required{box-shadow:inset 0 0 0 3px #34a853}.square.legal-target{box-shadow:inset 0 0 0 3px #4285f4}
     .login{min-height:70vh;display:grid;place-items:center}.login .card{width:min(420px,100%);text-align:center}.game-result{text-align:center;font-size:1.1rem;font-weight:500;margin:14px 0}
-    @media(max-width:950px){.games-grid{grid-template-columns:repeat(2,1fr)}.two-col{grid-template-columns:1fr}}
-    @media(max-width:560px){.games-grid{grid-template-columns:1fr}.ttt{grid-template-columns:repeat(3,78px)}.ttt button{width:78px;height:78px}.draw-canvas{height:280px}}
+    @media(max-width:950px){.games-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.two-col{grid-template-columns:1fr}}
+    @media(max-width:560px){.games-grid{grid-template-columns:1fr}.game-card-actions.three{grid-template-columns:1fr 1fr}.game-card-actions.three .btn:last-child{grid-column:1/-1}.ttt{grid-template-columns:repeat(3,78px)}.ttt button{width:78px;height:78px}.draw-canvas{height:280px}}
 
     .local-games-grid{grid-template-columns:repeat(4,minmax(0,1fr))}
     .external-games-grid{grid-template-columns:repeat(3,minmax(0,1fr))}
     .game-card{min-width:0}
-    .game-card .btn{width:100%}
+    .game-card>a.btn{width:100%}
     .checkers{max-width:100%;overflow:auto}
     .domino-board,.domino-hand{max-width:100%;overflow-wrap:anywhere}
     .guess-row{min-width:0}
@@ -145,6 +151,8 @@
 
     @media(max-width:720px){
       .shell{width:calc(100% - 18px);padding-top:12px}
+      .game-card-actions.three{grid-template-columns:1fr 1fr}
+      .game-card-actions.three .btn:last-child{grid-column:1/-1}
       header{align-items:stretch;flex-direction:column}
       header .actions{width:100%;display:grid;grid-template-columns:repeat(2,minmax(0,1fr))}
       header .actions .btn{width:100%;text-align:center;justify-content:center}
@@ -212,7 +220,7 @@
             <div class="card game-card">
               <h3>Dominó</h3>
               <p>Escolha uma partida para 2 ou 4 jogadores.</p>
-              <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+              <div class="game-card-actions two">
                 <button class="btn primary" data-create-game="domino" data-domino-players="2">2 jogadores</button>
                 <button class="btn primary" data-create-game="domino" data-domino-players="4">4 jogadores</button>
               </div>
@@ -220,7 +228,7 @@
             <div class="card game-card">
               <h3>Ludo Tech</h3>
               <p>Tabuleiro com dado, 4 peças por jogador, captura e chegada ao centro.</p>
-              <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px">
+              <div class="game-card-actions three">
                 <button class="btn primary" data-create-game="ludo" data-ludo-players="2">2 jogadores</button>
                 <button class="btn primary" data-create-game="ludo" data-ludo-players="3">3 jogadores</button>
                 <button class="btn primary" data-create-game="ludo" data-ludo-players="4">4 jogadores</button>
