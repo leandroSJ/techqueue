@@ -105,6 +105,24 @@
     .tile.selected{outline:3px solid #f9ab00}
     .domino-side-choice{display:flex;justify-content:center;gap:10px;flex-wrap:wrap;margin:10px 0 16px}
     .domino-side-choice .btn{min-width:150px}
+    .ludo-wrap{display:grid;grid-template-columns:minmax(0,1fr) 210px;gap:16px;align-items:start;margin-top:12px}
+    .ludo-board{width:min(100%,650px);aspect-ratio:1;margin:0 auto;display:grid;grid-template-columns:repeat(15,1fr);grid-template-rows:repeat(15,1fr);border:2px solid var(--border);border-radius:10px;overflow:hidden;background:var(--surface)}
+    .ludo-cell{position:relative;min-width:0;min-height:0;border:1px solid rgba(120,120,120,.25);display:flex;align-items:center;justify-content:center;gap:1px;padding:1px;background:var(--surface)}
+    .ludo-cell.home-red{background:#f7d4d1}.ludo-cell.home-green{background:#d5ead8}.ludo-cell.home-yellow{background:#fff0bd}.ludo-cell.home-blue{background:#d5e4f7}
+    .ludo-cell.lane-red,.ludo-cell.start-red{background:#ef9a9a}.ludo-cell.lane-green,.ludo-cell.start-green{background:#8fcca0}.ludo-cell.lane-yellow,.ludo-cell.start-yellow{background:#f2cf63}.ludo-cell.lane-blue,.ludo-cell.start-blue{background:#90b9ec}
+    .ludo-cell.safe::after{content:"";width:22%;height:22%;border-radius:50%;background:rgba(0,0,0,.18);position:absolute;inset:39%;pointer-events:none}
+    .ludo-cell.center{background:conic-gradient(#d85c55 0 25%,#62a86e 25% 50%,#e5bc3f 50% 75%,#568bcb 75% 100%)}
+    .ludo-token{width:72%;max-width:24px;aspect-ratio:1;border-radius:50%;border:2px solid rgba(255,255,255,.9);box-shadow:0 1px 4px rgba(0,0,0,.35);display:grid;place-items:center;padding:0;color:#fff;font-size:.62rem;font-weight:700;line-height:1;z-index:2}
+    button.ludo-token{cursor:pointer}.ludo-token.movable{outline:3px solid #202124;outline-offset:1px;animation:ludoPulse .8s ease-in-out infinite alternate}
+    .ludo-token.red{background:#c9342c}.ludo-token.green{background:#2f8f46}.ludo-token.yellow{background:#c99a08;color:#2b2308}.ludo-token.blue{background:#3074c6}
+    @keyframes ludoPulse{to{transform:scale(1.12)}}
+    .ludo-panel{display:grid;gap:10px}.ludo-die{width:78px;height:78px;margin:0 auto;border:2px solid var(--border);border-radius:16px;display:grid;place-items:center;background:var(--surface);font-size:2rem;font-weight:700;box-shadow:inset 0 -4px 8px rgba(0,0,0,.08)}
+    .ludo-player-row{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:8px;border:1px solid var(--border);border-radius:9px}.ludo-color-dot{width:12px;height:12px;border-radius:50%;display:inline-block;flex:0 0 auto}
+    .ludo-color-dot.red{background:#c9342c}.ludo-color-dot.green{background:#2f8f46}.ludo-color-dot.yellow{background:#c99a08}.ludo-color-dot.blue{background:#3074c6}
+    .ludo-rules{font-size:.76rem;line-height:1.45;color:var(--muted)}
+    @media(max-width:760px){.ludo-wrap{grid-template-columns:1fr}.ludo-panel{grid-template-columns:1fr 1fr}.ludo-panel .ludo-status,.ludo-panel .ludo-rules{grid-column:1/-1}.ludo-board{width:100%}}
+    @media(max-width:500px){.ludo-panel{grid-template-columns:1fr}.ludo-panel .ludo-status,.ludo-panel .ludo-rules{grid-column:auto}.ludo-token{font-size:.52rem;border-width:1px}}
+
     .checkers{display:grid;grid-template-columns:repeat(8,minmax(34px,56px));justify-content:center;border:1px solid var(--border);width:max-content;margin:0 auto}
     .square{aspect-ratio:1;border:0;border-radius:0;padding:0;display:grid;place-items:center;background:#ede7d9}.square.dark{background:#7b6855}.piece{width:72%;height:72%;border-radius:50%;border:3px solid rgba(255,255,255,.55)}
     .piece.red{background:#c5221f}.piece.black{background:#202124}.piece.king::after{content:"K";color:#fff;font-size:.75rem;font-weight:600}.square.selected{outline:3px solid #f9ab00;outline-offset:-3px}.square.capture-required{box-shadow:inset 0 0 0 3px #34a853}.square.legal-target{box-shadow:inset 0 0 0 3px #4285f4}
@@ -278,6 +296,33 @@
     const GAME_NAMES = {tictactoe:"Jogo da Velha",draw:"Desenhe e Adivinhe",hangman:"Forca",domino:"Dominó",ludo:"Ludo Tech",checkers:"Dama"};
     const MAX_PLAYERS = {tictactoe:2,draw:6,hangman:6,domino:4,ludo:4,checkers:2};
     const MIN_PLAYERS = {tictactoe:2,draw:2,hangman:2,domino:2,ludo:2,checkers:2};
+
+    const LUDO_COLORS=["red","green","yellow","blue"];
+    const LUDO_TRACK=[
+      [6,1],[6,2],[6,3],[6,4],[6,5],
+      [5,6],[4,6],[3,6],[2,6],[1,6],[0,6],[0,7],
+      [0,8],[1,8],[2,8],[3,8],[4,8],[5,8],
+      [6,9],[6,10],[6,11],[6,12],[6,13],[6,14],[7,14],
+      [8,14],[8,13],[8,12],[8,11],[8,10],[8,9],
+      [9,8],[10,8],[11,8],[12,8],[13,8],[14,8],[14,7],
+      [14,6],[13,6],[12,6],[11,6],[10,6],[9,6],
+      [8,5],[8,4],[8,3],[8,2],[8,1],[8,0],[7,0],[6,0]
+    ];
+    const LUDO_START_OFFSETS={red:0,green:13,yellow:26,blue:39};
+    const LUDO_SAFE_GLOBAL=new Set([0,8,13,21,26,34,39,47]);
+    const LUDO_HOME_LANES={
+      red:[[7,1],[7,2],[7,3],[7,4],[7,5],[7,6]],
+      green:[[1,7],[2,7],[3,7],[4,7],[5,7],[6,7]],
+      yellow:[[7,13],[7,12],[7,11],[7,10],[7,9],[7,8]],
+      blue:[[13,7],[12,7],[11,7],[10,7],[9,7],[8,7]]
+    };
+    const LUDO_YARDS={
+      red:[[1,1],[1,4],[4,1],[4,4]],
+      green:[[1,10],[1,13],[4,10],[4,13]],
+      yellow:[[10,10],[10,13],[13,10],[13,13]],
+      blue:[[10,1],[10,4],[13,1],[13,4]]
+    };
+    const LUDO_FINISH_STEP=58;
 
     const HANGMAN_LEVELS = [
       [
