@@ -17,19 +17,30 @@ service cloud.firestore {
         && request.auth.token.email == "leandro3dejesus@gmail.com";
     }
 
+    function activeGoogleUser() {
+      return googleUser()
+        && (adminUser() || !exists(/databases/$(database)/documents/bans/$(request.auth.uid)));
+    }
+
+    match /bans/{userId} {
+      allow read: if googleUser()
+        && (request.auth.uid == userId || adminUser());
+      allow create, update, delete: if adminUser();
+    }
+
     match /profiles/{userId} {
       allow read, create, update: if signedIn() && request.auth.uid == userId;
       allow delete: if false;
     }
 
     match /days/{dayId} {
-      allow read, create, update: if googleUser();
+      allow read, create, update: if activeGoogleUser();
       allow delete: if adminUser();
 
       match /attendances/{attendanceId} {
-        allow read: if googleUser();
+        allow read: if activeGoogleUser();
 
-        allow create: if googleUser()
+        allow create: if activeGoogleUser()
           && request.resource.data.technicianUid == request.auth.uid;
 
         allow update: if googleUser()
@@ -40,19 +51,19 @@ service cloud.firestore {
       }
 
       match /queuedClients/{queuedClientId} {
-        allow read: if googleUser();
+        allow read: if activeGoogleUser();
 
-        allow create: if googleUser()
+        allow create: if activeGoogleUser()
           && request.resource.data.fromUid == request.auth.uid;
 
-        allow delete: if googleUser();
+        allow delete: if activeGoogleUser();
         allow update: if false;
       }
 
       match /nudges/{nudgeId} {
-        allow read: if googleUser();
+        allow read: if activeGoogleUser();
 
-        allow create: if googleUser()
+        allow create: if activeGoogleUser()
           && request.resource.data.fromUid == request.auth.uid
           && request.resource.data.targetUid is string
           && request.resource.data.targetUid != request.auth.uid;
@@ -62,9 +73,9 @@ service cloud.firestore {
       }
 
       match /events/{eventId} {
-        allow read: if googleUser();
+        allow read: if activeGoogleUser();
 
-        allow create: if googleUser()
+        allow create: if activeGoogleUser()
           && request.resource.data.fromUid == request.auth.uid;
 
         allow update: if false;
@@ -76,10 +87,10 @@ service cloud.firestore {
       // A página de jogos já exige autenticação. Aqui aceitamos qualquer
       // sessão Firebase autenticada para evitar falso permission-denied
       // causado pelo provedor do token.
-      allow read, create, update, delete: if signedIn();
+      allow read, create, update, delete: if activeGoogleUser();
 
       match /strokes/{strokeId} {
-        allow read, create, delete: if signedIn();
+        allow read, create, delete: if activeGoogleUser();
         allow update: if false;
       }
     }
