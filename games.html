@@ -878,7 +878,12 @@
 
         if(currentRoomId){
           currentRoom=map[currentRoomId]?{id:currentRoomId,...map[currentRoomId]}:null;
-          if(currentRoom)renderRoom(); else backToLobby();
+          if(currentRoom){
+            renderRoom();
+            if(currentRoom.status==="finished"&&Number(currentRoom.betAmount||0)>0&&!currentRoom.betSettled){
+              settleRoomBet(currentRoomId).catch(err=>console.error("Falha ao liquidar aposta:",err));
+            }
+          }else backToLobby();
         }
       },err=>{
         console.error("Erro ao ler documento diário:",err);
@@ -936,6 +941,70 @@
         if(join){await joinRoom(join.dataset.joinRoom);return}
       }catch(err){console.error(err);gameError.textContent=err?.message||"Não foi possível abrir a sala."}
     });
+
+    function roomWinnerUid(room){
+      return room?.state?.championUid||room?.state?.winnerUid||null;
+    }
+
+    async function settleRoomBet(id){
+      if(!id||settlingBetRooms.has(id))return;
+      settlingBetRooms.add(id);
+
+      const dRef=dayRef();
+      const wRef=walletRef();
+
+      try{
+        await runTransaction(db,async tx=>{
+          const daySnap=await tx.get(dRef);
+          const walletSnap=await tx.get(wRef);
+          if(!daySnap.exists()||!walletSnap.exists())return;
+
+          const dayData=daySnap.data();
+          const gameRooms={...(dayData.gameRooms||{})};
+          const room=structuredClone(gameRooms[id]);
+
+          if(!room||room.status!=="finished"||room.betSettled||Number(room.betAmount||0)<=0)return;
+
+          const stakes={...(room.stakes||{})};
+          const pot=Object.values(stakes).reduce((sum,value)=>sum+Number(value||0),0);
+          const winnerUid=roomWinnerUid(room);
+          const walletData=walletSnap.data();
+          const wallets={...(walletData.wallets||{})};
+
+          if(winnerUid&&Object.prototype.hasOwnProperty.call(stakes,winnerUid)){
+            const winnerWallet={...(wallets[winnerUid]||{xpBalance:0,audioCredits:{},unlockedItems:[]})};
+            winnerWallet.xpBalance=Number(winnerWallet.xpBalance||0)+pot;
+            winnerWallet.updatedAtMs=Date.now();
+            wallets[winnerUid]=winnerWallet;
+            room.betWinnerUid=winnerUid;
+            room.betPaidAmount=pot;
+            room.betRefunded=false;
+          }else{
+            for(const [uid,value] of Object.entries(stakes)){
+              const refund=Number(value||0);
+              if(refund<=0)continue;
+              const wallet={...(wallets[uid]||{xpBalance:0,audioCredits:{},unlockedItems:[]})};
+              wallet.xpBalance=Number(wallet.xpBalance||0)+refund;
+              wallet.updatedAtMs=Date.now();
+              wallets[uid]=wallet;
+            }
+            room.betWinnerUid=null;
+            room.betPaidAmount=0;
+            room.betRefunded=true;
+          }
+
+          room.betPot=pot;
+          room.betSettled=true;
+          room.betSettledAtMs=Date.now();
+          gameRooms[id]=room;
+
+          tx.set(wRef,{type:"techqueue_wallets",wallets,updatedAt:serverTimestamp()},{merge:true});
+          tx.update(dRef,{gameRooms,updatedAt:serverTimestamp()});
+        });
+      }finally{
+        settlingBetRooms.delete(id);
+      }
+    }
 
     async function mutateDay(mutator){
       await runTransaction(db,async tx=>{
@@ -1148,12 +1217,53 @@
 
     leaveBtn.addEventListener("click",async()=>{
       if(!currentRoomId||!user){backToLobby();return}
+
+      if(Number(currentRoom?.betAmount||0)>0&&currentRoom?.status==="playing"&&!currentRoom?.betSettled){
+        alert("Esta partida tem aposta de XP em andamento. Finalize a partida antes de sair da sala.");
+        return;
+      }
+
       try{
-        await mutateDay(data=>{
-          const gameRooms={...(data.gameRooms||{})},room=gameRooms[currentRoomId];if(!room)return {gameRooms};
-          const players={...(room.players||{})};delete players[user.uid];
+        const dRef=dayRef();
+        const wRef=walletRef();
+
+        await runTransaction(db,async tx=>{
+          const daySnap=await tx.get(dRef);
+          if(!daySnap.exists())return;
+
+          const data=daySnap.data();
+          const gameRooms={...(data.gameRooms||{})};
+          const room=structuredClone(gameRooms[currentRoomId]);
+          if(!room)return;
+
+          const stake=Number(room.stakes?.[user.uid]||0);
+          const shouldRefund=stake>0&&room.status==="waiting"&&!room.betSettled;
+          const walletSnap=shouldRefund?await tx.get(wRef):null;
+
+          const players={...(room.players||{})};
+          delete players[user.uid];
+
           const order=(room.playerOrder||[]).filter(uid=>uid!==user.uid);
-          if(!order.length){delete gameRooms[currentRoomId];return {gameRooms}}
+          const stakes={...(room.stakes||{})};
+          delete stakes[user.uid];
+
+          if(shouldRefund){
+            if(!walletSnap?.exists())throw new Error("Carteira de XP não encontrada para devolver a aposta.");
+            const walletData=walletSnap.data();
+            const wallets={...(walletData.wallets||{})};
+            const wallet={...(wallets[user.uid]||defaultGameWallet())};
+            wallet.xpBalance=Number(wallet.xpBalance||0)+stake;
+            wallet.updatedAtMs=Date.now();
+            wallets[user.uid]=wallet;
+            tx.set(wRef,{type:"techqueue_wallets",wallets,updatedAt:serverTimestamp()},{merge:true});
+          }
+
+          if(!order.length){
+            delete gameRooms[currentRoomId];
+            tx.update(dRef,{gameRooms,updatedAt:serverTimestamp()});
+            return;
+          }
+
           const hostUid=room.hostUid===user.uid?order[0]:room.hostUid;
           const requiredPlayers=Number(room.requiredPlayers||MIN_PLAYERS[room.game]||2);
           const nextState=room.game==="domino"
@@ -1161,18 +1271,27 @@
             : room.game==="ludo"
               ? initLudo(order,requiredPlayers,room.state)
               : initialState(room.game,order,room.state);
+
           gameRooms[currentRoomId]={
             ...room,
             players,
             playerOrder:order,
+            stakes,
+            betPot:Object.values(stakes).reduce((sum,value)=>sum+Number(value||0),0),
             hostUid,
             hostName:players[hostUid]||"Jogador",
             status:order.length>=requiredPlayers?"playing":"waiting",
             state:nextState
           };
-          return {gameRooms};
+
+          tx.update(dRef,{gameRooms,updatedAt:serverTimestamp()});
         });
-      }catch(err){console.error(err)}
+      }catch(err){
+        console.error(err);
+        gameError.textContent=err?.message||"Não foi possível sair da sala.";
+        return;
+      }
+
       backToLobby();
     });
 
@@ -1192,9 +1311,15 @@
 
     function renderRoom(){
       const room=currentRoom;
-      roomTitle.textContent=GAME_NAMES[room.game]||"Sala";roomCode.textContent=`Sala ${room.id.slice(0,6).toUpperCase()}`;
+      roomTitle.textContent=GAME_NAMES[room.game]||"Sala";
+      const bet=Number(room.betAmount||0);
+      const pot=Object.values(room.stakes||{}).reduce((sum,value)=>sum+Number(value||0),0);
+      const betInfo=bet>0
+        ? ` · aposta ${bet} XP · pote ${pot} XP${room.betSettled?" · encerrada":""}`
+        : " · sem aposta";
+      roomCode.textContent=`Sala ${room.id.slice(0,6).toUpperCase()}${betInfo}`;
       playersEl.innerHTML=(room.playerOrder||[]).map(uid=>`<span class="player-chip">${escapeHtml(room.players?.[uid]||"Jogador")}${uid===user.uid?" · você":""}</span>`).join("");
-      restartBtn.classList.toggle("hidden",room.status!=="finished");
+      restartBtn.classList.toggle("hidden",room.status!=="finished"||bet>0);
       const requiredPlayers=Number(room.requiredPlayers||MIN_PLAYERS[room.game]||2);
 
       if(room.game==="ludo"){
