@@ -592,7 +592,7 @@
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-app.js";
     import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-auth.js";
-    import { getFirestore, doc, onSnapshot, runTransaction, serverTimestamp } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-firestore.js";
+    import { getFirestore, doc, getDoc, onSnapshot, runTransaction, serverTimestamp } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-firestore.js";
 
     const firebaseConfig = {
       apiKey: "AIzaSyDVHhF1LcLxqdb4xJDONkCoNhLS8HC7OxY",
@@ -671,7 +671,7 @@
     const restartBtn=document.querySelector("#restartBtn"),leaveBtn=document.querySelector("#leaveBtn"),googleBtn=document.querySelector("#googleBtn"),loginError=document.querySelector("#loginError"),logoutBtn=document.querySelector("#logoutBtn"),themeBtn=document.querySelector("#themeBtn"),gameError=document.querySelector("#gameError"),gameToast=document.querySelector("#gameToast");
     const gamesMenuBtn=document.querySelector("#gamesMenuBtn"),gamesHeaderMenu=document.querySelector("#gamesHeaderMenu");
 
-    let user=null,dayState=null,rooms=[],currentRoomId=null,currentRoom=null,unsubDay=null,selectedChecker=null,selectedDominoIndex=null,drawing=false,activeStroke=[];
+    let user=null,dayState=null,rooms=[],currentRoomId=null,currentRoom=null,unsubDay=null,unsubBan=null,selectedChecker=null,selectedDominoIndex=null,drawing=false,activeStroke=[];
     let seenHangmanActionId=null;
     let seenLudoRollId=null;
     let seenLudoMoveId=null;
@@ -737,17 +737,48 @@
     });
     logoutBtn.addEventListener("click",()=>signOut(auth));
 
-    onAuthStateChanged(auth,authUser=>{
+    onAuthStateChanged(auth,async authUser=>{
       user=authUser;
       loginView.classList.toggle("hidden",!!user);
       appView.classList.toggle("hidden",!user);
       logoutBtn.classList.toggle("hidden",!user);
-      if(user) subscribeDay(); else cleanup();
+
+      if(!user){
+        cleanup();
+        return;
+      }
+
+      try{
+        const isAdmin=(user.email||"").toLowerCase()==="leandro3dejesus@gmail.com";
+        const banRef=doc(db,"bans",user.uid);
+        const banSnap=await getDoc(banRef);
+
+        if(banSnap.exists()&&!isAdmin){
+          loginError.textContent="Seu acesso ao TechQueue foi bloqueado pelo administrador.";
+          await signOut(auth);
+          return;
+        }
+
+        if(unsubBan)unsubBan();
+        if(!isAdmin){
+          unsubBan=onSnapshot(banRef,async snap=>{
+            if(!snap.exists())return;
+            loginError.textContent="Seu acesso ao TechQueue foi bloqueado pelo administrador.";
+            try{await signOut(auth)}catch(err){console.error(err)}
+          });
+        }
+
+        subscribeDay();
+      }catch(err){
+        console.error(err);
+        loginError.textContent="Não foi possível validar seu acesso.";
+      }
     });
 
     function cleanup(){
       if(unsubDay)unsubDay();
-      unsubDay=null;dayState=null;rooms=[];currentRoomId=null;currentRoom=null;
+      if(unsubBan)unsubBan();
+      unsubDay=null;unsubBan=null;dayState=null;rooms=[];currentRoomId=null;currentRoom=null;
     }
 
     function subscribeDay(){
