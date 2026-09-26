@@ -29,7 +29,7 @@ service cloud.firestore {
     }
 
     match /profiles/{userId} {
-      allow read, create, update: if signedIn() && request.auth.uid == userId;
+      allow read, create, update: if activeGoogleUser() && request.auth.uid == userId;
       allow delete: if false;
     }
 
@@ -43,7 +43,7 @@ service cloud.firestore {
         allow create: if activeGoogleUser()
           && request.resource.data.technicianUid == request.auth.uid;
 
-        allow update: if googleUser()
+        allow update: if activeGoogleUser()
           && resource.data.technicianUid == request.auth.uid
           && request.resource.data.technicianUid == resource.data.technicianUid;
 
