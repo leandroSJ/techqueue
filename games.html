@@ -35,6 +35,8 @@
     .btn.danger:hover{background:var(--danger);color:#fff;border-color:var(--danger)}
     .card{background:var(--surface);border-color:var(--border);border-radius:16px;box-shadow:var(--shadow)}
     .game-card,.panel-card,.game-area,.login .card{padding:18px}
+    .bet-panel{padding:16px}
+    .bet-panel .form-select{min-width:150px}
     .game-card{display:flex;flex-direction:column;gap:10px;min-width:0;height:100%}
     .game-card h3{margin:0;font-size:1rem}
     .game-card p{margin:0;color:var(--muted);font-size:.84rem;line-height:1.4;flex:1}
@@ -471,6 +473,28 @@
       <section id="lobbyView">
         <div id="gameError" class="error"></div>
 
+        <section class="card shadow-sm mb-4 bet-panel">
+          <div class="d-flex flex-column flex-md-row align-items-md-center justify-content-between gap-3">
+            <div>
+              <h2 class="h6 fw-semibold mb-1">Aposta de XP</h2>
+              <p class="muted mb-0">Opcional. O XP é apenas interno do TechQueue e não possui valor em dinheiro.</p>
+            </div>
+            <div class="d-flex flex-column flex-sm-row align-items-sm-center gap-2">
+              <span id="gameWalletXp" class="badge text-bg-secondary">Saldo: -- XP</span>
+              <select id="betSelect" class="form-select" aria-label="Valor da aposta">
+                <option value="0">Sem aposta</option>
+                <option value="5">5 XP</option>
+                <option value="10">10 XP</option>
+                <option value="20">20 XP</option>
+                <option value="50">50 XP</option>
+                <option value="100">100 XP</option>
+                <option value="150">150 XP</option>
+                <option value="200">200 XP</option>
+              </select>
+            </div>
+          </div>
+        </section>
+
         <section class="mb-4">
           <div class="mb-3">
             <h2 class="h5 fw-semibold mb-1">Jogos online</h2>
@@ -564,7 +588,7 @@
               <h2 class="h5 fw-semibold mb-3">Como funciona</h2>
               <p class="muted"><strong>Online:</strong> Jogo da Velha, Desenhe e Adivinhe, Forca, Dominó, Ludo Tech e Dama usam o Firestore para sincronizar os jogadores.</p>
               <p class="muted"><strong>Biblioteca:</strong> o Click Jogos continua hospedando os jogos; o TechQueue apenas oferece o acesso e a navegação.</p>
-              <p class="muted mb-0">Os jogos não gastam XP e não alteram o ranking de atendimento.</p>
+              <p class="muted mb-0">As apostas são opcionais e usam somente XP interno. O vencedor recebe o pote; em empate, as apostas são devolvidas. Isso não altera o ranking de atendimento.</p>
             </section>
           </div>
         </div>
@@ -669,9 +693,9 @@
     const loginView=document.querySelector("#loginView"),appView=document.querySelector("#appView"),lobbyView=document.querySelector("#lobbyView"),roomView=document.querySelector("#roomView");
     const roomsList=document.querySelector("#roomsList"),roomTitle=document.querySelector("#roomTitle"),roomCode=document.querySelector("#roomCode"),playersEl=document.querySelector("#players"),gameRoot=document.querySelector("#gameRoot");
     const restartBtn=document.querySelector("#restartBtn"),leaveBtn=document.querySelector("#leaveBtn"),googleBtn=document.querySelector("#googleBtn"),loginError=document.querySelector("#loginError"),logoutBtn=document.querySelector("#logoutBtn"),themeBtn=document.querySelector("#themeBtn"),gameError=document.querySelector("#gameError"),gameToast=document.querySelector("#gameToast");
-    const gamesMenuBtn=document.querySelector("#gamesMenuBtn"),gamesHeaderMenu=document.querySelector("#gamesHeaderMenu");
+    const gamesMenuBtn=document.querySelector("#gamesMenuBtn"),gamesHeaderMenu=document.querySelector("#gamesHeaderMenu"),gameWalletXp=document.querySelector("#gameWalletXp"),betSelect=document.querySelector("#betSelect");
 
-    let user=null,dayState=null,rooms=[],currentRoomId=null,currentRoom=null,unsubDay=null,unsubBan=null,selectedChecker=null,selectedDominoIndex=null,drawing=false,activeStroke=[];
+    let user=null,dayState=null,rooms=[],currentRoomId=null,currentRoom=null,unsubDay=null,unsubBan=null,unsubWallet=null,walletBalance=null,selectedChecker=null,selectedDominoIndex=null,drawing=false,activeStroke=[];
     let seenHangmanActionId=null;
     let seenLudoRollId=null;
     let seenLudoMoveId=null;
@@ -682,6 +706,8 @@
     let ludoSoundUnlocked=false;
     let ludoSoundEnabled=true;
     let gameToastTimer=null;
+    const settlingBetRooms=new Set();
+    const BET_VALUES=[0,5,10,20,50,100,150,200];
 
     function bahiaDateId(date=new Date()){
       const parts=new Intl.DateTimeFormat("en-CA",{timeZone:TEAM_TIMEZONE,year:"numeric",month:"2-digit",day:"2-digit"}).formatToParts(date);
@@ -689,6 +715,63 @@
       return `${map.year}-${map.month}-${map.day}`;
     }
     function dayRef(){return doc(db,"days",bahiaDateId())}
+    function walletRef(){return doc(db,"days","_wallets")}
+    function normalizeBet(value){
+      const amount=Number(value||0);
+      if(!BET_VALUES.includes(amount))throw new Error("Valor de aposta inválido.");
+      return amount;
+    }
+    function defaultGameWallet(){
+      return{
+        name:displayName(),
+        email:(user?.email||"").toLowerCase(),
+        xpBalance:35,
+        welcomeBonus35Granted:true,
+        welcomeBonusAmount:35,
+        audioCredits:{},
+        unlockedItems:[],
+        updatedAtMs:Date.now()
+      };
+    }
+    async function ensureGameWallet(){
+      if(!user)return;
+      const ref=walletRef();
+      await runTransaction(db,async tx=>{
+        const snap=await tx.get(ref);
+        const data=snap.exists()?snap.data():{};
+        const wallets={...(data.wallets||{})};
+        const existing=wallets[user.uid];
+
+        if(!existing){
+          wallets[user.uid]=defaultGameWallet();
+        }else if(existing.welcomeBonus35Granted!==true){
+          wallets[user.uid]={
+            ...existing,
+            name:displayName(),
+            email:(user.email||"").toLowerCase(),
+            xpBalance:Number(existing.xpBalance||0)+35,
+            welcomeBonus35Granted:true,
+            welcomeBonusAmount:35,
+            updatedAtMs:Date.now()
+          };
+        }
+
+        tx.set(ref,{type:"techqueue_wallets",wallets,updatedAt:serverTimestamp()},{merge:true});
+      });
+    }
+    function subscribeGameWallet(){
+      if(unsubWallet)unsubWallet();
+      unsubWallet=onSnapshot(walletRef(),snap=>{
+        const wallets=snap.exists()?(snap.data().wallets||{}):{};
+        walletBalance=Number(wallets[user?.uid]?.xpBalance||0);
+        if(gameWalletXp)gameWalletXp.textContent=`Saldo: ${walletBalance} XP`;
+        renderRooms();
+      },err=>{
+        console.error("Falha ao ler saldo de XP:",err);
+        walletBalance=null;
+        if(gameWalletXp)gameWalletXp.textContent="Saldo indisponível";
+      });
+    }
     function setTheme(theme){
       document.documentElement.dataset.theme=theme;
       document.documentElement.setAttribute("data-bs-theme",theme);
@@ -768,6 +851,8 @@
           });
         }
 
+        await ensureGameWallet();
+        subscribeGameWallet();
         subscribeDay();
       }catch(err){
         console.error(err);
@@ -778,7 +863,8 @@
     function cleanup(){
       if(unsubDay)unsubDay();
       if(unsubBan)unsubBan();
-      unsubDay=null;unsubBan=null;dayState=null;rooms=[];currentRoomId=null;currentRoom=null;
+      if(unsubWallet)unsubWallet();
+      unsubDay=null;unsubBan=null;unsubWallet=null;walletBalance=null;dayState=null;rooms=[];currentRoomId=null;currentRoom=null;
     }
 
     function subscribeDay(){
@@ -811,14 +897,26 @@
         )
       );
       if(!visible.length){roomsList.innerHTML='<div class="muted">Nenhuma sala aberta agora.</div>';return}
-      roomsList.innerHTML=visible.map(r=>`
-        <div class="room-row">
-          <div>
-            <strong>${escapeHtml(GAME_NAMES[r.game]||r.game)}${["domino","ludo"].includes(r.game) ? ` · ${Number(r.requiredPlayers||r.maxPlayers||2)} jogadores` : ""}</strong>
-            <div class="muted small">Criada por ${escapeHtml(r.hostName||"Jogador")} · ${(r.playerOrder||[]).length}/${r.requiredPlayers||r.maxPlayers||2}</div>
-          </div>
-          <button class="btn" data-join-room="${r.id}">${(r.playerOrder||[]).includes(user?.uid)?"Abrir":"Entrar"}</button>
-        </div>`).join("");
+
+      roomsList.innerHTML=visible.map(r=>{
+        const isMember=(r.playerOrder||[]).includes(user?.uid);
+        const bet=Number(r.betAmount||0);
+        const stakes=r.stakes||{};
+        const pot=Object.values(stakes).reduce((sum,value)=>sum+Number(value||0),0);
+        const insufficient=!isMember&&bet>0&&(walletBalance===null||walletBalance<bet);
+        const betText=bet>0?` · Aposta ${bet} XP · pote ${pot} XP`:" · Sem aposta";
+
+        return `
+          <div class="room-row">
+            <div>
+              <strong>${escapeHtml(GAME_NAMES[r.game]||r.game)}${["domino","ludo"].includes(r.game) ? ` · ${Number(r.requiredPlayers||r.maxPlayers||2)} jogadores` : ""}</strong>
+              <div class="muted small">Criada por ${escapeHtml(r.hostName||"Jogador")} · ${(r.playerOrder||[]).length}/${r.requiredPlayers||r.maxPlayers||2}${betText}</div>
+            </div>
+            <button class="btn" data-join-room="${r.id}" ${insufficient?"disabled":""}>
+              ${isMember?"Abrir":insufficient?"Saldo insuficiente":"Entrar"}
+            </button>
+          </div>`;
+      }).join("");
     }
 
     document.addEventListener("click",async event=>{
@@ -832,7 +930,7 @@
             : game==="ludo"
               ? Number(create.dataset.ludoPlayers||2)
               : null;
-          await createRoom(game,roomPlayers);
+          await createRoom(game,roomPlayers,normalizeBet(betSelect?.value||0));
           return;
         }
         if(join){await joinRoom(join.dataset.joinRoom);return}
@@ -863,15 +961,16 @@
       return roomResult;
     }
 
-    async function createRoom(game,roomPlayers=null){
+    async function createRoom(game,roomPlayers=null,betAmount=0){
       if(!user)return;
 
+      const bet=normalizeBet(betAmount);
       const requestedPlayers=["domino","ludo"].includes(game)
         ? Math.max(2,Math.min(MAX_PLAYERS[game],Number(roomPlayers||2)))
         : MIN_PLAYERS[game];
 
       const requiredPlayers=requestedPlayers;
-      const maxPlayers=["domino","ludo"].includes(game) ? requiredPlayers : MAX_PLAYERS[game];
+      const maxPlayers=["domino","ludo"].includes(game)?requiredPlayers:MAX_PLAYERS[game];
       const id=roomId();
       const players={[user.uid]:displayName()};
       const order=[user.uid];
@@ -891,26 +990,94 @@
         requiredPlayers,
         status:order.length>=requiredPlayers?"playing":"waiting",
         state,
+        betAmount:bet,
+        stakes:{[user.uid]:bet},
+        betPot:bet,
+        betSettled:false,
         createdAtMs:Date.now()
       };
 
-      await mutateDay(data=>{
-        const gameRooms={...(data.gameRooms||{})};
+      const dRef=dayRef();
+      const wRef=walletRef();
+
+      await runTransaction(db,async tx=>{
+        const daySnap=await tx.get(dRef);
+        const walletSnap=bet>0?await tx.get(wRef):null;
+        const dayData=daySnap.exists()?daySnap.data():{};
+        const gameRooms={...(dayData.gameRooms||{})};
+
+        if(bet>0){
+          if(!walletSnap?.exists())throw new Error("Carteira de XP não encontrada.");
+          const walletData=walletSnap.data();
+          const wallets={...(walletData.wallets||{})};
+          const wallet={...(wallets[user.uid]||defaultGameWallet())};
+          const balance=Number(wallet.xpBalance||0);
+
+          if(balance<bet)throw new Error(`Saldo insuficiente. Você tem ${balance} XP e a aposta é de ${bet} XP.`);
+
+          wallet.xpBalance=balance-bet;
+          wallet.updatedAtMs=Date.now();
+          wallets[user.uid]=wallet;
+          tx.set(wRef,{type:"techqueue_wallets",wallets,updatedAt:serverTimestamp()},{merge:true});
+        }
+
         gameRooms[id]=createdRoom;
-        return {gameRooms};
+
+        if(daySnap.exists()){
+          tx.update(dRef,{gameRooms,updatedAt:serverTimestamp()});
+        }else{
+          tx.set(dRef,{dateId:bahiaDateId(),gameRooms,updatedAt:serverTimestamp(),createdAt:serverTimestamp()},{merge:true});
+        }
       });
+
       openRoom(id,createdRoom);
     }
 
     async function joinRoom(id){
-      const joinedRoom=await mutateRoom(id,room=>{
-        const players={...(room.players||{})},order=[...(room.playerOrder||[])];
+      if(!user)return;
+      const dRef=dayRef();
+      const wRef=walletRef();
+      let joinedRoom=null;
+
+      await runTransaction(db,async tx=>{
+        const daySnap=await tx.get(dRef);
+        if(!daySnap.exists())throw new Error("Sala não encontrada.");
+
+        const data=daySnap.data();
+        const gameRooms={...(data.gameRooms||{})};
+        const room=structuredClone(gameRooms[id]);
+        if(!room)throw new Error("Sala não encontrada.");
+
+        const players={...(room.players||{})};
+        const order=[...(room.playerOrder||[])];
         const alreadyMember=order.includes(user.uid);
+        const bet=Number(room.betAmount||0);
+
+        let walletPayload=null;
 
         if(!alreadyMember){
           if(order.length>=(room.maxPlayers||2))throw new Error("Sala lotada.");
+
+          if(bet>0){
+            const walletSnap=await tx.get(wRef);
+            if(!walletSnap.exists())throw new Error("Carteira de XP não encontrada.");
+            const walletData=walletSnap.data();
+            const wallets={...(walletData.wallets||{})};
+            const wallet={...(wallets[user.uid]||defaultGameWallet())};
+            const balance=Number(wallet.xpBalance||0);
+
+            if(balance<bet)throw new Error(`Saldo insuficiente. Esta sala exige ${bet} XP e você tem ${balance} XP.`);
+
+            wallet.xpBalance=balance-bet;
+            wallet.updatedAtMs=Date.now();
+            wallets[user.uid]=wallet;
+            walletPayload={type:"techqueue_wallets",wallets,updatedAt:serverTimestamp()};
+          }
+
           players[user.uid]=displayName();
           order.push(user.uid);
+          room.stakes={...(room.stakes||{}),[user.uid]:bet};
+          room.betPot=Object.values(room.stakes).reduce((sum,value)=>sum+Number(value||0),0);
         }
 
         room.players=players;
@@ -930,15 +1097,11 @@
 
           if(room.state?.winnerUid)room.status="finished";
           else room.status=colorsReady?"playing":"waiting";
-
-          return room;
-        }
-
-        if(enoughPlayers){
+        }else if(enoughPlayers){
           room.status="playing";
 
           if(room.game==="domino"){
-            const hasAllHands=order.length===requiredPlayers &&
+            const hasAllHands=order.length===requiredPlayers&&
               order.every(uid=>Array.isArray(room.state?.hands?.[uid]));
             if(!hasAllHands)room.state=initDomino(order,requiredPlayers);
           }else if(room.game==="hangman"){
@@ -949,8 +1112,12 @@
           }
         }
 
-        return room;
+        gameRooms[id]=room;
+        tx.update(dRef,{gameRooms,updatedAt:serverTimestamp()});
+        if(walletPayload)tx.set(wRef,walletPayload,{merge:true});
+        joinedRoom=structuredClone(room);
       });
+
       openRoom(id,joinedRoom);
     }
 
