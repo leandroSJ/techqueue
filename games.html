@@ -3606,17 +3606,32 @@
         )return room;
 
         const playerName=room.players?.[s.turnUid]||"Jogador";
-        const nextUid=nextActivePlayer(active,s.turnUid);
+        const currentUid=s.turnUid;
+        const nextUid=nextActivePlayer(active,currentUid);
+        const tried=[...new Set([...(s.finalAnswerTried||[]),currentUid])];
+        const everyoneTried=active.length>0&&active.every(uid=>tried.includes(uid));
 
         s.lastAction={
           id:actionId(),
-          type:"answer_timeout",
-          byUid:s.turnUid,
+          type:everyoneTried?"answer_cycle_failed":"answer_timeout",
+          byUid:currentUid,
           hit:false,
-          message:playerName+" não respondeu em 10 segundos e perdeu a vez."
+          message:everyoneTried
+            ?"Ninguém acertou a resposta final. "+(room.players?.[nextUid]||"O próximo jogador")+" deve escolher 1 letra."
+            :playerName+" não respondeu em 10 segundos e perdeu a vez."
         };
         s.turnUid=nextUid;
-        s.answerDeadlineMs=Date.now()+10000;
+
+        if(everyoneTried){
+          s.finalAnswerTried=[];
+          s.forceLetterTurn=true;
+          s.answerDeadlineMs=null;
+        }else{
+          s.finalAnswerTried=tried;
+          s.forceLetterTurn=false;
+          s.answerDeadlineMs=Date.now()+10000;
+        }
+
         room.state=s;
         room.status="playing";
         return room;
@@ -3836,6 +3851,11 @@
         // Regra clássica: acertou a letra, continua jogando; errou, passa a vez.
         s.turnUid=hit?user.uid:nextUid;
         const remainingLetters=[...word].filter(ch=>/[a-z]/.test(ch)&&!guessed.has(ch)).length;
+
+        // Depois que todos falham na resposta final, o jogo libera exatamente
+        // uma letra. Após essa letra, começa um novo ciclo de resposta final.
+        s.forceLetterTurn=false;
+        s.finalAnswerTried=[];
         s.answerDeadlineMs=remainingLetters<=3?Date.now()+10000:null;
         room.state=s;
         room.status="playing";
