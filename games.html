@@ -1515,12 +1515,18 @@
       roomView.classList.remove("hidden");
       const found=roomSnapshot||(dayState?.gameRooms||{})[id];
       currentRoom=found?{id,...found}:null;
+      seenGameChatSoundIds.clear();
+      for(const message of (currentRoom?.chatMessages||[])){
+        if(message?.type==="sound"&&message.id)seenGameChatSoundIds.add(message.id);
+      }
       seenLudoRollId=currentRoom?.game==="ludo" ? (currentRoom.state?.lastRoll?.id||null) : null;
       seenLudoMoveId=currentRoom?.game==="ludo" ? (currentRoom.state?.lastMove?.id||null) : null;
       ludoAnimationQueue=Promise.resolve();
       if(currentRoom)renderRoom();
     }
     function backToLobby(){
+      stopDominoTurnTimer();
+      seenGameChatSoundIds.clear();
       ludoAnimationRun++;
       ludoAnimationActive=false;
       seenLudoRollId=null;
@@ -1569,7 +1575,10 @@
         const hands={...(state.hands||{})};
         delete hands[leavingUid];
         state.hands=hands;
-        if(state.turnUid===leavingUid)state.turnUid=remainingOrder[0]||null;
+        if(state.turnUid===leavingUid){
+          state.turnUid=remainingOrder[0]||null;
+          state.turnStartedAtMs=Date.now();
+        }
         return state;
       }
 
@@ -1802,21 +1811,40 @@
       if(chatCount)chatCount.textContent=String(messages.length);
       if(gameChatInput)gameChatInput.disabled=!isPlayer;
       if(gameChatSendBtn)gameChatSendBtn.disabled=!isPlayer;
+      if(gameChatSoundSelect)gameChatSoundSelect.disabled=!isPlayer;
+      if(gameChatSoundBtn)gameChatSoundBtn.disabled=!isPlayer;
 
       if(!messages.length){
         gameChatMessages.innerHTML='<div class="game-chat-empty">Nenhuma mensagem ainda. Mande a primeira.</div>';
         return;
       }
 
+      for(const message of messages){
+        if(message?.type==="sound"&&message.id&&!seenGameChatSoundIds.has(message.id)){
+          seenGameChatSoundIds.add(message.id);
+          playGameChatSound(message.soundId,false);
+        }
+      }
+
       gameChatMessages.innerHTML=messages.map(message=>{
         const mine=message.uid===user?.uid;
+        const sound=message.type==="sound"
+          ? GAME_CHAT_SOUNDS.find(item=>item.id===message.soundId)
+          : null;
+
         return `
           <div class="game-chat-message ${mine?"me":""}">
             <div class="game-chat-meta">
               <strong>${escapeHtml(message.name||"Jogador")}</strong>
               <span>${escapeHtml(formatGameChatTime(message.createdAtMs))}</span>
             </div>
-            <div class="game-chat-text">${escapeHtml(message.text||"")}</div>
+            ${sound
+              ? `<div class="game-chat-sound">
+                   <span>Som: ${escapeHtml(sound.label)}</span>
+                   <button type="button" data-replay-chat-sound="${sound.id}">Ouvir</button>
+                 </div>`
+              : `<div class="game-chat-text">${escapeHtml(message.text||"")}</div>`
+            }
           </div>
         `;
       }).join("");
@@ -1855,6 +1883,63 @@
       }catch(err){
         console.error("Falha ao enviar mensagem do jogo:",err);
         showGameToastMessage(err?.message||"Não foi possível enviar a mensagem.");
+      }
+    }
+
+    function playGameChatSound(soundId,showError=true){
+      const sound=GAME_CHAT_SOUNDS.find(item=>item.id===soundId);
+      if(!sound)return;
+
+      try{
+        gameChatAudio.pause();
+        gameChatAudio.src=sound.file;
+        gameChatAudio.currentTime=0;
+        gameChatAudio.volume=.9;
+        gameChatAudio.play().catch(err=>{
+          console.warn("Áudio do chat foi bloqueado:",err);
+          if(showError)showGameToastMessage("O navegador bloqueou o áudio. Toque em Ouvir para liberar.");
+        });
+      }catch(err){
+        console.error("Falha ao tocar áudio do chat:",err);
+      }
+    }
+
+    async function sendGameChatSound(){
+      const soundId=gameChatSoundSelect?.value||"";
+      const sound=GAME_CHAT_SOUNDS.find(item=>item.id===soundId);
+      if(!sound||!currentRoomId||!user)return;
+
+      const messageId=actionId();
+
+      // Quem clicou escuta imediatamente, sem esperar o retorno do Firestore.
+      seenGameChatSoundIds.add(messageId);
+      playGameChatSound(sound.id,true);
+
+      try{
+        await mutateRoom(currentRoomId,room=>{
+          const order=room.playerOrder||[];
+          if(!order.includes(user.uid)){
+            throw new Error("Você precisa estar nesta sala para usar o chat.");
+          }
+
+          const messages=Array.isArray(room.chatMessages)?[...room.chatMessages]:[];
+          messages.push({
+            id:messageId,
+            uid:user.uid,
+            name:displayName(),
+            type:"sound",
+            soundId:sound.id,
+            soundLabel:sound.label,
+            createdAtMs:Date.now()
+          });
+
+          room.chatMessages=messages.slice(-60);
+          return room;
+        });
+      }catch(err){
+        seenGameChatSoundIds.delete(messageId);
+        console.error("Falha ao enviar áudio no chat:",err);
+        showGameToastMessage(err?.message||"Não foi possível enviar o áudio.");
       }
     }
 
@@ -2035,6 +2120,13 @@
     gameChatForm?.addEventListener("submit",async event=>{
       event.preventDefault();
       await sendGameChatMessage(gameChatInput?.value||"");
+    });
+
+    gameChatSoundBtn?.addEventListener("click",sendGameChatSound);
+
+    gameChatMessages?.addEventListener("click",event=>{
+      const button=event.target.closest("[data-replay-chat-sound]");
+      if(button)playGameChatSound(button.dataset.replayChatSound,true);
     });
 
     document.querySelector(".game-chat-quick")?.addEventListener("click",async event=>{
