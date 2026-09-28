@@ -394,67 +394,102 @@
     .draw-hint{font-size:.82rem;color:var(--muted)}
     .draw-hint strong{color:var(--text)}
     .draw-actions{display:flex;gap:8px;flex-wrap:wrap}
-    .domino-board,.domino-hand{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;align-items:center;margin:16px 0}
+    .domino-board,.domino-hand{
+      display:flex;
+      gap:12px;
+      flex-wrap:wrap;
+      justify-content:center;
+      align-items:center;
+      margin:16px 0;
+    }
     .tile{
       position:relative;
       display:grid;
       place-items:center;
-      width:82px;
-      height:46px;
-      min-width:82px;
-      min-height:46px;
+      width:84px;
+      height:48px;
+      min-width:84px;
+      min-height:48px;
       padding:0;
-      border:1px solid transparent;
-      border-radius:9px;
+      border:0;
+      border-radius:11px;
       background:transparent;
       color:var(--text);
-      overflow:hidden;
+      overflow:visible;
     }
     .tile.double{
-      width:46px;
-      height:82px;
-      min-width:46px;
-      min-height:82px;
+      width:48px;
+      height:84px;
+      min-width:48px;
+      min-height:84px;
     }
-    .domino-piece-img{
-      position:absolute;
-      left:50%;
-      top:50%;
-      display:block;
-      width:46px;
-      height:82px;
-      object-fit:contain;
-      user-select:none;
-      -webkit-user-drag:none;
-      filter:drop-shadow(0 2px 3px rgba(0,0,0,.18));
-      transform:translate(-50%,-50%);
-      transform-origin:center;
-    }
-    .tile:not(.double) .domino-piece-img{transform:translate(-50%,-50%) rotate(90deg)}
-    .domino-fallback{
+    .domino-face{
+      width:100%;
+      height:100%;
       display:grid;
-      grid-template-columns:1fr 1fr;
-      width:78px;
-      height:42px;
-      border:1px solid var(--border);
-      border-radius:8px;
       overflow:hidden;
-      background:var(--surface);
+      border:1px solid #9aa0a6;
+      border-radius:10px;
+      background:linear-gradient(145deg,#fff 0%,#f4f5f7 72%,#e7e9ec 100%);
+      box-shadow:
+        0 3px 7px rgba(0,0,0,.18),
+        inset 0 1px 0 rgba(255,255,255,.95);
+      transition:transform .14s ease,box-shadow .14s ease,border-color .14s ease;
     }
-    .domino-fallback[hidden]{display:none}
-    .domino-fallback span{display:grid;place-items:center;padding:8px}
-    .domino-fallback span+span{border-left:1px solid var(--border)}
-    .tile.double .domino-fallback{
-      grid-template-columns:1fr;
-      grid-template-rows:1fr 1fr;
-      width:42px;
-      height:78px;
+    .domino-face.horizontal{grid-template-columns:1fr 1fr}
+    .domino-face.vertical{grid-template-rows:1fr 1fr}
+    .domino-half{
+      min-width:0;
+      min-height:0;
+      display:grid;
+      place-items:center;
+      background:rgba(255,255,255,.62);
     }
-    .tile.double .domino-fallback span+span{border-left:0;border-top:1px solid var(--border)}
+    .domino-face.horizontal .domino-half+.domino-half{border-left:2px solid #4b4f53}
+    .domino-face.vertical .domino-half+.domino-half{border-top:2px solid #4b4f53}
+    .pip-grid{
+      width:100%;
+      height:100%;
+      display:grid;
+      grid-template-columns:repeat(3,1fr);
+      grid-template-rows:repeat(3,1fr);
+      padding:5px;
+    }
+    .pip-cell{display:grid;place-items:center;min-width:0;min-height:0}
+    .pip{
+      width:7px;
+      height:7px;
+      border-radius:50%;
+      background:#202124;
+      box-shadow:inset 0 1px 1px rgba(255,255,255,.28),0 1px 1px rgba(0,0,0,.18);
+    }
     button.tile{cursor:pointer}
-    button.tile:disabled{cursor:default}
-    .tile.playable{outline:2px solid var(--primary);outline-offset:3px}
-    .tile.selected{outline:3px solid #f9ab00;outline-offset:3px}
+    button.tile:disabled{cursor:default;opacity:.92}
+    button.tile:not(:disabled):hover .domino-face{
+      transform:translateY(-2px);
+      box-shadow:
+        0 7px 15px rgba(0,0,0,.20),
+        inset 0 1px 0 rgba(255,255,255,.95);
+    }
+    .tile.playable .domino-face{
+      border-color:var(--primary);
+      box-shadow:
+        0 0 0 2px color-mix(in srgb,var(--primary) 58%,transparent),
+        0 3px 7px rgba(0,0,0,.18);
+    }
+    .tile.selected .domino-face{
+      border-color:#f9ab00;
+      box-shadow:
+        0 0 0 3px rgba(249,171,0,.45),
+        0 6px 14px rgba(0,0,0,.20);
+      transform:translateY(-2px);
+    }
+    html[data-theme="dark"] .domino-face{
+      border-color:#8a9096;
+      background:linear-gradient(145deg,#f7f7f7 0%,#e7e9ec 72%,#d6d9dd 100%);
+    }
+    html[data-theme="dark"] .domino-half{background:rgba(255,255,255,.58)}
+    html[data-theme="dark"] .pip{background:#151515}
     .domino-side-choice{display:flex;justify-content:center;gap:10px;flex-wrap:wrap;margin:10px 0 16px}
     .domino-side-choice .btn{min-width:150px}
     .ludo-stage{
@@ -5116,7 +5151,6 @@
         </div>
       `;
 
-      wireDominoImageFallbacks();
       document.querySelector("#drawDominoBtn")?.addEventListener("click",drawOrPassDomino);
 
       if(!s.winnerUid){
@@ -5213,50 +5247,43 @@
       });
     }
 
-    function dominoAssetPath(a,b){
-      return "./assets/domino/"+a+"-"+b+".png";
+    function dominoPipMap(value){
+      const map={
+        0:[],
+        1:[4],
+        2:[0,8],
+        3:[0,4,8],
+        4:[0,2,6,8],
+        5:[0,2,4,6,8],
+        6:[0,2,3,5,6,8]
+      };
+      return map[Number(value)]||[];
     }
 
-    function tileInner(tile){
-      const primary=dominoAssetPath(tile.a,tile.b);
-      const reverse=dominoAssetPath(tile.b,tile.a);
-      const alt=tile.a+"-"+tile.b;
-
+    function renderDominoPips(value){
+      const active=new Set(dominoPipMap(value));
       return`
-        <img
-          class="domino-piece-img"
-          src="${primary}"
-          data-domino-primary="${primary}"
-          data-domino-reverse="${reverse}"
-          alt="Pedra de dominó ${alt}"
-          draggable="false"
-        >
-        <span class="domino-fallback" hidden aria-hidden="true">
-          <span>${tile.a}</span><span>${tile.b}</span>
+        <span class="pip-grid" aria-hidden="true">
+          ${Array.from({length:9},(_,index)=>`
+            <span class="pip-cell">${active.has(index)?'<span class="pip"></span>':""}</span>
+          `).join("")}
         </span>
       `;
     }
 
-    function wireDominoImageFallbacks(){
-      document.querySelectorAll("[data-domino-primary]").forEach(img=>{
-        if(img.dataset.fallbackReady==="1")return;
-        img.dataset.fallbackReady="1";
-
-        img.addEventListener("error",()=>{
-          const reverse=img.dataset.dominoReverse;
-          const primary=img.dataset.dominoPrimary;
-
-          if(img.dataset.triedReverse!=="1"&&reverse&&reverse!==primary){
-            img.dataset.triedReverse="1";
-            img.src=reverse;
-            return;
-          }
-
-          img.hidden=true;
-          const fallback=img.nextElementSibling;
-          if(fallback)fallback.hidden=false;
-        });
-      });
+    function tileInner(tile){
+      const vertical=tile.a===tile.b;
+      return`
+        <span
+          class="domino-face ${vertical?"vertical":"horizontal"}"
+          role="img"
+          aria-label="Pedra de dominó ${tile.a}-${tile.b}"
+          title="${tile.a}-${tile.b}"
+        >
+          <span class="domino-half">${renderDominoPips(tile.a)}</span>
+          <span class="domino-half">${renderDominoPips(tile.b)}</span>
+        </span>
+      `;
     }
 
     function tileHtml(tile){
