@@ -3689,7 +3689,9 @@
             ? `${escapeHtml(championName||"Jogador")} é o campeão da Forca!`
             : finalAnswerMode
               ? `Resposta final: ${escapeHtml(turnName||"jogador")} tem 10 segundos para responder.`
-              : `É a vez de ${escapeHtml(turnName||"jogador")}. ${isMyTurn?"Escolha uma letra ou arrisque a resposta.":"Aguarde a jogada."}`
+              : s.forceLetterTurn
+                ? `Ninguém acertou a resposta. ${escapeHtml(turnName||"jogador")} deve escolher 1 letra para continuar.`
+                : `É a vez de ${escapeHtml(turnName||"jogador")}. ${isMyTurn?"Escolha uma letra ou arrisque a resposta.":"Aguarde a jogada."}`
           }
         </div>
 
@@ -3707,7 +3709,9 @@
           <div class="small muted" style="margin-top:5px">
             ${finalAnswerMode
               ?"Com 3 letras ou menos faltando, a rodada entra no modo de resposta final."
-              :"Uma nova pista é revelada a cada jogada, até acabar a lista."
+              :s.forceLetterTurn
+                ?"Ninguém acertou a resposta final. Agora será escolhida somente 1 letra antes de tentar responder novamente."
+                :"Uma nova pista é revelada a cada jogada, até acabar a lista."
             }
           </div>
         </div>
@@ -3741,7 +3745,7 @@
           }).join("")}
         </div>
 
-        ${!s.championUid&&!finalAnswerMode?`
+        ${!s.championUid&&!finalAnswerMode&&!s.forceLetterTurn?`
           <form id="wordGuessForm" class="guess-row" style="margin-top:14px">
             <input id="wordGuessInput" maxlength="80" placeholder="Arriscar a palavra ou expressão" ${isMyTurn?"":"disabled"} required>
             <button class="btn primary" ${isMyTurn?"":"disabled"}>Responder</button>
