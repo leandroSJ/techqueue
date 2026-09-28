@@ -3909,7 +3909,7 @@
         }
 
         s.turnUid=nextUid;
-        s.answerDeadlineMs=hangmanRemainingLetters(s)<=5?Date.now()+10000:null;
+        s.answerDeadlineMs=hangmanRemainingLetters(s)<=3?Date.now()+10000:null;
         room.state=s;
         room.status="playing";
         return room;
