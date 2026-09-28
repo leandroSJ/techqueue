@@ -1945,6 +1945,7 @@
 
     function renderRoom(){
       const room=currentRoom;
+      if(room?.game!=="domino")stopDominoTurnTimer();
       roomTitle.textContent=GAME_NAMES[room.game]||"Sala";
       const bet=Number(room.betAmount||0);
       const pot=Object.values(room.stakes||{}).reduce((sum,value)=>sum+Number(value||0),0);
@@ -1964,6 +1965,7 @@
       }
 
       if((room.playerOrder||[]).length<requiredPlayers){
+        if(room.game==="domino")stopDominoTurnTimer();
         gameRoot.innerHTML=`<div class="muted">Aguardando jogadores: ${(room.playerOrder||[]).length}/${requiredPlayers}.</div>`;
         return;
       }
@@ -3294,6 +3296,7 @@
           board:[],
           boneyard:[],
           turnUid:order[0]||null,
+          turnStartedAtMs:null,
           winnerUid:null,
           requiredPlayers:target
         };
@@ -3321,6 +3324,7 @@
         board:[],
         boneyard:tiles.slice(dealt),
         turnUid:order[0]||null,
+        turnStartedAtMs:Date.now(),
         winnerUid:null,
         requiredPlayers:target
       };
@@ -3341,6 +3345,13 @@
 
       gameRoot.innerHTML=`
         <div class="turn">${winner?`${escapeHtml(winner)} bateu.`:`Vez de ${escapeHtml(turnName||"jogador")}`}</div>
+        ${!winner?`
+          <div id="dominoTimerWrap" class="domino-timer-wrap">
+            <div class="domino-timer-label">Tempo para jogar: <span id="dominoTimerText">10s</span></div>
+            <div class="domino-timer-track"><div id="dominoTimerBar" class="domino-timer-bar"></div></div>
+          </div>
+        `:""}
+        ${s.lastTimeout?.name?`<div class="small muted" style="text-align:center;margin-bottom:8px">${escapeHtml(s.lastTimeout.name)} estourou os 10 segundos e perdeu a vez.</div>`:""}
 
         <div class="players" style="justify-content:center;margin:0 0 10px">
           ${(currentRoom.playerOrder||[]).map(uid=>`
@@ -3394,6 +3405,97 @@
       `;
 
       document.querySelector("#drawDominoBtn")?.addEventListener("click",drawOrPassDomino);
+
+      if(!s.winnerUid){
+        if(!s.turnStartedAtMs)ensureDominoTurnClock();
+        else startDominoTurnTimer(s.turnUid,s.turnStartedAtMs);
+      }else{
+        stopDominoTurnTimer();
+      }
+    }
+
+    function stopDominoTurnTimer(){
+      if(dominoTimerInterval)clearInterval(dominoTimerInterval);
+      dominoTimerInterval=null;
+      dominoTimeoutKey=null;
+    }
+
+    async function ensureDominoTurnClock(){
+      if(!currentRoomId)return;
+      try{
+        await mutateRoom(currentRoomId,room=>{
+          if(room.game!=="domino"||room.state?.winnerUid||room.state?.turnStartedAtMs)return room;
+          room.state.turnStartedAtMs=Date.now();
+          return room;
+        });
+      }catch(err){
+        console.warn("Falha ao iniciar relógio do dominó:",err);
+      }
+    }
+
+    function startDominoTurnTimer(turnUid,startedAtMs){
+      if(dominoTimerInterval)clearInterval(dominoTimerInterval);
+
+      const key=currentRoomId+"|"+turnUid+"|"+startedAtMs;
+      dominoTimeoutKey=null;
+
+      const tick=()=>{
+        const elapsed=Date.now()-Number(startedAtMs||Date.now());
+        const remaining=Math.max(0,DOMINO_TURN_MS-elapsed);
+        const seconds=Math.max(0,Math.ceil(remaining/1000));
+        const percent=Math.max(0,Math.min(100,(remaining/DOMINO_TURN_MS)*100));
+
+        const textEl=document.querySelector("#dominoTimerText");
+        const barEl=document.querySelector("#dominoTimerBar");
+        const wrapEl=document.querySelector("#dominoTimerWrap");
+
+        if(textEl)textEl.textContent=seconds+"s";
+        if(barEl)barEl.style.width=percent+"%";
+
+        if(wrapEl){
+          wrapEl.classList.toggle("warning",seconds<=5&&seconds>2);
+          wrapEl.classList.toggle("danger",seconds<=2);
+        }
+
+        if(remaining<=0){
+          if(dominoTimerInterval)clearInterval(dominoTimerInterval);
+          dominoTimerInterval=null;
+
+          if(dominoTimeoutKey!==key){
+            dominoTimeoutKey=key;
+            expireDominoTurn(turnUid,startedAtMs)
+              .catch(err=>console.error("Falha ao avançar turno do dominó:",err));
+          }
+        }
+      };
+
+      tick();
+      dominoTimerInterval=setInterval(tick,100);
+    }
+
+    async function expireDominoTurn(expectedTurnUid,expectedStartedAtMs){
+      if(!currentRoomId)return;
+
+      await mutateRoom(currentRoomId,room=>{
+        const s=structuredClone(room.state||{});
+        const order=room.playerOrder||[];
+
+        if(
+          room.game!=="domino" ||
+          s.winnerUid ||
+          s.turnUid!==expectedTurnUid ||
+          Number(s.turnStartedAtMs||0)!==Number(expectedStartedAtMs||0)
+        )return room;
+
+        if(Date.now()-Number(s.turnStartedAtMs||0)<DOMINO_TURN_MS)return room;
+
+        const timedOutName=room.players?.[s.turnUid]||"Jogador";
+        s.lastTimeout={uid:s.turnUid,name:timedOutName,at:Date.now()};
+        s.turnUid=nextDominoPlayer(order,s.turnUid);
+        s.turnStartedAtMs=Date.now();
+        room.state=s;
+        return room;
+      });
     }
 
     function tileInner(tile){
@@ -3494,6 +3596,7 @@
         const next=nextDominoPlayer(order,user.uid);
         s.winnerUid=winner;
         s.turnUid=winner?null:next;
+        s.turnStartedAtMs=winner?null:Date.now();
         room.state=s;
         room.status=winner?"finished":"playing";
         return room;
@@ -3518,8 +3621,10 @@
         if((s.boneyard||[]).length){
           hand.push(s.boneyard.shift());
           s.hands[user.uid]=hand;
+          s.turnStartedAtMs=Date.now();
         }else{
           s.turnUid=nextDominoPlayer(order,user.uid);
+          s.turnStartedAtMs=Date.now();
         }
 
         room.state=s;
