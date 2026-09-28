@@ -15,6 +15,7 @@
       --bg:#f8fafd;
       --surface:#ffffff;
       --surface-container:#f0f4f9;
+      --surface-container-low:#f7f9fc;
       --surface-container-high:#e9eef6;
       --text:#1f1f1f;
       --muted:#5f6368;
@@ -38,6 +39,7 @@
       --bg:#131314;
       --surface:#1e1f20;
       --surface-container:#252627;
+      --surface-container-low:#191a1b;
       --surface-container-high:#2d2f31;
       --text:#e3e3e3;
       --muted:#c4c7c5;
@@ -55,6 +57,30 @@
       --danger-bg:#8c1d18;
       --shadow:0 1px 2px rgba(0,0,0,.35);
     }
+
+    html[data-theme="dark"] .lunch{background:#4d3900;color:#ffe08a}
+    html[data-theme="dark"] .paid_bathroom{background:#47215f;color:#e9b9ff}
+    html[data-theme="dark"] .smoke{background:#123c52;color:#9bdcff}
+    html[data-theme="dark"] .smoking{background:#4b2a12;color:#ffc58f}
+    html[data-theme="dark"] .away{background:#292c62;color:#c8c9ff}
+    html[data-theme="dark"] .complexity-badge.standard{background:#123d22;color:#9be4ae}
+    html[data-theme="dark"] .complexity-badge.moderate{background:#4d3900;color:#ffe08a}
+    html[data-theme="dark"] .complexity-badge.critical{background:#5a211d;color:#ffc1bc}
+    html[data-theme="dark"] .history-item,
+    html[data-theme="dark"] .person,
+    html[data-theme="dark"] .queued-client{color:var(--text)}
+    html[data-theme="dark"] .history-title,
+    html[data-theme="dark"] .history-details,
+    html[data-theme="dark"] .person-name,
+    html[data-theme="dark"] .queue-chat-text{color:var(--text)}
+    html[data-theme="dark"] .queue-chat-message.me{color:var(--on-primary-container)}
+    html[data-theme="dark"] .queue-chat-message.me .queue-chat-meta strong,
+    html[data-theme="dark"] .queue-chat-message.me .queue-chat-text{color:var(--on-primary-container)}
+    html[data-theme="dark"] select,
+    html[data-theme="dark"] input,
+    html[data-theme="dark"] textarea{background:var(--surface);color:var(--text);border-color:var(--border-strong)}
+    html[data-theme="dark"] option{background:var(--surface);color:var(--text)}
+    html[data-theme="dark"] ::placeholder{color:#9aa0a6;opacity:1}
 
     *{box-sizing:border-box}
     html,body{margin:0;min-height:100%}
