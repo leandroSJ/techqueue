@@ -281,6 +281,36 @@
       margin:16px 0;padding:12px;border-radius:14px;
       background:var(--primary-container);font-weight:700;
     }
+    .hangman-word-dialog{width:min(94vw,520px)}
+    .hangman-modal-icon{font-size:1.6rem}
+    .hangman-modal-word{
+      margin:14px 0 10px;
+      padding:12px;
+      border:1px solid var(--border);
+      border-radius:12px;
+      background:var(--surface-2);
+      font-size:clamp(1.15rem,4vw,1.65rem);
+      letter-spacing:.16rem;
+      overflow-wrap:anywhere;
+    }
+    .hangman-modal-timer{
+      margin:8px 0 14px;
+      font-size:1rem;
+    }
+    .hangman-modal-timer strong{font-size:1.25rem}
+    .hangman-modal-form{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px}
+    .hangman-modal-form input{
+      min-width:0;
+      border:1px solid var(--border);
+      border-radius:10px;
+      padding:10px 12px;
+      background:var(--surface);
+      color:var(--text);
+    }
+    @media(max-width:560px){
+      .hangman-modal-form{grid-template-columns:1fr}
+      .hangman-modal-form .btn{width:100%}
+    }
 
     .game-chat-form{
       display:grid;
@@ -957,6 +987,22 @@
     </main>
   </div>
 
+  <dialog id="hangmanWordDialog" class="winner-dialog hangman-word-dialog">
+    <div class="winner-dialog-body">
+      <div class="winner-crown hangman-modal-icon" aria-hidden="true">?</div>
+      <div class="winner-kicker">Forca · resposta final</div>
+      <h2 id="hangmanWordDialogTitle">Hora de responder</h2>
+      <p id="hangmanWordDialogText" class="muted"></p>
+      <div id="hangmanWordMasked" class="hangman-modal-word"></div>
+      <div class="hangman-modal-timer">Tempo: <strong id="hangmanWordTimer">10s</strong></div>
+      <form id="hangmanWordDialogForm" class="hangman-modal-form">
+        <input id="hangmanWordDialogInput" type="text" maxlength="80" autocomplete="off" placeholder="Digite a palavra ou expressão" required>
+        <button class="btn btn-primary" type="submit">Responder</button>
+      </form>
+      <div id="hangmanWordWaiting" class="muted hidden"></div>
+    </div>
+  </dialog>
+
   <dialog id="winnerDialog" class="winner-dialog">
     <div class="winner-dialog-body">
       <div class="winner-crown" aria-hidden="true">★</div>
@@ -1152,7 +1198,7 @@
     const loginView=document.querySelector("#loginView"),appView=document.querySelector("#appView"),lobbyView=document.querySelector("#lobbyView"),roomView=document.querySelector("#roomView");
     const roomsList=document.querySelector("#roomsList"),roomTitle=document.querySelector("#roomTitle"),roomCode=document.querySelector("#roomCode"),playersEl=document.querySelector("#players"),gameRoot=document.querySelector("#gameRoot"),gameChatMessages=document.querySelector("#gameChatMessages"),gameChatForm=document.querySelector("#gameChatForm"),gameChatInput=document.querySelector("#gameChatInput"),gameChatSendBtn=document.querySelector("#gameChatSendBtn"),gameChatSoundSelect=document.querySelector("#gameChatSoundSelect"),gameChatSoundBtn=document.querySelector("#gameChatSoundBtn"),chatCount=document.querySelector("#chatCount"),lobbyGameChatMessages=document.querySelector("#lobbyGameChatMessages"),lobbyChatForm=document.querySelector("#lobbyChatForm"),lobbyChatInput=document.querySelector("#lobbyChatInput"),lobbyChatSendBtn=document.querySelector("#lobbyChatSendBtn"),lobbyChatSoundSelect=document.querySelector("#lobbyChatSoundSelect"),lobbyChatSoundBtn=document.querySelector("#lobbyChatSoundBtn"),lobbyChatCount=document.querySelector("#lobbyChatCount");
     const restartBtn=document.querySelector("#restartBtn"),closeRoomBtn=document.querySelector("#closeRoomBtn"),leaveBtn=document.querySelector("#leaveBtn"),googleBtn=document.querySelector("#googleBtn"),loginError=document.querySelector("#loginError"),logoutBtn=document.querySelector("#logoutBtn"),themeBtn=document.querySelector("#themeBtn"),gameError=document.querySelector("#gameError"),gameToast=document.querySelector("#gameToast");
-    const gamesMenuBtn=document.querySelector("#gamesMenuBtn"),gamesHeaderMenu=document.querySelector("#gamesHeaderMenu"),gameWalletXp=document.querySelector("#gameWalletXp"),betSelect=document.querySelector("#betSelect"),winnerDialog=document.querySelector("#winnerDialog"),winnerDialogTitle=document.querySelector("#winnerDialogTitle"),winnerDialogText=document.querySelector("#winnerDialogText"),winnerDialogReward=document.querySelector("#winnerDialogReward"),winnerDialogClose=document.querySelector("#winnerDialogClose");
+    const gamesMenuBtn=document.querySelector("#gamesMenuBtn"),gamesHeaderMenu=document.querySelector("#gamesHeaderMenu"),gameWalletXp=document.querySelector("#gameWalletXp"),betSelect=document.querySelector("#betSelect"),winnerDialog=document.querySelector("#winnerDialog"),winnerDialogTitle=document.querySelector("#winnerDialogTitle"),winnerDialogText=document.querySelector("#winnerDialogText"),winnerDialogReward=document.querySelector("#winnerDialogReward"),winnerDialogClose=document.querySelector("#winnerDialogClose"),hangmanWordDialog=document.querySelector("#hangmanWordDialog"),hangmanWordDialogTitle=document.querySelector("#hangmanWordDialogTitle"),hangmanWordDialogText=document.querySelector("#hangmanWordDialogText"),hangmanWordMasked=document.querySelector("#hangmanWordMasked"),hangmanWordTimer=document.querySelector("#hangmanWordTimer"),hangmanWordDialogForm=document.querySelector("#hangmanWordDialogForm"),hangmanWordDialogInput=document.querySelector("#hangmanWordDialogInput"),hangmanWordWaiting=document.querySelector("#hangmanWordWaiting");
 
     let user=null,dayState=null,rooms=[],currentRoomId=null,currentRoom=null,unsubDay=null,unsubBan=null,unsubWallet=null,walletBalance=null,selectedChecker=null,selectedDominoIndex=null,drawing=false,activeStroke=[];
     let dominoTimerInterval=null,dominoTimeoutKey=null;
@@ -1162,6 +1208,8 @@
     const seenGameChatSoundIds=new Set();
     const gameChatAudio=new Audio();
     let seenHangmanActionId=null;
+    let hangmanAnswerTimerInterval=null;
+    let hangmanAnswerTimeoutKey=null;
     let seenLudoRollId=null;
     let seenLudoMoveId=null;
     let ludoAnimationRun=0;
