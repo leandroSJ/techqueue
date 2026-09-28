@@ -3545,7 +3545,7 @@
           if(
             room.game!=="hangman" ||
             s.championUid ||
-            hangmanRemainingLetters(s)>5 ||
+            hangmanRemainingLetters(s)>3 ||
             s.answerDeadlineMs
           )return room;
 
@@ -3598,7 +3598,7 @@
           s.championUid ||
           s.turnUid!==expectedTurnUid ||
           Number(s.answerDeadlineMs||0)!==Number(expectedDeadlineMs||0) ||
-          hangmanRemainingLetters(s)>5 ||
+          hangmanRemainingLetters(s)>3 ||
           Date.now()<Number(s.answerDeadlineMs||0)
         )return room;
 
@@ -3622,7 +3622,7 @@
 
     function syncHangmanAnswerModal(state,isMyTurn,turnName){
       const remaining=hangmanRemainingLetters(state);
-      const finalMode=!state.championUid&&remaining<=5;
+      const finalMode=!state.championUid&&remaining<=3;
 
       if(!finalMode){
         stopHangmanAnswerTimer();
@@ -3676,7 +3676,7 @@
       const turnName=s.turnUid?currentRoom.players?.[s.turnUid]:"";
       const revealedClues=(s.clueWords||[]).slice(0,Math.max(1,Number(s.clueCount||1)));
       const remainingLetters=hangmanRemainingLetters(s);
-      const finalAnswerMode=!s.championUid&&remainingLetters<=5;
+      const finalAnswerMode=!s.championUid&&remainingLetters<=3;
 
       maybeShowHangmanAction(s.lastAction);
 
@@ -3703,7 +3703,7 @@
           <div>${revealedClues.map(clue=>escapeHtml(clue)).join(" · ")}</div>
           <div class="small muted" style="margin-top:5px">
             ${finalAnswerMode
-              ?"Com 5 letras ou menos faltando, a rodada entra no modo de resposta final."
+              ?"Com 3 letras ou menos faltando, a rodada entra no modo de resposta final."
               :"Uma nova pista é revelada a cada jogada, até acabar a lista."
             }
           </div>
@@ -3829,7 +3829,7 @@
         // Regra clássica: acertou a letra, continua jogando; errou, passa a vez.
         s.turnUid=hit?user.uid:nextUid;
         const remainingLetters=[...word].filter(ch=>/[a-z]/.test(ch)&&!guessed.has(ch)).length;
-        s.answerDeadlineMs=remainingLetters<=5?Date.now()+10000:null;
+        s.answerDeadlineMs=remainingLetters<=3?Date.now()+10000:null;
         room.state=s;
         room.status="playing";
         return room;
