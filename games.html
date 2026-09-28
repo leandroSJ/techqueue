@@ -2912,9 +2912,45 @@
     }
     function drawStroke(ctx,pts){if(pts.length<2)return;ctx.beginPath();ctx.moveTo(pts[0].x,pts[0].y);for(let i=1;i<pts.length;i++)ctx.lineTo(pts[i].x,pts[i].y);ctx.stroke()}
     async function submitGuess(e){
-      e.preventDefault();const input=document.querySelector("#guessInput"),text=input.value.trim();if(!text)return;
-      await mutateRoom(currentRoomId,room=>{const s={...room.state};if(s.winnerUid)return room;const guesses=[...(s.guesses||[]),{uid:user.uid,name:displayName(),text,at:Date.now()}].slice(-30),correct=normalize(text)===normalize(s.word||"");room.state={...s,guesses,winnerUid:correct?user.uid:null,winnerName:correct?displayName():null};room.status=correct?"finished":"playing";return room});
+      e.preventDefault();
+      const input=document.querySelector("#guessInput");
+      const text=input.value.trim();
+      if(!text)return;
+
+      let wasCorrect=false;
+      let wrongCount=0;
+
+      await mutateRoom(currentRoomId,room=>{
+        const s={...room.state};
+        if(s.winnerUid||s.drawerUid===user.uid)return room;
+
+        const correct=normalize(text)===normalize(s.word||"");
+        wasCorrect=correct;
+
+        const guesses=[
+          ...(s.guesses||[]),
+          {uid:user.uid,name:displayName(),text,correct,at:Date.now()}
+        ].slice(-30);
+
+        wrongCount=guesses.filter(guess=>guess.uid===user.uid&&guess.correct===false).length;
+
+        room.state={
+          ...s,
+          guesses,
+          winnerUid:correct?user.uid:null,
+          winnerName:correct?displayName():null
+        };
+        room.status=correct?"finished":"playing";
+        return room;
+      });
+
       input.value="";
+
+      if(!wasCorrect&&wrongCount<=3){
+        showGameToastMessage("Palpite errado. Dica "+wrongCount+" de 3 liberada.");
+      }else if(!wasCorrect&&wrongCount>3){
+        showGameToastMessage("Palpite errado. Você já usou as 3 dicas.");
+      }
     }
     function normalize(v){return String(v).normalize("NFD").replace(/[\u0300-\u036f]/g,"").trim().toLowerCase()}
 
