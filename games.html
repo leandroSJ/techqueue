@@ -1170,30 +1170,894 @@
 
     const HANGMAN_LEVELS = [
       [
-        {answer:"abacaxi",category:"Fruta",clues:["fruta","tropical","coroa","amarela","doce"]},
-        {answer:"girafa",category:"Animal",clues:["animal","africa","pescoco","alto","manchas"]},
-        {answer:"pipoca",category:"Comida",clues:["milho","cinema","estoura","salgada","lanche"]},
-        {answer:"foguete",category:"Espaço",clues:["espaco","lancamento","motor","ceu","orbita"]}
+            {
+                  "answer": "abacaxi",
+                  "category": "Fruta",
+                  "clues": [
+                        "fruta",
+                        "tropical",
+                        "coroa",
+                        "amarela",
+                        "doce"
+                  ]
+            },
+            {
+                  "answer": "girafa",
+                  "category": "Animal",
+                  "clues": [
+                        "animal",
+                        "africa",
+                        "pescoco",
+                        "alto",
+                        "manchas"
+                  ]
+            },
+            {
+                  "answer": "pipoca",
+                  "category": "Comida",
+                  "clues": [
+                        "milho",
+                        "cinema",
+                        "estoura",
+                        "salgada",
+                        "lanche"
+                  ]
+            },
+            {
+                  "answer": "foguete",
+                  "category": "Espaço",
+                  "clues": [
+                        "espaco",
+                        "lancamento",
+                        "motor",
+                        "ceu",
+                        "orbita"
+                  ]
+            },
+            {
+                  "answer": "banana",
+                  "category": "Fruta",
+                  "clues": [
+                        "fruta",
+                        "amarela",
+                        "cacho",
+                        "macaco",
+                        "casca"
+                  ]
+            },
+            {
+                  "answer": "elefante",
+                  "category": "Animal",
+                  "clues": [
+                        "animal",
+                        "tromba",
+                        "grande",
+                        "africa",
+                        "marfim"
+                  ]
+            },
+            {
+                  "answer": "janela",
+                  "category": "Casa",
+                  "clues": [
+                        "vidro",
+                        "parede",
+                        "abre",
+                        "cortina",
+                        "vista"
+                  ]
+            },
+            {
+                  "answer": "cadeira",
+                  "category": "Objeto",
+                  "clues": [
+                        "sentar",
+                        "quatro pernas",
+                        "mesa",
+                        "encosto",
+                        "movel"
+                  ]
+            },
+            {
+                  "answer": "chuveiro",
+                  "category": "Casa",
+                  "clues": [
+                        "banho",
+                        "agua",
+                        "banheiro",
+                        "quente",
+                        "frio"
+                  ]
+            },
+            {
+                  "answer": "sorvete",
+                  "category": "Comida",
+                  "clues": [
+                        "gelado",
+                        "casquinha",
+                        "doce",
+                        "verao",
+                        "sabor"
+                  ]
+            },
+            {
+                  "answer": "tartaruga",
+                  "category": "Animal",
+                  "clues": [
+                        "casco",
+                        "lenta",
+                        "reptil",
+                        "mar",
+                        "longeva"
+                  ]
+            },
+            {
+                  "answer": "violao",
+                  "category": "Música",
+                  "clues": [
+                        "cordas",
+                        "musica",
+                        "instrumento",
+                        "tocar",
+                        "madeira"
+                  ]
+            },
+            {
+                  "answer": "telefone",
+                  "category": "Objeto",
+                  "clues": [
+                        "ligacao",
+                        "falar",
+                        "numero",
+                        "celular",
+                        "comunicacao"
+                  ]
+            },
+            {
+                  "answer": "mochila",
+                  "category": "Objeto",
+                  "clues": [
+                        "costas",
+                        "escola",
+                        "alcas",
+                        "guardar",
+                        "viagem"
+                  ]
+            },
+            {
+                  "answer": "coelho",
+                  "category": "Animal",
+                  "clues": [
+                        "orelhas",
+                        "cenoura",
+                        "peludo",
+                        "salta",
+                        "toca"
+                  ]
+            },
+            {
+                  "answer": "melancia",
+                  "category": "Fruta",
+                  "clues": [
+                        "verde",
+                        "vermelha",
+                        "sementes",
+                        "grande",
+                        "suco"
+                  ]
+            },
+            {
+                  "answer": "sapato",
+                  "category": "Roupa",
+                  "clues": [
+                        "pe",
+                        "calcar",
+                        "cadarco",
+                        "par",
+                        "andar"
+                  ]
+            },
+            {
+                  "answer": "estrela",
+                  "category": "Espaço",
+                  "clues": [
+                        "ceu",
+                        "brilha",
+                        "noite",
+                        "cinco pontas",
+                        "universo"
+                  ]
+            },
+            {
+                  "answer": "escada",
+                  "category": "Casa",
+                  "clues": [
+                        "degraus",
+                        "subir",
+                        "descer",
+                        "andar",
+                        "corrimao"
+                  ]
+            },
+            {
+                  "answer": "geladeira",
+                  "category": "Casa",
+                  "clues": [
+                        "frio",
+                        "cozinha",
+                        "comida",
+                        "porta",
+                        "conservar"
+                  ]
+            }
       ],
       [
-        {answer:"tempestade",category:"Natureza",clues:["chuva","vento","trovao","nuvem","raio"]},
-        {answer:"astronauta",category:"Profissão",clues:["espaco","traje","nasa","orbita","lua"]},
-        {answer:"bicicleta",category:"Transporte",clues:["duas","rodas","pedal","guidom","ciclista"]},
-        {answer:"dinossauro",category:"História",clues:["prehistoria","fossil","reptil","extinto","jurassico"]}
+            {
+                  "answer": "tempestade",
+                  "category": "Natureza",
+                  "clues": [
+                        "chuva",
+                        "vento",
+                        "trovao",
+                        "nuvem",
+                        "raio"
+                  ]
+            },
+            {
+                  "answer": "astronauta",
+                  "category": "Profissão",
+                  "clues": [
+                        "espaco",
+                        "traje",
+                        "nasa",
+                        "orbita",
+                        "lua"
+                  ]
+            },
+            {
+                  "answer": "bicicleta",
+                  "category": "Transporte",
+                  "clues": [
+                        "duas rodas",
+                        "pedal",
+                        "guidom",
+                        "ciclista",
+                        "corrente"
+                  ]
+            },
+            {
+                  "answer": "dinossauro",
+                  "category": "História",
+                  "clues": [
+                        "prehistoria",
+                        "fossil",
+                        "reptil",
+                        "extinto",
+                        "jurassico"
+                  ]
+            },
+            {
+                  "answer": "computador",
+                  "category": "Tecnologia",
+                  "clues": [
+                        "teclado",
+                        "monitor",
+                        "programa",
+                        "internet",
+                        "processador"
+                  ]
+            },
+            {
+                  "answer": "helicoptero",
+                  "category": "Transporte",
+                  "clues": [
+                        "voa",
+                        "helices",
+                        "piloto",
+                        "resgate",
+                        "ceu"
+                  ]
+            },
+            {
+                  "answer": "biblioteca",
+                  "category": "Lugar",
+                  "clues": [
+                        "livros",
+                        "silencio",
+                        "leitura",
+                        "estantes",
+                        "emprestimo"
+                  ]
+            },
+            {
+                  "answer": "microfone",
+                  "category": "Objeto",
+                  "clues": [
+                        "voz",
+                        "cantar",
+                        "palco",
+                        "som",
+                        "gravar"
+                  ]
+            },
+            {
+                  "answer": "semáforo",
+                  "category": "Trânsito",
+                  "clues": [
+                        "vermelho",
+                        "amarelo",
+                        "verde",
+                        "rua",
+                        "carros"
+                  ]
+            },
+            {
+                  "answer": "cachoeira",
+                  "category": "Natureza",
+                  "clues": [
+                        "agua",
+                        "queda",
+                        "rio",
+                        "pedras",
+                        "natureza"
+                  ]
+            },
+            {
+                  "answer": "travesseiro",
+                  "category": "Casa",
+                  "clues": [
+                        "dormir",
+                        "cabeca",
+                        "cama",
+                        "macio",
+                        "fronha"
+                  ]
+            },
+            {
+                  "answer": "ventilador",
+                  "category": "Casa",
+                  "clues": [
+                        "vento",
+                        "helices",
+                        "calor",
+                        "gira",
+                        "tomada"
+                  ]
+            },
+            {
+                  "answer": "ambulancia",
+                  "category": "Transporte",
+                  "clues": [
+                        "sirene",
+                        "hospital",
+                        "emergencia",
+                        "socorro",
+                        "veiculo"
+                  ]
+            },
+            {
+                  "answer": "professor",
+                  "category": "Profissão",
+                  "clues": [
+                        "escola",
+                        "ensina",
+                        "aula",
+                        "aluno",
+                        "quadro"
+                  ]
+            },
+            {
+                  "answer": "carteiro",
+                  "category": "Profissão",
+                  "clues": [
+                        "carta",
+                        "entrega",
+                        "correio",
+                        "rua",
+                        "encomenda"
+                  ]
+            },
+            {
+                  "answer": "oceano",
+                  "category": "Natureza",
+                  "clues": [
+                        "agua",
+                        "mar",
+                        "profundo",
+                        "ondas",
+                        "planeta"
+                  ]
+            },
+            {
+                  "answer": "planeta",
+                  "category": "Espaço",
+                  "clues": [
+                        "orbita",
+                        "espaco",
+                        "terra",
+                        "redondo",
+                        "sistema"
+                  ]
+            },
+            {
+                  "answer": "crocodilo",
+                  "category": "Animal",
+                  "clues": [
+                        "reptil",
+                        "dentes",
+                        "rio",
+                        "grande",
+                        "predador"
+                  ]
+            },
+            {
+                  "answer": "abajur",
+                  "category": "Objeto",
+                  "clues": [
+                        "luz",
+                        "mesa",
+                        "lampada",
+                        "quarto",
+                        "cúpula"
+                  ]
+            },
+            {
+                  "answer": "escorregador",
+                  "category": "Parque",
+                  "clues": [
+                        "crianca",
+                        "parque",
+                        "descer",
+                        "brinquedo",
+                        "alto"
+                  ]
+            }
       ],
       [
-        {answer:"bola de cristal",category:"Expressão/objeto",clues:["vidente","futuro","redonda","previsao","misterio"]},
-        {answer:"guarda chuva",category:"Objeto",clues:["chuva","protege","abre","cabo","temporal"]},
-        {answer:"cachorro quente",category:"Comida",clues:["lanche","pao","salsicha","molho","rua"]},
-        {answer:"parque de diversoes",category:"Lugar",clues:["brinquedos","roda","ingresso","familia","montanha"]}
+            {
+                  "answer": "bola de cristal",
+                  "category": "Expressão/objeto",
+                  "clues": [
+                        "vidente",
+                        "futuro",
+                        "redonda",
+                        "previsao",
+                        "misterio"
+                  ]
+            },
+            {
+                  "answer": "guarda chuva",
+                  "category": "Objeto",
+                  "clues": [
+                        "chuva",
+                        "protege",
+                        "abre",
+                        "cabo",
+                        "temporal"
+                  ]
+            },
+            {
+                  "answer": "cachorro quente",
+                  "category": "Comida",
+                  "clues": [
+                        "lanche",
+                        "pao",
+                        "salsicha",
+                        "molho",
+                        "rua"
+                  ]
+            },
+            {
+                  "answer": "parque de diversoes",
+                  "category": "Lugar",
+                  "clues": [
+                        "brinquedos",
+                        "roda",
+                        "ingresso",
+                        "familia",
+                        "montanha"
+                  ]
+            },
+            {
+                  "answer": "arco iris",
+                  "category": "Natureza",
+                  "clues": [
+                        "cores",
+                        "chuva",
+                        "ceu",
+                        "sol",
+                        "sete"
+                  ]
+            },
+            {
+                  "answer": "estrela cadente",
+                  "category": "Espaço",
+                  "clues": [
+                        "ceu",
+                        "noite",
+                        "pedido",
+                        "rapida",
+                        "luz"
+                  ]
+            },
+            {
+                  "answer": "cartao de credito",
+                  "category": "Finanças",
+                  "clues": [
+                        "compra",
+                        "limite",
+                        "fatura",
+                        "senha",
+                        "banco"
+                  ]
+            },
+            {
+                  "answer": "controle remoto",
+                  "category": "Objeto",
+                  "clues": [
+                        "televisao",
+                        "botoes",
+                        "canal",
+                        "pilha",
+                        "distancia"
+                  ]
+            },
+            {
+                  "answer": "bolo de aniversario",
+                  "category": "Comida",
+                  "clues": [
+                        "festa",
+                        "vela",
+                        "parabens",
+                        "doce",
+                        "idade"
+                  ]
+            },
+            {
+                  "answer": "ponto de onibus",
+                  "category": "Lugar",
+                  "clues": [
+                        "transporte",
+                        "esperar",
+                        "rua",
+                        "passageiro",
+                        "coletivo"
+                  ]
+            },
+            {
+                  "answer": "maquina de lavar",
+                  "category": "Casa",
+                  "clues": [
+                        "roupa",
+                        "agua",
+                        "sabao",
+                        "centrifugar",
+                        "lavanderia"
+                  ]
+            },
+            {
+                  "answer": "copo de agua",
+                  "category": "Objeto",
+                  "clues": [
+                        "beber",
+                        "liquido",
+                        "vidro",
+                        "sede",
+                        "mesa"
+                  ]
+            },
+            {
+                  "answer": "posto de gasolina",
+                  "category": "Lugar",
+                  "clues": [
+                        "combustivel",
+                        "carro",
+                        "bomba",
+                        "frentista",
+                        "tanque"
+                  ]
+            },
+            {
+                  "answer": "bola de futebol",
+                  "category": "Esporte",
+                  "clues": [
+                        "chute",
+                        "gol",
+                        "campo",
+                        "redonda",
+                        "jogo"
+                  ]
+            },
+            {
+                  "answer": "mesa de jantar",
+                  "category": "Casa",
+                  "clues": [
+                        "comida",
+                        "cadeiras",
+                        "refeicao",
+                        "pratos",
+                        "familia"
+                  ]
+            },
+            {
+                  "answer": "porta retrato",
+                  "category": "Objeto",
+                  "clues": [
+                        "foto",
+                        "moldura",
+                        "mesa",
+                        "lembranca",
+                        "imagem"
+                  ]
+            },
+            {
+                  "answer": "caixa de ferramentas",
+                  "category": "Objeto",
+                  "clues": [
+                        "martelo",
+                        "chave",
+                        "conserto",
+                        "oficina",
+                        "guardar"
+                  ]
+            },
+            {
+                  "answer": "pista de corrida",
+                  "category": "Esporte",
+                  "clues": [
+                        "velocidade",
+                        "voltas",
+                        "largada",
+                        "chegada",
+                        "carro"
+                  ]
+            },
+            {
+                  "answer": "sala de aula",
+                  "category": "Lugar",
+                  "clues": [
+                        "escola",
+                        "alunos",
+                        "professor",
+                        "quadro",
+                        "carteiras"
+                  ]
+            },
+            {
+                  "answer": "rio de janeiro",
+                  "category": "Lugar",
+                  "clues": [
+                        "cidade",
+                        "praia",
+                        "cristo",
+                        "brasil",
+                        "carioca"
+                  ]
+            }
       ],
       [
-        {answer:"maquina do tempo",category:"Ficção",clues:["viagem","passado","futuro","relogio","ficcao"]},
-        {answer:"segredo a sete chaves",category:"Expressão",clues:["misterio","guardar","chaves","esconder","sigilo"]},
-        {answer:"tempestade em copo dagua",category:"Expressão",clues:["exagero","problema","pequeno","agua","expressao"]},
-        {answer:"quem espera sempre alcanca",category:"Ditado",clues:["paciencia","tempo","objetivo","ditado","persistencia"]}
+            {
+                  "answer": "maquina do tempo",
+                  "category": "Ficção",
+                  "clues": [
+                        "viagem",
+                        "passado",
+                        "futuro",
+                        "relogio",
+                        "ficcao"
+                  ]
+            },
+            {
+                  "answer": "segredo a sete chaves",
+                  "category": "Expressão",
+                  "clues": [
+                        "misterio",
+                        "guardar",
+                        "chaves",
+                        "esconder",
+                        "sigilo"
+                  ]
+            },
+            {
+                  "answer": "tempestade em copo dagua",
+                  "category": "Expressão",
+                  "clues": [
+                        "exagero",
+                        "problema",
+                        "pequeno",
+                        "agua",
+                        "expressao"
+                  ]
+            },
+            {
+                  "answer": "quem espera sempre alcanca",
+                  "category": "Ditado",
+                  "clues": [
+                        "paciencia",
+                        "tempo",
+                        "objetivo",
+                        "ditado",
+                        "persistencia"
+                  ]
+            },
+            {
+                  "answer": "agua mole em pedra dura",
+                  "category": "Ditado",
+                  "clues": [
+                        "persistencia",
+                        "pedra",
+                        "agua",
+                        "tempo",
+                        "ditado"
+                  ]
+            },
+            {
+                  "answer": "mais vale um passaro na mao",
+                  "category": "Ditado",
+                  "clues": [
+                        "seguranca",
+                        "ave",
+                        "mao",
+                        "escolha",
+                        "ditado"
+                  ]
+            },
+            {
+                  "answer": "cavalo dado nao se olha os dentes",
+                  "category": "Ditado",
+                  "clues": [
+                        "presente",
+                        "cavalo",
+                        "dentes",
+                        "gratidao",
+                        "ditado"
+                  ]
+            },
+            {
+                  "answer": "cada macaco no seu galho",
+                  "category": "Ditado",
+                  "clues": [
+                        "macaco",
+                        "arvore",
+                        "lugar",
+                        "cada um",
+                        "ditado"
+                  ]
+            },
+            {
+                  "answer": "de grao em grao a galinha enche o papo",
+                  "category": "Ditado",
+                  "clues": [
+                        "pouco a pouco",
+                        "galinha",
+                        "grao",
+                        "paciencia",
+                        "ditado"
+                  ]
+            },
+            {
+                  "answer": "quem com ferro fere com ferro sera ferido",
+                  "category": "Ditado",
+                  "clues": [
+                        "consequencia",
+                        "ferro",
+                        "acao",
+                        "retorno",
+                        "ditado"
+                  ]
+            },
+            {
+                  "answer": "a pressa e inimiga da perfeicao",
+                  "category": "Ditado",
+                  "clues": [
+                        "rapidez",
+                        "erro",
+                        "calma",
+                        "perfeicao",
+                        "ditado"
+                  ]
+            },
+            {
+                  "answer": "antes tarde do que nunca",
+                  "category": "Ditado",
+                  "clues": [
+                        "tempo",
+                        "atraso",
+                        "melhor",
+                        "fazer",
+                        "ditado"
+                  ]
+            },
+            {
+                  "answer": "quem nao arrisca nao petisca",
+                  "category": "Ditado",
+                  "clues": [
+                        "risco",
+                        "tentativa",
+                        "ganho",
+                        "coragem",
+                        "ditado"
+                  ]
+            },
+            {
+                  "answer": "casa de ferreiro espeto de pau",
+                  "category": "Ditado",
+                  "clues": [
+                        "ferreiro",
+                        "casa",
+                        "espeto",
+                        "contradicao",
+                        "ditado"
+                  ]
+            },
+            {
+                  "answer": "filho de peixe peixinho e",
+                  "category": "Ditado",
+                  "clues": [
+                        "familia",
+                        "peixe",
+                        "heranca",
+                        "parecido",
+                        "ditado"
+                  ]
+            },
+            {
+                  "answer": "santo de casa nao faz milagre",
+                  "category": "Ditado",
+                  "clues": [
+                        "casa",
+                        "santo",
+                        "milagre",
+                        "valor",
+                        "ditado"
+                  ]
+            },
+            {
+                  "answer": "uma mao lava a outra",
+                  "category": "Ditado",
+                  "clues": [
+                        "ajuda",
+                        "maos",
+                        "cooperação",
+                        "reciprocidade",
+                        "ditado"
+                  ]
+            },
+            {
+                  "answer": "quem canta seus males espanta",
+                  "category": "Ditado",
+                  "clues": [
+                        "musica",
+                        "cantar",
+                        "alegria",
+                        "problemas",
+                        "ditado"
+                  ]
+            },
+            {
+                  "answer": "devagar se vai ao longe",
+                  "category": "Ditado",
+                  "clues": [
+                        "calma",
+                        "distancia",
+                        "progresso",
+                        "tempo",
+                        "ditado"
+                  ]
+            },
+            {
+                  "answer": "nao julgue o livro pela capa",
+                  "category": "Ditado",
+                  "clues": [
+                        "aparencia",
+                        "livro",
+                        "capa",
+                        "julgar",
+                        "ditado"
+                  ]
+            }
       ]
-    ];
+];
 
     const loginView=document.querySelector("#loginView"),appView=document.querySelector("#appView"),lobbyView=document.querySelector("#lobbyView"),roomView=document.querySelector("#roomView");
     const roomsList=document.querySelector("#roomsList"),roomTitle=document.querySelector("#roomTitle"),roomCode=document.querySelector("#roomCode"),playersEl=document.querySelector("#players"),gameRoot=document.querySelector("#gameRoot"),gameChatMessages=document.querySelector("#gameChatMessages"),gameChatForm=document.querySelector("#gameChatForm"),gameChatInput=document.querySelector("#gameChatInput"),gameChatSendBtn=document.querySelector("#gameChatSendBtn"),gameChatSoundSelect=document.querySelector("#gameChatSoundSelect"),gameChatSoundBtn=document.querySelector("#gameChatSoundBtn"),chatCount=document.querySelector("#chatCount"),lobbyGameChatMessages=document.querySelector("#lobbyGameChatMessages"),lobbyChatForm=document.querySelector("#lobbyChatForm"),lobbyChatInput=document.querySelector("#lobbyChatInput"),lobbyChatSendBtn=document.querySelector("#lobbyChatSendBtn"),lobbyChatSoundSelect=document.querySelector("#lobbyChatSoundSelect"),lobbyChatSoundBtn=document.querySelector("#lobbyChatSoundBtn"),lobbyChatCount=document.querySelector("#lobbyChatCount");
@@ -2399,10 +3263,19 @@
       return{};
     }
 
-    function pickHangmanEntry(level){
+    function pickHangmanEntry(level,usedWords=[]){
       const safeLevel=Math.max(1,Math.min(HANGMAN_LEVELS.length,Number(level||1)));
-      const pool=HANGMAN_LEVELS[safeLevel-1];
-      return structuredClone(pool[Math.floor(Math.random()*pool.length)]);
+      const used=new Set((usedWords||[]).map(normalize));
+      const levelPool=HANGMAN_LEVELS[safeLevel-1];
+      let available=levelPool.filter(entry=>!used.has(normalize(entry.answer)));
+
+      if(!available.length){
+        const all=HANGMAN_LEVELS.flat();
+        available=all.filter(entry=>!used.has(normalize(entry.answer)));
+      }
+
+      if(!available.length)available=levelPool;
+      return structuredClone(available[Math.floor(Math.random()*available.length)]);
     }
 
     function createHangmanTournament(order){
@@ -2414,15 +3287,17 @@
         scores,
         round:1,
         startUid:active[0]||null,
-        lastAction:null
+        lastAction:null,
+        usedWords:[]
       });
     }
 
-    function createHangmanRound({activePlayers,eliminated,scores,round,startUid,lastAction}){
+    function createHangmanRound({activePlayers,eliminated,scores,round,startUid,lastAction,usedWords=[]}){
       const level=Math.max(1,Math.min(HANGMAN_LEVELS.length,Number(round||1)));
-      const entry=pickHangmanEntry(level);
+      const entry=pickHangmanEntry(level,usedWords);
       const playerErrors=Object.fromEntries((activePlayers||[]).map(uid=>[uid,0]));
       const start=(activePlayers||[]).includes(startUid)?startUid:(activePlayers||[])[0]||null;
+      const nextUsed=[...(usedWords||[]),normalize(entry.answer)].slice(-80);
 
       return{
         word:normalize(entry.answer),
@@ -2441,6 +3316,8 @@
         level,
         turnUid:start,
         championUid:null,
+        answerDeadlineMs:null,
+        usedWords:nextUsed,
         lastAction:lastAction||null
       };
     }
@@ -2503,7 +3380,8 @@
         scores:s.scores||{},
         round:Number(s.round||1)+1,
         startUid:nextStartUid||active[0]||null,
-        lastAction:action
+        lastAction:action,
+        usedWords:s.usedWords||[]
       });
       room.status="playing";
       return room;
