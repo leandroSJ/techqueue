@@ -408,7 +408,7 @@
       border-radius:9px;
       background:transparent;
       color:var(--text);
-      overflow:visible;
+      overflow:hidden;
     }
     .tile.double{
       width:46px;
@@ -417,6 +417,9 @@
       min-height:82px;
     }
     .domino-piece-img{
+      position:absolute;
+      left:50%;
+      top:50%;
       display:block;
       width:46px;
       height:82px;
@@ -424,8 +427,10 @@
       user-select:none;
       -webkit-user-drag:none;
       filter:drop-shadow(0 2px 3px rgba(0,0,0,.18));
+      transform:translate(-50%,-50%);
+      transform-origin:center;
     }
-    .tile:not(.double) .domino-piece-img{transform:rotate(90deg)}
+    .tile:not(.double) .domino-piece-img{transform:translate(-50%,-50%) rotate(90deg)}
     .domino-fallback{
       display:grid;
       grid-template-columns:1fr 1fr;
@@ -2132,7 +2137,7 @@
     const settlingBetRooms=new Set();
     const settlingRewardRooms=new Set();
     const BET_VALUES=[0,5,10,20,50,100,150,200];
-    const DOMINO_TURN_MS=20000;
+    const DOMINO_TURN_MS=120000;
     const GAME_PARTICIPATION_XP=10;
     const GAME_WINNER_BONUS_XP=20;
     const GAME_CHAT_SOUNDS=[
@@ -5054,11 +5059,11 @@
         <div class="turn">${winner?`${escapeHtml(winner)} bateu.`:`Vez de ${escapeHtml(turnName||"jogador")}`}</div>
         ${!winner?`
           <div id="dominoTimerWrap" class="domino-timer-wrap">
-            <div class="domino-timer-label">Tempo para jogar: <span id="dominoTimerText">20s</span></div>
+            <div class="domino-timer-label">Tempo para jogar: <span id="dominoTimerText">2:00</span></div>
             <div class="domino-timer-track"><div id="dominoTimerBar" class="domino-timer-bar"></div></div>
           </div>
         `:""}
-        ${s.lastTimeout?.name?`<div class="small muted" style="text-align:center;margin-bottom:8px">${escapeHtml(s.lastTimeout.name)} estourou os 20 segundos e perdeu a vez.</div>`:""}
+        ${s.lastTimeout?.name?`<div class="small muted" style="text-align:center;margin-bottom:8px">${escapeHtml(s.lastTimeout.name)} estourou os 2 minutos e perdeu a vez.</div>`:""}
 
         <div class="players" style="justify-content:center;margin:0 0 10px">
           ${(currentRoom.playerOrder||[]).map(uid=>`
@@ -5151,18 +5156,20 @@
         const elapsed=Date.now()-Number(startedAtMs||Date.now());
         const remaining=Math.max(0,DOMINO_TURN_MS-elapsed);
         const seconds=Math.max(0,Math.ceil(remaining/1000));
+        const minutes=Math.floor(seconds/60);
+        const displaySeconds=String(seconds%60).padStart(2,"0");
         const percent=Math.max(0,Math.min(100,(remaining/DOMINO_TURN_MS)*100));
 
         const textEl=document.querySelector("#dominoTimerText");
         const barEl=document.querySelector("#dominoTimerBar");
         const wrapEl=document.querySelector("#dominoTimerWrap");
 
-        if(textEl)textEl.textContent=seconds+"s";
+        if(textEl)textEl.textContent=minutes+":"+displaySeconds;
         if(barEl)barEl.style.width=percent+"%";
 
         if(wrapEl){
-          wrapEl.classList.toggle("warning",seconds<=5&&seconds>2);
-          wrapEl.classList.toggle("danger",seconds<=2);
+          wrapEl.classList.toggle("warning",seconds<=30&&seconds>10);
+          wrapEl.classList.toggle("danger",seconds<=10);
         }
 
         if(remaining<=0){
