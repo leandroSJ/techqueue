@@ -983,12 +983,15 @@
     ];
 
     const loginView=document.querySelector("#loginView"),appView=document.querySelector("#appView"),lobbyView=document.querySelector("#lobbyView"),roomView=document.querySelector("#roomView");
-    const roomsList=document.querySelector("#roomsList"),roomTitle=document.querySelector("#roomTitle"),roomCode=document.querySelector("#roomCode"),playersEl=document.querySelector("#players"),gameRoot=document.querySelector("#gameRoot"),gameChatMessages=document.querySelector("#gameChatMessages"),gameChatForm=document.querySelector("#gameChatForm"),gameChatInput=document.querySelector("#gameChatInput"),gameChatSendBtn=document.querySelector("#gameChatSendBtn"),gameChatSoundSelect=document.querySelector("#gameChatSoundSelect"),gameChatSoundBtn=document.querySelector("#gameChatSoundBtn"),chatCount=document.querySelector("#chatCount");
+    const roomsList=document.querySelector("#roomsList"),roomTitle=document.querySelector("#roomTitle"),roomCode=document.querySelector("#roomCode"),playersEl=document.querySelector("#players"),gameRoot=document.querySelector("#gameRoot"),gameChatMessages=document.querySelector("#gameChatMessages"),gameChatForm=document.querySelector("#gameChatForm"),gameChatInput=document.querySelector("#gameChatInput"),gameChatSendBtn=document.querySelector("#gameChatSendBtn"),gameChatSoundSelect=document.querySelector("#gameChatSoundSelect"),gameChatSoundBtn=document.querySelector("#gameChatSoundBtn"),chatCount=document.querySelector("#chatCount"),lobbyGameChatMessages=document.querySelector("#lobbyGameChatMessages"),lobbyChatForm=document.querySelector("#lobbyChatForm"),lobbyChatInput=document.querySelector("#lobbyChatInput"),lobbyChatSendBtn=document.querySelector("#lobbyChatSendBtn"),lobbyChatSoundSelect=document.querySelector("#lobbyChatSoundSelect"),lobbyChatSoundBtn=document.querySelector("#lobbyChatSoundBtn"),lobbyChatCount=document.querySelector("#lobbyChatCount");
     const restartBtn=document.querySelector("#restartBtn"),closeRoomBtn=document.querySelector("#closeRoomBtn"),leaveBtn=document.querySelector("#leaveBtn"),googleBtn=document.querySelector("#googleBtn"),loginError=document.querySelector("#loginError"),logoutBtn=document.querySelector("#logoutBtn"),themeBtn=document.querySelector("#themeBtn"),gameError=document.querySelector("#gameError"),gameToast=document.querySelector("#gameToast");
-    const gamesMenuBtn=document.querySelector("#gamesMenuBtn"),gamesHeaderMenu=document.querySelector("#gamesHeaderMenu"),gameWalletXp=document.querySelector("#gameWalletXp"),betSelect=document.querySelector("#betSelect");
+    const gamesMenuBtn=document.querySelector("#gamesMenuBtn"),gamesHeaderMenu=document.querySelector("#gamesHeaderMenu"),gameWalletXp=document.querySelector("#gameWalletXp"),betSelect=document.querySelector("#betSelect"),winnerDialog=document.querySelector("#winnerDialog"),winnerDialogTitle=document.querySelector("#winnerDialogTitle"),winnerDialogText=document.querySelector("#winnerDialogText"),winnerDialogReward=document.querySelector("#winnerDialogReward"),winnerDialogClose=document.querySelector("#winnerDialogClose");
 
     let user=null,dayState=null,rooms=[],currentRoomId=null,currentRoom=null,unsubDay=null,unsubBan=null,unsubWallet=null,walletBalance=null,selectedChecker=null,selectedDominoIndex=null,drawing=false,activeStroke=[];
     let dominoTimerInterval=null,dominoTimeoutKey=null;
+    let globalChatReady=false;
+    let winnerEventsReady=false;
+    let lastSeenWinnerEventId=null;
     const seenGameChatSoundIds=new Set();
     const gameChatAudio=new Audio();
     let seenHangmanActionId=null;
@@ -1002,8 +1005,11 @@
     let ludoSoundEnabled=true;
     let gameToastTimer=null;
     const settlingBetRooms=new Set();
+    const settlingRewardRooms=new Set();
     const BET_VALUES=[0,5,10,20,50,100,150,200];
     const DOMINO_TURN_MS=10000;
+    const GAME_PARTICIPATION_XP=10;
+    const GAME_WINNER_BONUS_XP=20;
     const GAME_CHAT_SOUNDS=[
       {id:"msn",label:"MSN - nova mensagem",file:"./assets/sounds/new-message-msn.mp3"},
       {id:"dbz",label:"Kakaroto, você é uma besta",file:"./assets/sounds/dbz-pt-br-kakaroto-voce-e-uma-besta.mp3"},
@@ -1128,11 +1134,11 @@
       return Date.now()+"-"+Math.random().toString(36).slice(2,7);
     }
 
-    if(gameChatSoundSelect){
-      gameChatSoundSelect.innerHTML=GAME_CHAT_SOUNDS
-        .map(sound=>`<option value="${sound.id}">${escapeHtml(sound.label)}</option>`)
-        .join("");
-    }
+    const gameSoundOptions=GAME_CHAT_SOUNDS
+      .map(sound=>`<option value="${sound.id}">${escapeHtml(sound.label)}</option>`)
+      .join("");
+    if(gameChatSoundSelect)gameChatSoundSelect.innerHTML=gameSoundOptions;
+    if(lobbyChatSoundSelect)lobbyChatSoundSelect.innerHTML=gameSoundOptions;
 
     googleBtn.addEventListener("click",async()=>{
       try{
@@ -1193,7 +1199,7 @@
       if(unsubDay)unsubDay();
       if(unsubBan)unsubBan();
       if(unsubWallet)unsubWallet();
-      unsubDay=null;unsubBan=null;unsubWallet=null;walletBalance=null;dayState=null;rooms=[];currentRoomId=null;currentRoom=null;
+      unsubDay=null;unsubBan=null;unsubWallet=null;walletBalance=null;dayState=null;rooms=[];currentRoomId=null;currentRoom=null;globalChatReady=false;winnerEventsReady=false;lastSeenWinnerEventId=null;seenGameChatSoundIds.clear();
     }
 
     function subscribeDay(){
@@ -1243,7 +1249,7 @@
         return `
           <div class="room-row">
             <div>
-              <strong>${escapeHtml(GAME_NAMES[r.game]||r.game)}${["domino","ludo"].includes(r.game) ? ` · ${Number(r.requiredPlayers||r.maxPlayers||2)} jogadores` : ""}</strong>
+              <strong>${escapeHtml(GAME_NAMES[r.game]||r.game)}${["domino","ludo","draw","hangman"].includes(r.game) ? ` · ${Number(r.requiredPlayers||r.maxPlayers||2)} jogadores` : ""}</strong>
               <div class="muted small">Criada por ${escapeHtml(r.hostName||"Jogador")} · ${(r.playerOrder||[]).length}/${r.requiredPlayers||r.maxPlayers||2}${betText}</div>
             </div>
             <div class="d-flex gap-2 flex-wrap">
@@ -1262,11 +1268,9 @@
         gameError.textContent="";
         if(create){
           const game=create.dataset.createGame;
-          const roomPlayers=game==="domino"
-            ? Number(create.dataset.dominoPlayers||2)
-            : game==="ludo"
-              ? Number(create.dataset.ludoPlayers||2)
-              : null;
+          const roomPlayers=["domino","ludo","draw","hangman"].includes(game)
+            ? Number(create.dataset.gamePlayers||2)
+            : null;
           await createRoom(game,roomPlayers,normalizeBet(betSelect?.value||0));
           return;
         }
@@ -1427,12 +1431,13 @@
       if(!user)return;
 
       const bet=normalizeBet(betAmount);
-      const requestedPlayers=["domino","ludo"].includes(game)
-        ? Math.max(2,Math.min(MAX_PLAYERS[game],Number(roomPlayers||2)))
+      const variablePlayers=["domino","ludo","draw","hangman"].includes(game);
+      const requestedPlayers=variablePlayers
+        ? Math.max(2,Math.min(4,Number(roomPlayers||2)))
         : MIN_PLAYERS[game];
 
       const requiredPlayers=requestedPlayers;
-      const maxPlayers=["domino","ludo"].includes(game)?requiredPlayers:MAX_PLAYERS[game];
+      const maxPlayers=variablePlayers?requiredPlayers:MAX_PLAYERS[game];
       const id=roomId();
       const players={[user.uid]:displayName()};
       const order=[user.uid];
@@ -1457,6 +1462,7 @@
         stakes:{[user.uid]:bet},
         betPot:bet,
         betSettled:false,
+        xpRewardSettled:false,
         createdAtMs:Date.now()
       };
 
@@ -1878,68 +1884,71 @@
       }
     }
 
+    function gameChatMessageHtml(message){
+      const mine=message.uid===user?.uid;
+      const sound=message.type==="sound"
+        ? GAME_CHAT_SOUNDS.find(item=>item.id===message.soundId)
+        : null;
+
+      return `
+        <div class="game-chat-message ${mine?"me":""}">
+          <div class="game-chat-meta">
+            <strong>${escapeHtml(message.name||"Jogador")}</strong>
+            <span>${escapeHtml(formatGameChatTime(message.createdAtMs))}</span>
+          </div>
+          ${sound
+            ? `<div class="game-chat-sound">
+                 <span>Som: ${escapeHtml(sound.label)}</span>
+                 <button type="button" data-replay-chat-sound="${sound.id}">Ouvir</button>
+               </div>`
+            : `<div class="game-chat-text">${escapeHtml(message.text||"")}</div>`
+          }
+        </div>
+      `;
+    }
+
     function renderGameChat(){
-      if(!gameChatMessages||!currentRoom)return;
+      const messages=Array.isArray(dayState?.gameChatMessages)?dayState.gameChatMessages:[];
 
-      const messages=Array.isArray(currentRoom.chatMessages)?currentRoom.chatMessages:[];
-      const isPlayer=(currentRoom.playerOrder||[]).includes(user?.uid);
-
-      if(chatCount)chatCount.textContent=String(messages.length);
-      if(gameChatInput)gameChatInput.disabled=!isPlayer;
-      if(gameChatSendBtn)gameChatSendBtn.disabled=!isPlayer;
-      if(gameChatSoundSelect)gameChatSoundSelect.disabled=!isPlayer;
-      if(gameChatSoundBtn)gameChatSoundBtn.disabled=!isPlayer;
-
-      if(!messages.length){
-        gameChatMessages.innerHTML='<div class="game-chat-empty">Nenhuma mensagem ainda. Mande a primeira.</div>';
-        return;
-      }
-
-      for(const message of messages){
-        if(message?.type==="sound"&&message.id&&!seenGameChatSoundIds.has(message.id)){
-          seenGameChatSoundIds.add(message.id);
-          playGameChatSound(message.soundId,false);
+      if(!globalChatReady){
+        for(const message of messages){
+          if(message?.type==="sound"&&message.id)seenGameChatSoundIds.add(message.id);
+        }
+        globalChatReady=true;
+      }else{
+        for(const message of messages){
+          if(message?.type==="sound"&&message.id&&!seenGameChatSoundIds.has(message.id)){
+            seenGameChatSoundIds.add(message.id);
+            if(message.uid!==user?.uid)playGameChatSound(message.soundId,false);
+          }
         }
       }
 
-      gameChatMessages.innerHTML=messages.map(message=>{
-        const mine=message.uid===user?.uid;
-        const sound=message.type==="sound"
-          ? GAME_CHAT_SOUNDS.find(item=>item.id===message.soundId)
-          : null;
+      const html=messages.length
+        ? messages.map(gameChatMessageHtml).join("")
+        : '<div class="game-chat-empty">Nenhuma mensagem ainda. Mande a primeira.</div>';
 
-        return `
-          <div class="game-chat-message ${mine?"me":""}">
-            <div class="game-chat-meta">
-              <strong>${escapeHtml(message.name||"Jogador")}</strong>
-              <span>${escapeHtml(formatGameChatTime(message.createdAtMs))}</span>
-            </div>
-            ${sound
-              ? `<div class="game-chat-sound">
-                   <span>Som: ${escapeHtml(sound.label)}</span>
-                   <button type="button" data-replay-chat-sound="${sound.id}">Ouvir</button>
-                 </div>`
-              : `<div class="game-chat-text">${escapeHtml(message.text||"")}</div>`
-            }
-          </div>
-        `;
-      }).join("");
+      for(const container of [gameChatMessages,lobbyGameChatMessages]){
+        if(!container)continue;
+        container.innerHTML=html;
+        container.scrollTop=container.scrollHeight;
+      }
 
-      gameChatMessages.scrollTop=gameChatMessages.scrollHeight;
+      if(chatCount)chatCount.textContent=String(messages.length);
+      if(lobbyChatCount)lobbyChatCount.textContent=String(messages.length);
+
+      for(const control of [gameChatInput,gameChatSendBtn,gameChatSoundSelect,gameChatSoundBtn,lobbyChatInput,lobbyChatSendBtn,lobbyChatSoundSelect,lobbyChatSoundBtn]){
+        if(control)control.disabled=!user;
+      }
     }
 
     async function sendGameChatMessage(rawText){
       const textValue=String(rawText||"").trim().slice(0,180);
-      if(!textValue||!currentRoomId||!user)return;
+      if(!textValue||!user)return;
 
       try{
-        await mutateRoom(currentRoomId,room=>{
-          const order=room.playerOrder||[];
-          if(!order.includes(user.uid)){
-            throw new Error("Você precisa estar nesta sala para usar o chat.");
-          }
-
-          const messages=Array.isArray(room.chatMessages)?[...room.chatMessages]:[];
+        await mutateDay(data=>{
+          const messages=Array.isArray(data.gameChatMessages)?[...data.gameChatMessages]:[];
           messages.push({
             id:actionId(),
             uid:user.uid,
@@ -1947,17 +1956,13 @@
             text:textValue,
             createdAtMs:Date.now()
           });
-
-          room.chatMessages=messages.slice(-60);
-          return room;
+          return{gameChatMessages:messages.slice(-60)};
         });
 
-        if(gameChatInput){
-          gameChatInput.value="";
-          gameChatInput.focus();
-        }
+        if(gameChatInput)gameChatInput.value="";
+        if(lobbyChatInput)lobbyChatInput.value="";
       }catch(err){
-        console.error("Falha ao enviar mensagem do jogo:",err);
+        console.error("Falha ao enviar mensagem do chat geral:",err);
         showGameToastMessage(err?.message||"Não foi possível enviar a mensagem.");
       }
     }
@@ -1980,25 +1985,18 @@
       }
     }
 
-    async function sendGameChatSound(){
-      const soundId=gameChatSoundSelect?.value||"";
+    async function sendGameChatSound(selectElement=gameChatSoundSelect){
+      const soundId=selectElement?.value||"";
       const sound=GAME_CHAT_SOUNDS.find(item=>item.id===soundId);
-      if(!sound||!currentRoomId||!user)return;
+      if(!sound||!user)return;
 
       const messageId=actionId();
-
-      // Quem clicou escuta imediatamente, sem esperar o retorno do Firestore.
       seenGameChatSoundIds.add(messageId);
       playGameChatSound(sound.id,true);
 
       try{
-        await mutateRoom(currentRoomId,room=>{
-          const order=room.playerOrder||[];
-          if(!order.includes(user.uid)){
-            throw new Error("Você precisa estar nesta sala para usar o chat.");
-          }
-
-          const messages=Array.isArray(room.chatMessages)?[...room.chatMessages]:[];
+        await mutateDay(data=>{
+          const messages=Array.isArray(data.gameChatMessages)?[...data.gameChatMessages]:[];
           messages.push({
             id:messageId,
             uid:user.uid,
@@ -2008,13 +2006,11 @@
             soundLabel:sound.label,
             createdAtMs:Date.now()
           });
-
-          room.chatMessages=messages.slice(-60);
-          return room;
+          return{gameChatMessages:messages.slice(-60)};
         });
       }catch(err){
         seenGameChatSoundIds.delete(messageId);
-        console.error("Falha ao enviar áudio no chat:",err);
+        console.error("Falha ao enviar áudio no chat geral:",err);
         showGameToastMessage(err?.message||"Não foi possível enviar o áudio.");
       }
     }
