@@ -140,6 +140,64 @@
       font-size:.72rem;
       cursor:pointer;
     }
+    .game-chat-soundbar{
+      display:grid;
+      grid-template-columns:minmax(0,1fr) auto;
+      gap:7px;
+      padding:8px 10px 0;
+      background:var(--surface);
+    }
+    .game-chat-soundbar .form-select{min-width:0}
+    .game-chat-sound{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:8px;
+      margin-top:5px;
+      padding:6px 8px;
+      border-radius:9px;
+      background:rgba(0,0,0,.05);
+      font-size:.76rem;
+    }
+    [data-theme="dark"] .game-chat-sound{background:rgba(255,255,255,.08)}
+    .game-chat-sound button{
+      flex:0 0 auto;
+      border:1px solid var(--border);
+      border-radius:999px;
+      padding:3px 8px;
+      background:var(--surface);
+      color:var(--text);
+      font-size:.7rem;
+    }
+    .domino-timer-wrap{
+      max-width:360px;
+      margin:10px auto 4px;
+      text-align:center;
+    }
+    .domino-timer-label{
+      display:flex;
+      justify-content:center;
+      gap:5px;
+      font-weight:600;
+      margin-bottom:5px;
+    }
+    .domino-timer-track{
+      height:8px;
+      overflow:hidden;
+      border-radius:999px;
+      background:var(--surface-2);
+      border:1px solid var(--border);
+    }
+    .domino-timer-bar{
+      height:100%;
+      width:100%;
+      background:var(--primary);
+      transform-origin:left center;
+      transition:width .1s linear;
+    }
+    .domino-timer-wrap.warning .domino-timer-bar{background:#f9ab00}
+    .domino-timer-wrap.danger .domino-timer-bar{background:#b3261e}
+
     .game-chat-form{
       display:grid;
       grid-template-columns:minmax(0,1fr) auto;
@@ -755,6 +813,11 @@
               <button type="button" data-chat-quick="Vai jogar!">Vai jogar!</button>
             </div>
 
+            <div class="game-chat-soundbar">
+              <select id="gameChatSoundSelect" class="form-select form-select-sm" aria-label="Escolher áudio do chat"></select>
+              <button id="gameChatSoundBtn" class="btn btn-outline-secondary btn-sm" type="button">Tocar som</button>
+            </div>
+
             <form id="gameChatForm" class="game-chat-form">
               <input id="gameChatInput" type="text" maxlength="180" autocomplete="off" placeholder="Digite uma mensagem..." />
               <button id="gameChatSendBtn" class="btn btn-primary" type="submit">Enviar</button>
@@ -844,11 +907,14 @@
     ];
 
     const loginView=document.querySelector("#loginView"),appView=document.querySelector("#appView"),lobbyView=document.querySelector("#lobbyView"),roomView=document.querySelector("#roomView");
-    const roomsList=document.querySelector("#roomsList"),roomTitle=document.querySelector("#roomTitle"),roomCode=document.querySelector("#roomCode"),playersEl=document.querySelector("#players"),gameRoot=document.querySelector("#gameRoot"),gameChatMessages=document.querySelector("#gameChatMessages"),gameChatForm=document.querySelector("#gameChatForm"),gameChatInput=document.querySelector("#gameChatInput"),gameChatSendBtn=document.querySelector("#gameChatSendBtn"),chatCount=document.querySelector("#chatCount");
+    const roomsList=document.querySelector("#roomsList"),roomTitle=document.querySelector("#roomTitle"),roomCode=document.querySelector("#roomCode"),playersEl=document.querySelector("#players"),gameRoot=document.querySelector("#gameRoot"),gameChatMessages=document.querySelector("#gameChatMessages"),gameChatForm=document.querySelector("#gameChatForm"),gameChatInput=document.querySelector("#gameChatInput"),gameChatSendBtn=document.querySelector("#gameChatSendBtn"),gameChatSoundSelect=document.querySelector("#gameChatSoundSelect"),gameChatSoundBtn=document.querySelector("#gameChatSoundBtn"),chatCount=document.querySelector("#chatCount");
     const restartBtn=document.querySelector("#restartBtn"),closeRoomBtn=document.querySelector("#closeRoomBtn"),leaveBtn=document.querySelector("#leaveBtn"),googleBtn=document.querySelector("#googleBtn"),loginError=document.querySelector("#loginError"),logoutBtn=document.querySelector("#logoutBtn"),themeBtn=document.querySelector("#themeBtn"),gameError=document.querySelector("#gameError"),gameToast=document.querySelector("#gameToast");
     const gamesMenuBtn=document.querySelector("#gamesMenuBtn"),gamesHeaderMenu=document.querySelector("#gamesHeaderMenu"),gameWalletXp=document.querySelector("#gameWalletXp"),betSelect=document.querySelector("#betSelect");
 
     let user=null,dayState=null,rooms=[],currentRoomId=null,currentRoom=null,unsubDay=null,unsubBan=null,unsubWallet=null,walletBalance=null,selectedChecker=null,selectedDominoIndex=null,drawing=false,activeStroke=[];
+    let dominoTimerInterval=null,dominoTimeoutKey=null;
+    const seenGameChatSoundIds=new Set();
+    const gameChatAudio=new Audio();
     let seenHangmanActionId=null;
     let seenLudoRollId=null;
     let seenLudoMoveId=null;
@@ -861,6 +927,27 @@
     let gameToastTimer=null;
     const settlingBetRooms=new Set();
     const BET_VALUES=[0,5,10,20,50,100,150,200];
+    const DOMINO_TURN_MS=10000;
+    const GAME_CHAT_SOUNDS=[
+      {id:"msn",label:"MSN - nova mensagem",file:"./assets/sounds/new-message-msn.mp3"},
+      {id:"dbz",label:"Kakaroto, você é uma besta",file:"./assets/sounds/dbz-pt-br-kakaroto-voce-e-uma-besta.mp3"},
+      {id:"problema",label:"Tu sai de problema",file:"./assets/sounds/tu-sai-de-problema.mp3"},
+      {id:"grosso",label:"Vai entrar o grosso",file:"./assets/sounds/luladrao-vai-entrar-o-grosso.mp3"},
+      {id:"avast",label:"Avast - ameaça detectada",file:"./assets/sounds/avast-ameaca-detectada.mp3"},
+      {id:"hadouken",label:"Bom dia Hadouken",file:"./assets/sounds/bom-dia-hadouken.mp3"},
+      {id:"todos_todes",label:"Bom dia a todos e todes",file:"./assets/sounds/bom-dia-a-todos-e-todes-meme(1).mp3"},
+      {id:"machucar",label:"Alguém vai se machucar",file:"./assets/sounds/alguem-vai-se-machucar-amegan-smzinho.mp3"},
+      {id:"cagou",label:"Será que cagou? Full HD",file:"./assets/sounds/sera-que-cagou-full-hd-1.mp3"},
+      {id:"pastor",label:"Pastor metralhadora",file:"./assets/sounds/pastor-metralhadora.mp3"},
+      {id:"bichao",label:"Cê é o bichão mesmo, hein doido",file:"./assets/sounds/ce-e-o-bichao-memo-hein-doido-red.mp3"},
+      {id:"unico_kakaroto",label:"Único imbecil é Kakaroto",file:"./assets/sounds/Unico_imbecil_eh_kakaroto.mp3"},
+      {id:"vegeta_maldade",label:"Vegeta - meu coração é pura maldade",file:"./assets/sounds/dragon-ball-z-vegeta-meu-coracao-e-pura-maldade.mp3"},
+      {id:"vegeta_genio",label:"Vegeta - o miserável é um gênio",file:"./assets/sounds/vegeta-o-miseravel-e-um-genio.mp3"},
+      {id:"sextou_tio",label:"Sextou, meu tio",file:"./assets/sounds/sextou-meu-tio.mp3"},
+      {id:"sextou",label:"Sextou!",file:"./assets/sounds/sextou_gJyn6iW.mp3"},
+      {id:"lula_pobre",label:"Pobre nasceu pra trabalhar",file:"./assets/sounds/lula-pobre-nasceu-pra-trabalhar.mp3"},
+      {id:"dilma",label:"Dilma filosofando",file:"./assets/sounds/dilma-filosofando-eoq.mp3"}
+    ];
 
     function bahiaDateId(date=new Date()){
       const parts=new Intl.DateTimeFormat("en-CA",{timeZone:TEAM_TIMEZONE,year:"numeric",month:"2-digit",day:"2-digit"}).formatToParts(date);
@@ -963,6 +1050,12 @@
 
     function actionId(){
       return Date.now()+"-"+Math.random().toString(36).slice(2,7);
+    }
+
+    if(gameChatSoundSelect){
+      gameChatSoundSelect.innerHTML=GAME_CHAT_SOUNDS
+        .map(sound=>`<option value="${sound.id}">${escapeHtml(sound.label)}</option>`)
+        .join("");
     }
 
     googleBtn.addEventListener("click",async()=>{
