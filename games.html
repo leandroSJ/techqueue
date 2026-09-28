@@ -2132,7 +2132,7 @@
     const settlingBetRooms=new Set();
     const settlingRewardRooms=new Set();
     const BET_VALUES=[0,5,10,20,50,100,150,200];
-    const DOMINO_TURN_MS=10000;
+    const DOMINO_TURN_MS=20000;
     const GAME_PARTICIPATION_XP=10;
     const GAME_WINNER_BONUS_XP=20;
     const GAME_CHAT_SOUNDS=[
@@ -5054,11 +5054,11 @@
         <div class="turn">${winner?`${escapeHtml(winner)} bateu.`:`Vez de ${escapeHtml(turnName||"jogador")}`}</div>
         ${!winner?`
           <div id="dominoTimerWrap" class="domino-timer-wrap">
-            <div class="domino-timer-label">Tempo para jogar: <span id="dominoTimerText">10s</span></div>
+            <div class="domino-timer-label">Tempo para jogar: <span id="dominoTimerText">20s</span></div>
             <div class="domino-timer-track"><div id="dominoTimerBar" class="domino-timer-bar"></div></div>
           </div>
         `:""}
-        ${s.lastTimeout?.name?`<div class="small muted" style="text-align:center;margin-bottom:8px">${escapeHtml(s.lastTimeout.name)} estourou os 10 segundos e perdeu a vez.</div>`:""}
+        ${s.lastTimeout?.name?`<div class="small muted" style="text-align:center;margin-bottom:8px">${escapeHtml(s.lastTimeout.name)} estourou os 20 segundos e perdeu a vez.</div>`:""}
 
         <div class="players" style="justify-content:center;margin:0 0 10px">
           ${(currentRoom.playerOrder||[]).map(uid=>`
