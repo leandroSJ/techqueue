@@ -2450,6 +2450,14 @@
     }
 
     winnerDialogClose?.addEventListener("click",()=>winnerDialog.close());
+    hangmanWordDialog?.addEventListener("cancel",event=>event.preventDefault());
+    hangmanWordDialogForm?.addEventListener("submit",async event=>{
+      event.preventDefault();
+      const answer=hangmanWordDialogInput?.value.trim();
+      if(!answer)return;
+      hangmanWordDialogInput.value="";
+      await submitHangmanWordAnswer(answer);
+    });
 
     async function settleGameRewards(id){
       if(!id||settlingRewardRooms.has(id))return;
@@ -3461,6 +3469,143 @@
       });
     }
     function tttWinner(b,m){return[[0,1,2],[3,4,5],[6,7,8],[0,3,6],[1,4,7],[2,5,8],[0,4,8],[2,4,6]].some(x=>x.every(i=>b[i]===m))}
+
+    function hangmanRemainingLetters(state){
+      const guessed=new Set(state?.guessed||[]);
+      return [...normalize(state?.word||"")].filter(ch=>/[a-z]/.test(ch)&&!guessed.has(ch)).length;
+    }
+
+    function stopHangmanAnswerTimer(){
+      if(hangmanAnswerTimerInterval)clearInterval(hangmanAnswerTimerInterval);
+      hangmanAnswerTimerInterval=null;
+      hangmanAnswerTimeoutKey=null;
+    }
+
+    async function ensureHangmanAnswerDeadline(){
+      if(!currentRoomId)return;
+      try{
+        await mutateRoom(currentRoomId,room=>{
+          const s=structuredClone(room.state||{});
+          if(
+            room.game!=="hangman" ||
+            s.championUid ||
+            hangmanRemainingLetters(s)>5 ||
+            s.answerDeadlineMs
+          )return room;
+
+          s.answerDeadlineMs=Date.now()+10000;
+          room.state=s;
+          return room;
+        });
+      }catch(err){
+        console.warn("Falha ao iniciar contagem da resposta final:",err);
+      }
+    }
+
+    function startHangmanAnswerTimer(turnUid,deadlineMs){
+      if(hangmanAnswerTimerInterval)clearInterval(hangmanAnswerTimerInterval);
+
+      const key=currentRoomId+"|"+turnUid+"|"+deadlineMs;
+      hangmanAnswerTimeoutKey=null;
+
+      const tick=()=>{
+        const remaining=Math.max(0,Number(deadlineMs||0)-Date.now());
+        const seconds=Math.max(0,Math.ceil(remaining/1000));
+
+        if(hangmanWordTimer)hangmanWordTimer.textContent=seconds+"s";
+
+        if(remaining<=0){
+          if(hangmanAnswerTimerInterval)clearInterval(hangmanAnswerTimerInterval);
+          hangmanAnswerTimerInterval=null;
+
+          if(hangmanAnswerTimeoutKey!==key){
+            hangmanAnswerTimeoutKey=key;
+            expireHangmanAnswerTurn(turnUid,deadlineMs)
+              .catch(err=>console.error("Falha ao passar a vez por tempo:",err));
+          }
+        }
+      };
+
+      tick();
+      hangmanAnswerTimerInterval=setInterval(tick,100);
+    }
+
+    async function expireHangmanAnswerTurn(expectedTurnUid,expectedDeadlineMs){
+      if(!currentRoomId)return;
+
+      await mutateRoom(currentRoomId,room=>{
+        const s=structuredClone(room.state||{});
+        const active=[...(s.activePlayers||room.playerOrder||[])];
+
+        if(
+          room.game!=="hangman" ||
+          s.championUid ||
+          s.turnUid!==expectedTurnUid ||
+          Number(s.answerDeadlineMs||0)!==Number(expectedDeadlineMs||0) ||
+          hangmanRemainingLetters(s)>5 ||
+          Date.now()<Number(s.answerDeadlineMs||0)
+        )return room;
+
+        const playerName=room.players?.[s.turnUid]||"Jogador";
+        const nextUid=nextActivePlayer(active,s.turnUid);
+
+        s.lastAction={
+          id:actionId(),
+          type:"answer_timeout",
+          byUid:s.turnUid,
+          hit:false,
+          message:playerName+" não respondeu em 10 segundos e perdeu a vez."
+        };
+        s.turnUid=nextUid;
+        s.answerDeadlineMs=Date.now()+10000;
+        room.state=s;
+        room.status="playing";
+        return room;
+      });
+    }
+
+    function syncHangmanAnswerModal(state,isMyTurn,turnName){
+      const remaining=hangmanRemainingLetters(state);
+      const finalMode=!state.championUid&&remaining<=5;
+
+      if(!finalMode){
+        stopHangmanAnswerTimer();
+        if(hangmanWordDialog?.open)hangmanWordDialog.close();
+        return;
+      }
+
+      if(!state.answerDeadlineMs){
+        ensureHangmanAnswerDeadline();
+        return;
+      }
+
+      const guessed=new Set(state.guessed||[]);
+      const masked=maskedHangmanWord(state.displayWord||state.word,guessed);
+
+      hangmanWordDialogTitle.textContent=isMyTurn
+        ?"Sua vez: responda agora"
+        :(turnName||"Outro jogador")+" está respondendo";
+
+      hangmanWordDialogText.textContent=isMyTurn
+        ?"Restam "+remaining+" letras. Você tem 10 segundos para dizer a palavra ou expressão completa."
+        :(turnName||"O jogador")+" tem 10 segundos para responder.";
+
+      hangmanWordMasked.textContent=masked;
+
+      hangmanWordDialogForm.classList.toggle("hidden",!isMyTurn);
+      hangmanWordWaiting.classList.toggle("hidden",isMyTurn);
+      hangmanWordWaiting.textContent=isMyTurn?"":"Aguardando a resposta de "+(turnName||"outro jogador")+"...";
+
+      if(isMyTurn){
+        hangmanWordDialogInput.disabled=false;
+        setTimeout(()=>hangmanWordDialogInput?.focus(),40);
+      }else{
+        hangmanWordDialogInput.disabled=true;
+      }
+
+      if(!hangmanWordDialog.open)hangmanWordDialog.showModal();
+      startHangmanAnswerTimer(state.turnUid,state.answerDeadlineMs);
+    }
 
     function renderHangman(){
       const s=currentRoom.state||{};
