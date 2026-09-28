@@ -3619,6 +3619,8 @@
       const championName=s.championUid?currentRoom.players?.[s.championUid]:"";
       const turnName=s.turnUid?currentRoom.players?.[s.turnUid]:"";
       const revealedClues=(s.clueWords||[]).slice(0,Math.max(1,Number(s.clueCount||1)));
+      const remainingLetters=hangmanRemainingLetters(s);
+      const finalAnswerMode=!s.championUid&&remainingLetters<=5;
 
       maybeShowHangmanAction(s.lastAction);
 
@@ -3626,7 +3628,10 @@
         <div class="turn">
           ${s.championUid
             ? `${escapeHtml(championName||"Jogador")} é o campeão da Forca!`
-            : `É a vez de ${escapeHtml(turnName||"jogador")}. ${isMyTurn?"Escolha uma letra ou arrisque a resposta.":"Aguarde a jogada."}`}
+            : finalAnswerMode
+              ? `Resposta final: ${escapeHtml(turnName||"jogador")} tem 10 segundos para responder.`
+              : `É a vez de ${escapeHtml(turnName||"jogador")}. ${isMyTurn?"Escolha uma letra ou arrisque a resposta.":"Aguarde a jogada."}`
+          }
         </div>
 
         <div class="hangman-meta">
@@ -3634,12 +3639,18 @@
           <span class="player-chip">Nível ${Number(s.level||1)} / ${HANGMAN_LEVELS.length}</span>
           <span class="player-chip">Categoria: ${escapeHtml(s.category||"-")}</span>
           <span class="player-chip">Restantes: ${active.length}</span>
+          <span class="player-chip">Letras faltando: ${remainingLetters}</span>
         </div>
 
         <div class="hangman-clues">
           <strong>Pistas progressivas</strong>
           <div>${revealedClues.map(clue=>escapeHtml(clue)).join(" · ")}</div>
-          <div class="small muted" style="margin-top:5px">Uma nova pista é revelada a cada jogada, até acabar a lista.</div>
+          <div class="small muted" style="margin-top:5px">
+            ${finalAnswerMode
+              ?"Com 5 letras ou menos faltando, a rodada entra no modo de resposta final."
+              :"Uma nova pista é revelada a cada jogada, até acabar a lista."
+            }
+          </div>
         </div>
 
         <div class="word">${maskedHangmanWord(s.displayWord||s.word,guessed)}</div>
@@ -3666,11 +3677,12 @@
           ${"abcdefghijklmnopqrstuvwxyz".split("").map(letter=>{
             const used=guessed.has(letter);
             const result=letterResults[letter]||"";
-            return`<button class="${used?"used":""} ${result}" data-letter="${letter}" ${s.championUid||!isMyTurn||used?"disabled":""}>${letter.toUpperCase()}${used?" ×":""}</button>`;
+            const disabled=s.championUid||!isMyTurn||used||finalAnswerMode;
+            return`<button class="${used?"used":""} ${result}" data-letter="${letter}" ${disabled?"disabled":""}>${letter.toUpperCase()}${used?" ×":""}</button>`;
           }).join("")}
         </div>
 
-        ${!s.championUid?`
+        ${!s.championUid&&!finalAnswerMode?`
           <form id="wordGuessForm" class="guess-row" style="margin-top:14px">
             <input id="wordGuessInput" maxlength="80" placeholder="Arriscar a palavra ou expressão" ${isMyTurn?"":"disabled"} required>
             <button class="btn primary" ${isMyTurn?"":"disabled"}>Responder</button>
@@ -3679,6 +3691,7 @@
       `;
 
       document.querySelector("#wordGuessForm")?.addEventListener("submit",guessWholeWord);
+      syncHangmanAnswerModal(s,isMyTurn,turnName);
     }
 
     async function guessLetter(letter){
