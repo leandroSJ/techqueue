@@ -2766,14 +2766,108 @@
       if(input)input.value="";
     }
 
-    function renderDraw(){
-      const s=currentRoom.state||{},drawerName=currentRoom.players?.[s.drawerUid]||"Jogador",isDrawer=s.drawerUid===user.uid;
-      gameRoot.innerHTML=`<div class="turn">${s.winnerUid?`${escapeHtml(s.winnerName)} acertou a palavra ${escapeHtml(s.word)}.`:isDrawer?`Sua palavra: ${escapeHtml(s.word)}`:`${escapeHtml(drawerName)} está desenhando.`}</div><div class="canvas-wrap"><canvas id="drawCanvas" class="draw-canvas" width="900" height="360"></canvas>${!isDrawer&&!s.winnerUid?`<form id="guessForm" class="guess-row"><input id="guessInput" maxlength="40" placeholder="Seu palpite" required><button class="btn primary">Enviar</button></form>`:""}${isDrawer&&!s.winnerUid?'<button id="clearCanvasBtn" class="btn" type="button">Limpar desenho</button>':""}<div class="guesses">${(s.guesses||[]).slice(-8).map(g=>`<div class="guess"><strong>${escapeHtml(g.name)}:</strong> ${escapeHtml(g.text)}</div>`).join("")}</div></div>`;
-      setupCanvas(isDrawer);
-      document.querySelector("#guessForm")?.addEventListener("submit",submitGuess);
-      document.querySelector("#clearCanvasBtn")?.addEventListener("click",async()=>mutateRoom(currentRoomId,room=>{room.state.strokes=[];return room}));
+    function drawHintLines(word,wrongCount){
+      const clean=String(word||"").trim();
+      const words=clean.split(/\s+/).filter(Boolean);
+      const hints=[];
+
+      if(wrongCount>=1){
+        hints.push("Tem "+words.length+" palavra"+(words.length===1?"":"s")+" e começa com \""+(words[0]?.[0]?.toUpperCase()||"?")+"\".");
+      }
+
+      if(wrongCount>=2){
+        hints.push("Iniciais: "+words.map(part=>(part[0]||"?").toUpperCase()).join(" · "));
+      }
+
+      if(wrongCount>=3){
+        const pattern=words.map(part=>{
+          const normalized=normalize(part);
+          if(normalized.length<=2)return part.toUpperCase();
+          return (part[0]||"").toUpperCase()+" _ ".repeat(Math.max(0,normalized.length-2))+(part[part.length-1]||"").toUpperCase();
+        }).join(" / ");
+        hints.push("Formato: "+pattern);
+      }
+
+      return hints.slice(0,3);
     }
 
+    function drawWrongCountFor(uid,state){
+      return (state?.guesses||[]).filter(guess=>guess.uid===uid&&guess.correct===false).length;
+    }
+
+    async function skipDrawing(){
+      if(!currentRoomId||!user)return;
+
+      await mutateRoom(currentRoomId,room=>{
+        const s={...(room.state||{})};
+        if(room.game!=="draw"||s.winnerUid||s.drawerUid!==user.uid)return room;
+
+        const previousWord=s.word||"";
+        let nextWord=randomWord();
+        let attempts=0;
+        while(normalize(nextWord)===normalize(previousWord)&&attempts<8){
+          nextWord=randomWord();
+          attempts++;
+        }
+
+        room.state={
+          ...s,
+          word:nextWord,
+          guesses:[],
+          strokes:[],
+          winnerUid:null,
+          winnerName:null,
+          skippedCount:Number(s.skippedCount||0)+1,
+          lastSkip:{byUid:user.uid,byName:displayName(),at:Date.now()}
+        };
+        return room;
+      });
+
+      showGameToastMessage("Desenho pulado. Uma nova ideia foi sorteada.");
+    }
+
+    function renderDraw(){
+      const s=currentRoom.state||{};
+      const drawerName=currentRoom.players?.[s.drawerUid]||"Jogador";
+      const isDrawer=s.drawerUid===user.uid;
+      const wrongCount=isDrawer?0:drawWrongCountFor(user.uid,s);
+      const hints=isDrawer?[]:drawHintLines(s.word,wrongCount);
+
+      const turnText=s.winnerUid
+        ? escapeHtml(s.winnerName)+" acertou: "+escapeHtml(s.word)+"."
+        : isDrawer
+          ? "Sua ideia para desenhar: "+escapeHtml(s.word)
+          : escapeHtml(drawerName)+" está desenhando.";
+
+      let controls="";
+      if(!isDrawer&&!s.winnerUid){
+        const hintHtml=hints.length
+          ? hints.map((hint,index)=>"<div class=\"draw-hint\"><strong>Dica "+(index+1)+":</strong> "+escapeHtml(hint)+"</div>").join("")
+          : "<div class=\"draw-hint\">Errou um palpite? A primeira dica aparece automaticamente.</div>";
+
+        controls="<div class=\"draw-hints\"><div class=\"draw-hints-title\">Dicas por erro · "+Math.min(wrongCount,3)+"/3 liberadas</div>"+hintHtml+"</div>"+
+          "<form id=\"guessForm\" class=\"guess-row\"><input id=\"guessInput\" maxlength=\"60\" placeholder=\"Seu palpite\" required><button class=\"btn primary\">Enviar</button></form>";
+      }else if(isDrawer&&!s.winnerUid){
+        controls="<div class=\"draw-actions\"><button id=\"clearCanvasBtn\" class=\"btn\" type=\"button\">Limpar desenho</button><button id=\"skipDrawingBtn\" class=\"btn btn-outline-secondary\" type=\"button\">Pular desenho</button></div>";
+      }
+
+      const guesses=(s.guesses||[]).slice(-10).map(g=>{
+        const errorLabel=g.correct===false?" <span class=\"muted\">· errou</span>":"";
+        return "<div class=\"guess\"><strong>"+escapeHtml(g.name)+":</strong> "+escapeHtml(g.text)+errorLabel+"</div>";
+      }).join("");
+
+      gameRoot.innerHTML="<div class=\"turn\">"+turnText+"</div><div class=\"canvas-wrap\"><canvas id=\"drawCanvas\" class=\"draw-canvas\" width=\"900\" height=\"360\"></canvas>"+controls+"<div class=\"guesses\">"+guesses+"</div></div>";
+
+      setupCanvas(isDrawer);
+      document.querySelector("#guessForm")?.addEventListener("submit",submitGuess);
+      document.querySelector("#clearCanvasBtn")?.addEventListener("click",async()=>mutateRoom(currentRoomId,room=>{
+        room.state.strokes=[];
+        return room;
+      }));
+      document.querySelector("#skipDrawingBtn")?.addEventListener("click",async()=>{
+        if(confirm("Pular este desenho e sortear outro?"))await skipDrawing();
+      });
+    }
     function setupCanvas(canDraw){
       const canvas=document.querySelector("#drawCanvas");if(!canvas)return;const ctx=canvas.getContext("2d");ctx.lineWidth=3;ctx.lineCap="round";ctx.strokeStyle="#202124";ctx.clearRect(0,0,canvas.width,canvas.height);
       for(const stroke of currentRoom.state?.strokes||[])drawStroke(ctx,decodeStroke(stroke.path||""));
