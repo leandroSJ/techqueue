@@ -2810,6 +2810,8 @@
     }
     function backToLobby(){
       stopDominoTurnTimer();
+      stopHangmanAnswerTimer();
+      if(hangmanWordDialog?.open)hangmanWordDialog.close();
       ludoAnimationRun++;
       ludoAnimationActive=false;
       seenLudoRollId=null;
@@ -3221,6 +3223,10 @@
     function renderRoom(){
       const room=currentRoom;
       if(room?.game!=="domino")stopDominoTurnTimer();
+      if(room?.game!=="hangman"){
+        stopHangmanAnswerTimer();
+        if(hangmanWordDialog?.open)hangmanWordDialog.close();
+      }
       roomTitle.textContent=GAME_NAMES[room.game]||"Sala";
       const bet=Number(room.betAmount||0);
       const pot=Object.values(room.stakes||{}).reduce((sum,value)=>sum+Number(value||0),0);
@@ -3241,6 +3247,10 @@
 
       if((room.playerOrder||[]).length<requiredPlayers){
         if(room.game==="domino")stopDominoTurnTimer();
+        if(room.game==="hangman"){
+          stopHangmanAnswerTimer();
+          if(hangmanWordDialog?.open)hangmanWordDialog.close();
+        }
         gameRoot.innerHTML=`<div class="muted">Aguardando jogadores: ${(room.playerOrder||[]).length}/${requiredPlayers}.</div>`;
         return;
       }
@@ -3755,7 +3765,8 @@
             scores,
             round:Number(s.round||1)+1,
             startUid:nextActivePlayer(remaining,user.uid),
-            lastAction:action
+            lastAction:action,
+            usedWords:s.usedWords||[]
           });
           room.status="playing";
           return room;
@@ -3771,27 +3782,35 @@
 
         // Regra clássica: acertou a letra, continua jogando; errou, passa a vez.
         s.turnUid=hit?user.uid:nextUid;
+        const remainingLetters=[...word].filter(ch=>/[a-z]/.test(ch)&&!guessed.has(ch)).length;
+        s.answerDeadlineMs=remainingLetters<=5?Date.now()+10000:null;
         room.state=s;
         room.status="playing";
         return room;
       });
     }
 
-    async function guessWholeWord(event){
-      event.preventDefault();
-      const input=document.querySelector("#wordGuessInput");
-      const answer=input?.value.trim();
-      if(!answer)return;
+    async function submitHangmanWordAnswer(answer){
+      const cleanAnswer=String(answer||"").trim();
+      if(!cleanAnswer||!currentRoomId||!user)return;
+
+      let expired=false;
 
       await mutateRoom(currentRoomId,room=>{
         const s=structuredClone(room.state||{});
         const active=[...(s.activePlayers||room.playerOrder||[])];
+
         if(s.championUid||s.turnUid!==user.uid||!active.includes(user.uid))return room;
+
+        if(s.answerDeadlineMs&&Date.now()>Number(s.answerDeadlineMs)){
+          expired=true;
+          return room;
+        }
 
         const scores={...(s.scores||{})};
         const errors={...(s.playerErrors||{})};
-        const correct=normalize(answer)===normalize(s.word||"");
-        const playerName=currentRoom.players?.[user.uid]||displayName();
+        const correct=normalize(cleanAnswer)===normalize(s.word||"");
+        const playerName=room.players?.[user.uid]||displayName();
         const nextUid=nextActivePlayer(active,user.uid);
         const action={
           id:actionId(),
@@ -3799,8 +3818,8 @@
           byUid:user.uid,
           hit:correct,
           message:correct
-            ? `${playerName} acertou a resposta "${s.displayWord||s.word}"! Nova rodada.`
-            : `${playerName} arriscou "${answer}" e errou.`
+            ? playerName+' acertou a resposta "'+(s.displayWord||s.word)+'"! Nova rodada.'
+            : playerName+' arriscou "'+cleanAnswer+'" e errou.'
         };
 
         s.clueCount=Math.min((s.clueWords||[]).length,Number(s.clueCount||1)+1);
@@ -3809,6 +3828,7 @@
         if(correct){
           scores[user.uid]=Number(scores[user.uid]||0)+500;
           s.scores=scores;
+          s.answerDeadlineMs=null;
           return finishHangmanRound(room,s,action,nextUid);
         }
 
@@ -3821,10 +3841,10 @@
           if(!eliminated.includes(user.uid))eliminated.push(user.uid);
 
           action.type="eliminated";
-          action.message=`${playerName} completou a forca e foi eliminado após errar a resposta.`;
+          action.message=playerName+" completou a forca e foi eliminado após errar a resposta.";
 
           if(remaining.length<=1){
-            room.state={...s,activePlayers:remaining,eliminated,championUid:remaining[0]||null,turnUid:null,lastAction:action};
+            room.state={...s,activePlayers:remaining,eliminated,championUid:remaining[0]||null,turnUid:null,answerDeadlineMs:null,lastAction:action};
             room.status="finished";
             return room;
           }
@@ -3835,18 +3855,29 @@
             scores,
             round:Number(s.round||1)+1,
             startUid:nextActivePlayer(remaining,user.uid),
-            lastAction:action
+            lastAction:action,
+            usedWords:s.usedWords||[]
           });
           room.status="playing";
           return room;
         }
 
         s.turnUid=nextUid;
+        s.answerDeadlineMs=hangmanRemainingLetters(s)<=5?Date.now()+10000:null;
         room.state=s;
         room.status="playing";
         return room;
       });
 
+      if(expired)showGameToastMessage("O tempo de 10 segundos já terminou.");
+    }
+
+    async function guessWholeWord(event){
+      event.preventDefault();
+      const input=document.querySelector("#wordGuessInput");
+      const answer=input?.value.trim();
+      if(!answer)return;
+      await submitHangmanWordAnswer(answer);
       if(input)input.value="";
     }
 
