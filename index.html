@@ -448,7 +448,117 @@
     shopItems.addEventListener("click",async event=>{const button=event.target.closest("[data-buy-item]");if(!button||!authUser)return;const item=SHOP_ITEMS.find(candidate=>candidate.id===button.dataset.buyItem);if(!item)return;button.disabled=true;const ref=walletRef();try{await runTransaction(db,async tx=>{const snap=await tx.get(ref);if(!snap.exists())throw new Error("Carteira de XP não encontrada.");const data=snap.data(),wallets={...(data.wallets||{})},wallet={...(wallets[authUser.uid]||defaultWallet())},balance=Number(wallet.xpBalance||0),unlocked=new Set(wallet.unlockedItems||[]),credits={...(wallet.audioCredits||{})};if(balance<item.price)throw new Error("XP insuficiente.");if(item.type==="sound"){credits[item.soundId]=Number(credits[item.soundId]||0)+1;wallet.xpBalance=balance-item.price;wallet.audioCredits=credits}else{if(unlocked.has(item.id))return;unlocked.add(item.id);wallet.xpBalance=balance-item.price;wallet.unlockedItems=[...unlocked]}wallet.updatedAtMs=Date.now();wallets[authUser.uid]=wallet;tx.set(ref,{wallets,updatedAt:serverTimestamp()},{merge:true})})}catch(err){console.error(err);alert(err.message||"Não foi possível comprar este item.")}finally{button.disabled=false}});
 
     function clearSubscriptions(){if(unsubDay)unsubDay();if(unsubHistory)unsubHistory();if(unsubNudges)unsubNudges();if(unsubQueuedClients)unsubQueuedClients();if(unsubProfile)unsubProfile();if(unsubBan)unsubBan();unsubDay=unsubHistory=unsubNudges=unsubEvents=unsubQueuedClients=unsubProfile=unsubBan=null;userProfileDoc=null;nudgesReady=false;lastSeenPassEventId=null;lastSeenPresenceEventId=null;lastSeenQueueChatId=null;queueChatReady=false;seenQueueChatSoundIds.clear();activeDayId=null;if(dayRolloverTimer)clearInterval(dayRolloverTimer);dayRolloverTimer=null}
-    async function joinToday(){if(isSigningOut||!authUser||!profile)return;const now=bahiaParts(),dayRef=doc(db,"days",now.dateId);await runTransaction(db,async tx=>{const snap=await tx.get(dayRef),existing=snap.exists()?snap.data():null,initial=existing||{dateId:now.dateId,status:"open",queue:[],currentUid:null,members:{},lastAttendanceUid:null,passedSinceLastAttendance:[]},members={...(initial.members||{})},existingMember=members[authUser.uid],isNewPresence=!existingMember;if(["busy","offline","lunch","smoke","smoking","bathroom","paid_bathroom","away"].includes(existingMember?.status))return;members[authUser.uid]={...existingMember,name:profile.name,email:profile.email,status:"available",joinedAtMs:existingMember?.joinedAtMs||Date.now(),currentAttendanceId:null};const queue=[...(initial.queue||[])];if(!queue.includes(authUser.uid))queue.push(authUser.uid);const payload={...initial,status:"open",members,queue,currentUid:initial.currentUid||queue[0]||null,updatedAt:serverTimestamp()};if(isNewPresence)payload.lastPresenceEvent={id:Date.now()+"-"+authUser.uid+"-join",type:"join",uid:authUser.uid,name:profile.name,createdAtMs:Date.now()};if(!existing)payload.createdAt=serverTimestamp();tx.set(dayRef,payload)})}
+    async function joinToday(){
+      if(isSigningOut||!authUser||!profile)return;
+      const now=bahiaParts(),dayRef=doc(db,"days",now.dateId);
+      await runTransaction(db,async tx=>{
+        const snap=await tx.get(dayRef);
+        const existing=snap.exists()?snap.data():null;
+        const initial=existing||{
+          dateId:now.dateId,
+          status:"open",
+          queue:[],
+          currentUid:null,
+          members:{},
+          lastAttendanceUid:null,
+          passedSinceLastAttendance:[]
+        };
+        const members={...(initial.members||{})};
+        const existingMember=members[authUser.uid];
+        const isNewPresence=!existingMember;
+
+        if(existingMember){
+          members[authUser.uid]={
+            ...existingMember,
+            name:profile.name,
+            email:profile.email,
+            lastSeenAtMs:Date.now()
+          };
+        }else{
+          members[authUser.uid]={
+            name:profile.name,
+            email:profile.email,
+            status:"available",
+            joinedAtMs:Date.now(),
+            lastSeenAtMs:Date.now(),
+            currentAttendanceId:null
+          };
+        }
+
+        const member=members[authUser.uid];
+        const queue=[...(initial.queue||[])];
+        if(member.status==="available"&&!queue.includes(authUser.uid))queue.push(authUser.uid);
+
+        const cleanQueue=queue.filter(uid=>members[uid]?.status==="available");
+        const currentUid=cleanQueue.includes(initial.currentUid)?initial.currentUid:(cleanQueue[0]||null);
+
+        const payload={
+          ...initial,
+          status:"open",
+          members,
+          queue:cleanQueue,
+          currentUid,
+          updatedAt:serverTimestamp()
+        };
+
+        if(isNewPresence){
+          payload.lastPresenceEvent={
+            id:Date.now()+"-"+authUser.uid+"-join",
+            type:"join",
+            uid:authUser.uid,
+            name:profile.name,
+            createdAtMs:Date.now()
+          };
+        }
+
+        if(!existing)payload.createdAt=serverTimestamp();
+        tx.set(dayRef,payload);
+      });
+    }
+
+    const PRESENCE_STALE_MS=135000;
+
+    async function cleanupStaleMembers(){
+      if(!authUser||!profile||isSigningOut)return;
+      const dayRef=doc(db,"days",bahiaParts().dateId);
+      try{
+        await runTransaction(db,async tx=>{
+          const snap=await tx.get(dayRef);
+          if(!snap.exists())return;
+
+          const state=snap.data();
+          const members={...(state.members||{})};
+          const nowMs=Date.now();
+          const staleUids=Object.entries(members)
+            .filter(([uid,member])=>{
+              if(uid===authUser.uid)return false;
+              if(member?.status==="busy")return false;
+              const lastSeen=Number(member?.lastSeenAtMs||0);
+              return lastSeen>0&&(nowMs-lastSeen)>PRESENCE_STALE_MS;
+            })
+            .map(([uid])=>uid);
+
+          if(!staleUids.length)return;
+
+          for(const uid of staleUids)delete members[uid];
+
+          const staleSet=new Set(staleUids);
+          const queue=(state.queue||[]).filter(uid=>!staleSet.has(uid)&&members[uid]?.status==="available");
+          const passedSinceLastAttendance=(state.passedSinceLastAttendance||[]).filter(uid=>!staleSet.has(uid));
+          const currentUid=queue.includes(state.currentUid)?state.currentUid:(queue[0]||null);
+
+          tx.update(dayRef,{
+            members,
+            queue,
+            currentUid,
+            passedSinceLastAttendance,
+            updatedAt:serverTimestamp()
+          });
+        });
+      }catch(err){
+        console.warn("Falha ao limpar usuários desconectados:",err);
+      }
+    }
 
     function subscribeToday(){const now=bahiaParts();activeDayId=now.dateId;if(dayRolloverTimer)clearInterval(dayRolloverTimer);dayRolloverTimer=setInterval(()=>{if(bahiaParts().dateId!==activeDayId)location.reload()},60000);const dayRef=doc(db,"days",now.dateId),attendanceCol=collection(db,"days",now.dateId,"attendances"),nudgesCol=collection(db,"days",now.dateId,"nudges"),queuedClientsCol=collection(db,"days",now.dateId,"queuedClients");unsubDay=onSnapshot(dayRef,async snap=>{const nextState=snap.exists()?snap.data():null,passEvent=nextState?.lastPassEvent||null,presenceEvent=nextState?.lastPresenceEvent||null;if(passEvent?.id&&passEvent.id!==lastSeenPassEventId){const shouldNotify=lastSeenPassEventId!==null&&passEvent.fromUid!==authUser?.uid;lastSeenPassEventId=passEvent.id;if(shouldNotify){eventToast.textContent=`${passEvent.fromName||"Alguém"} passou a vez. Agora é a vez de ${passEvent.nextName||"outro técnico"}.`;eventToast.classList.remove("hidden");setTimeout(()=>eventToast.classList.add("hidden"),4000)}}if(presenceEvent?.id&&presenceEvent.id!==lastSeenPresenceEventId){const shouldNotify=lastSeenPresenceEventId!==null&&presenceEvent.uid!==authUser?.uid;lastSeenPresenceEventId=presenceEvent.id;if(shouldNotify){const actionText=presenceEvent.type==="leave"?"saiu do TechQueue":"entrou no TechQueue",message=`${presenceEvent.name||"Usuário"} ${actionText}.`;eventToast.textContent=message;eventToast.classList.remove("hidden");setTimeout(()=>eventToast.classList.add("hidden"),8000);if(document.hidden&&"Notification" in window&&Notification.permission==="granted")try{new Notification("TechQueue",{body:message,tag:"techqueue-presence",renotify:true,silent:true})}catch(err){console.warn("Falha ao mostrar notificação de presença:",err)}}}dayState=nextState;await loadMyOpenAttendance();render()},err=>{console.error("Erro ao sincronizar fila:",err);systemNotice.textContent=err?.code==="permission-denied"?"O Firebase bloqueou a sincronização da fila. Atualize as regras do Firestore.":"Não foi possível sincronizar a fila agora."});unsubHistory=onSnapshot(attendanceCol,snap=>{todayAttendances=snap.docs.map(d=>({id:d.id,...d.data()})).sort((a,b)=>(b.startedAtMs||0)-(a.startedAtMs||0));renderHistory();renderRanking()},err=>console.error("Erro ao carregar histórico:",err));unsubQueuedClients=onSnapshot(queuedClientsCol,snap=>{queuedClients=snap.docs.map(d=>({id:d.id,...d.data()})).sort((a,b)=>(a.createdAtMs||0)-(b.createdAtMs||0));renderQueuedClients()},err=>console.error("Erro ao carregar clientes encaminhados:",err));unsubNudges=onSnapshot(nudgesCol,snap=>{if(!nudgesReady){nudgesReady=true;return}for(const change of snap.docChanges()){if(change.type!=="added")continue;const nudge=change.doc.data();if(nudge.fromUid!==authUser?.uid&&(nudge.targetUid===authUser?.uid||nudge.targetUid==="all"))showNudge(nudge)}})}
     async function loadMyOpenAttendance(){openAttendance=null;const member=memberOf(authUser?.uid),attendanceId=member?.currentAttendanceId;if(!attendanceId)return;const ref=doc(db,"days",bahiaParts().dateId,"attendances",attendanceId),snap=await getDoc(ref);if(snap.exists()&&snap.data().status==="open")openAttendance={id:snap.id,...snap.data()}}
@@ -635,7 +745,46 @@
     });
 
     function render(){if(!profile||!dayState)return;const current=dayState.currentUid?dayState.members?.[dayState.currentUid]:null,me=memberOf(authUser.uid);nextName.textContent=current?.name||"—";systemNotice.textContent=me?.status==="busy"?"Você está em atendimento. Finalize para voltar ao final da fila.":dayState.currentUid===authUser.uid?"É a sua vez de assumir o próximo cliente.":"A fila está liberada e sincronizada em tempo real, a qualquer hora.";const names=(dayState.queue||[]).map(uid=>dayState.members?.[uid]?.name).filter(Boolean);queueText.textContent=names.length?names.join(" → "):"Nenhum técnico disponível na fila";takeBtn.disabled=dayState.currentUid!==authUser.uid||me?.status!=="available";passTurnBtn.disabled=dayState.currentUid!==authUser.uid||me?.status!=="available"||(dayState.queue||[]).length<=1;if(adminPullBtn){const canPull=me?.status==="available"&&dayState.currentUid!==authUser.uid;adminPullBtn.classList.remove("hidden");adminPullBtn.disabled=!canPull;adminPullBtn.title=me?.status!=="available"?"Fique Disponível para puxar um atendimento.":dayState.currentUid===authUser.uid?"Você já está como próximo da fila.":"Colocar você como próximo atendimento.";}if(statusSelect){const editableStatus=["available","offline","lunch","smoke","smoking","bathroom","paid_bathroom","away"].includes(me?.status)?me.status:"available";statusSelect.value=editableStatus;statusSelect.disabled=me?.status==="busy"}renderQueue();renderQueueChat();if(openAttendance){myOpenTicket.classList.remove("hidden");openClient.textContent=openAttendance.clientName;openStarted.textContent=`Iniciado às ${formatTimestamp(openAttendance.startedAt)}`}else myOpenTicket.classList.add("hidden");const canReset=profile.role==="admin";resetDayBtn.disabled=!canReset;resetDayBtn.title=canReset?"":"Disponível somente para o administrador"}
-    function renderQueue(){const members=dayState?.members||{},queue=dayState?.queue||[],seen=new Set(),ordered=[];for(const uid of queue)if(members[uid]){ordered.push([uid,members[uid]]);seen.add(uid)}for(const [uid,member] of Object.entries(members))if(!seen.has(uid))ordered.push([uid,member]);if(!ordered.length){queueList.innerHTML='<div class="empty">Ninguém entrou na fila ainda.</div>';return}queueList.innerHTML=ordered.map(([uid,m])=>{const current=uid===dayState.currentUid,status=m.status||"offline",statusLabel=status==="available"?"Disponível":status==="busy"?"Em atendimento":status==="offline"?"Offline":status==="lunch"?"Almoço":status==="smoke"?"Vou PITAR":status==="smoking"?"FUMANDO UM JA VOLTO":status==="bathroom"?"Segura aí na moral, vou no banheiro":status==="paid_bathroom"?"Cagada remunerada":status==="away"?"Vou ali e já volto":"Fora da fila";return `<div class="person ${current?"current":""}"><div><div class="person-name">${escapeHtml(m.name)}${current?'<span class="current-label">Próximo</span>':""}</div><div class="person-sub">${uid===authUser.uid?"Você":status==="available"||status==="busy"?"Na fila":"Fora do rodízio"}</div></div><div class="person-actions">${uid!==authUser.uid&&status!=="offline"?`<button class="attention-btn" type="button" data-nudge-uid="${uid}" data-nudge-name="${escapeHtml(m.name)}">Chamar atenção</button>`:""}${profile?.role==="admin"&&uid!==authUser.uid&&status!=="busy"?`<button class="btn btn-secondary btn-sm" type="button" data-remove-queue-uid="${uid}" data-remove-queue-name="${escapeHtml(m.name)}">Tirar da fila</button>`:""}${profile?.role==="admin"&&uid!==authUser.uid?`<button class="btn btn-danger btn-sm" type="button" data-ban-uid="${uid}" data-ban-name="${escapeHtml(m.name)}">Banir</button>`:""}<span class="badge ${status}">${statusLabel}</span></div></div>`}).join("")}
+    function renderQueue(){
+      const members=dayState?.members||{},queue=dayState?.queue||[],seen=new Set(),ordered=[];
+
+      for(const uid of queue){
+        const member=members[uid];
+        if(member?.status==="available"){
+          ordered.push([uid,member]);
+          seen.add(uid);
+        }
+      }
+
+      for(const [uid,member] of Object.entries(members)){
+        if(!seen.has(uid)&&member?.status==="busy"){
+          ordered.push([uid,member]);
+          seen.add(uid);
+        }
+      }
+
+      if(!ordered.length){
+        queueList.innerHTML='<div class="empty">Ninguém entrou na fila ainda.</div>';
+        return;
+      }
+
+      queueList.innerHTML=ordered.map(([uid,m])=>{
+        const current=uid===dayState.currentUid,status=m.status||"offline";
+        const statusLabel=status==="available"?"Disponível":"Em atendimento";
+        return `<div class="person ${current?"current":""}">
+          <div>
+            <div class="person-name">${escapeHtml(m.name)}${current?'<span class="current-label">Próximo</span>':""}</div>
+            <div class="person-sub">${uid===authUser.uid?"Você":status==="available"?"Na fila":"Em atendimento"}</div>
+          </div>
+          <div class="person-actions">
+            ${uid!==authUser.uid?`<button class="attention-btn" type="button" data-nudge-uid="${uid}" data-nudge-name="${escapeHtml(m.name)}">Chamar atenção</button>`:""}
+            ${profile?.role==="admin"&&uid!==authUser.uid&&status!=="busy"?`<button class="btn btn-secondary btn-sm" type="button" data-remove-queue-uid="${uid}" data-remove-queue-name="${escapeHtml(m.name)}">Tirar da fila</button>`:""}
+            ${profile?.role==="admin"&&uid!==authUser.uid?`<button class="btn btn-danger btn-sm" type="button" data-ban-uid="${uid}" data-ban-name="${escapeHtml(m.name)}">Banir</button>`:""}
+            <span class="badge ${status}">${statusLabel}</span>
+          </div>
+        </div>`;
+      }).join("");
+    }
     function openNudgeDialog(target){
       if(!authUser||!target)return;
       pendingNudgeTarget=target;
@@ -808,12 +957,60 @@
     finishBtn.addEventListener("click",()=>{problemInput.value=solutionInput.value="";const defaultComplexity=finishForm.querySelector('input[name="complexity"][value="standard"]');if(defaultComplexity)defaultComplexity.checked=true;finishDialog.showModal();setTimeout(()=>problemInput.focus(),30)});
     finishForm.addEventListener("submit",async e=>{e.preventDefault();if(!openAttendance)return;const problem=problemInput.value.trim(),solution=solutionInput.value.trim(),complexity=finishForm.querySelector('input[name="complexity"]:checked')?.value||"standard",xpAwarded=xpForComplexity(complexity);if(!problem||!solution)return;const now=bahiaParts(),dayRef=doc(db,"days",now.dateId),attendanceRef=doc(db,"days",now.dateId,"attendances",openAttendance.id),profileRef=walletRef();try{await runTransaction(db,async tx=>{const [daySnap,attSnap,profileSnap]=await Promise.all([tx.get(dayRef),tx.get(attendanceRef),tx.get(profileRef)]);if(!daySnap.exists()||!attSnap.exists())throw new Error("Atendimento não encontrado.");const state=daySnap.data(),attendance=attSnap.data();if(attendance.technicianUid!==authUser.uid)throw new Error("Este atendimento pertence a outro técnico.");if(attendance.status!=="open")throw new Error("Este atendimento já foi finalizado.");const members={...state.members},member=members[authUser.uid];members[authUser.uid]={...member,status:"available",currentAttendanceId:null};let queue=[...(state.queue||[])];if(!queue.includes(authUser.uid))queue.push(authUser.uid);tx.update(attendanceRef,{status:"finished",problem,solution,complexity,xpAwarded,finishedAt:serverTimestamp()});tx.update(dayRef,{members,queue,currentUid:state.currentUid||queue[0]||null,updatedAt:serverTimestamp()});const walletDoc=profileSnap.exists()?profileSnap.data():{},wallets={...(walletDoc.wallets||{})},wallet={...(wallets[authUser.uid]||defaultWallet())};wallet.xpBalance=Number(wallet.xpBalance||0)+xpAwarded;wallet.updatedAtMs=Date.now();wallets[authUser.uid]=wallet;tx.set(profileRef,{wallets,updatedAt:serverTimestamp()},{merge:true})});finishDialog.close()}catch(err){console.error(err);alert(err.message||"Não foi possível finalizar.")}});
     logoutBtn.addEventListener("click",async()=>{const me=memberOf(authUser?.uid);if(me?.status==="busy"){alert("Finalize seu atendimento antes de sair.");return}isSigningOut=true;logoutBtn.disabled=true;try{await leaveQueue();await signOut(auth)}catch(err){console.error(err);isSigningOut=false;logoutBtn.disabled=false;alert("Não foi possível sair agora. Tente novamente.")}});
-    async function leaveQueue(){if(!authUser)return;const now=bahiaParts(),dayRef=doc(db,"days",now.dateId),leavingUid=authUser.uid,leavingName=profile?.name||authUser.displayName||"Usuário";await runTransaction(db,async tx=>{const snap=await tx.get(dayRef);if(!snap.exists())return;const state=snap.data(),member=state.members?.[leavingUid];if(!member)return;if(member.status==="busy")throw new Error("Finalize seu atendimento antes de sair.");const queue=(state.queue||[]).filter(uid=>uid!==leavingUid),members={...(state.members||{})};delete members[leavingUid];const passedSinceLastAttendance=(state.passedSinceLastAttendance||[]).filter(uid=>uid!==leavingUid),nextCurrentUid=state.currentUid===leavingUid?(queue[0]||null):(queue.includes(state.currentUid)?state.currentUid:(queue[0]||null));tx.update(dayRef,{queue,members,currentUid:nextCurrentUid,passedSinceLastAttendance,lastPresenceEvent:{id:Date.now()+"-"+leavingUid+"-leave",type:"leave",uid:leavingUid,name:leavingName,createdAtMs:Date.now()},updatedAt:serverTimestamp()})})}
+    async function leaveQueue(){
+      if(!authUser)return;
+      const now=bahiaParts(),dayRef=doc(db,"days",now.dateId),leavingUid=authUser.uid,leavingName=profile?.name||authUser.displayName||"Usuário";
+      await runTransaction(db,async tx=>{
+        const snap=await tx.get(dayRef);
+        if(!snap.exists())return;
+        const state=snap.data(),member=state.members?.[leavingUid];
+        if(!member)return;
+        if(member.status==="busy")throw new Error("Finalize seu atendimento antes de sair.");
+
+        const queue=(state.queue||[]).filter(uid=>uid!==leavingUid);
+        const members={...(state.members||{})};
+        delete members[leavingUid];
+
+        const passedSinceLastAttendance=(state.passedSinceLastAttendance||[]).filter(uid=>uid!==leavingUid);
+        const nextCurrentUid=state.currentUid===leavingUid
+          ? (queue[0]||null)
+          : (queue.includes(state.currentUid)?state.currentUid:(queue[0]||null));
+
+        tx.update(dayRef,{
+          queue,
+          members,
+          currentUid:nextCurrentUid,
+          passedSinceLastAttendance,
+          lastPresenceEvent:{
+            id:Date.now()+"-"+leavingUid+"-leave",
+            type:"leave",
+            uid:leavingUid,
+            name:leavingName,
+            createdAtMs:Date.now()
+          },
+          updatedAt:serverTimestamp()
+        });
+      });
+    }
+
+    window.addEventListener("pagehide",()=>{
+      const me=memberOf(authUser?.uid);
+      if(!authUser||isSigningOut||me?.status==="busy")return;
+      leaveQueue().catch(()=>{});
+    });
     resetDayBtn.addEventListener("click",async()=>{const now=bahiaParts();if(profile?.role!=="admin")return;const ok=confirm("Limpar todos os atendimentos do dia e zerar a fila? Esta ação não pode ser desfeita.");if(!ok)return;try{const collectionsToClear=["attendances","queuedClients","nudges","events"];for(const collectionName of collectionsToClear){const snap=await getDocs(collection(db,"days",now.dateId,collectionName)),docs=snap.docs;for(let i=0;i<docs.length;i+=400){const batch=writeBatch(db);docs.slice(i,i+400).forEach(d=>batch.delete(d.ref));await batch.commit()}}await setDoc(doc(db,"days",now.dateId),{dateId:now.dateId,status:"open",queue:[],currentUid:null,members:{},lastAttendanceUid:null,passedSinceLastAttendance:[],clearedAt:serverTimestamp(),updatedAt:serverTimestamp()},{merge:true})}catch(err){console.error(err);if(err?.code==="permission-denied")alert("O Firebase bloqueou a limpeza. Publique a versão mais recente das regras do Firestore e confirme que você está logado como leandro3dejesus@gmail.com.");else alert(`Não foi possível limpar o dia. ${err?.code||err?.message||""}`.trim())}});
     document.querySelectorAll("[data-close]").forEach(btn=>btn.addEventListener("click",()=>document.getElementById(btn.dataset.close).close()));
     function complexityBadge(value){const map={standard:["standard","Padrão"],moderate:["moderate","Moderado"],critical:["critical","Alta complexidade"]},item=map[value]||map.standard;return `<span class="complexity-badge ${item[0]}">${item[1]}</span>`}
     function escapeHtml(value){return String(value??"").replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;").replaceAll('"',"&quot;").replaceAll("'","&#039;")}
-    setInterval(async()=>{if(!authUser||!profile||isSigningOut)return;try{await joinToday()}catch(err){console.error(err)}},30000);
+    setInterval(async()=>{
+      if(!authUser||!profile||isSigningOut)return;
+      try{
+        await joinToday();
+        await cleanupStaleMembers();
+      }catch(err){
+        console.error(err);
+      }
+    },30000);
   </script>
 </body>
 </html>
