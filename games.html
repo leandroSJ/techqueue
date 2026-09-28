@@ -21,6 +21,65 @@
       --primary:#a8c7fa;--on-primary:#062e6f;--primary-container:#0842a0;--border:#444746;
       --danger:#f2b8b5;--success:#81c995;--shadow:0 1px 2px rgba(0,0,0,.35)
     }
+    html[data-theme="dark"] .btn-outline-primary{
+      color:#b7d1ff;
+      border-color:#7ea9ef;
+    }
+    html[data-theme="dark"] .btn-outline-primary:hover,
+    html[data-theme="dark"] .btn-outline-primary:focus{
+      background:#2a5fa8;
+      border-color:#8ab4f8;
+      color:#ffffff;
+    }
+    html[data-theme="dark"] .btn-outline-secondary{
+      color:#d5d9dd;
+      border-color:#73777b;
+    }
+    html[data-theme="dark"] .btn-outline-secondary:hover,
+    html[data-theme="dark"] .btn-outline-secondary:focus{
+      background:#3a3d40;
+      border-color:#9aa0a6;
+      color:#ffffff;
+    }
+    html[data-theme="dark"] .btn-outline-danger{
+      color:#ffb4ab;
+      border-color:#d46b63;
+    }
+    html[data-theme="dark"] .form-select,
+    html[data-theme="dark"] .form-control,
+    html[data-theme="dark"] input{
+      background-color:var(--surface);
+      color:var(--text);
+      border-color:#666a6d;
+    }
+    html[data-theme="dark"] .form-select:focus,
+    html[data-theme="dark"] .form-control:focus,
+    html[data-theme="dark"] input:focus{
+      background-color:var(--surface);
+      color:var(--text);
+      border-color:#8ab4f8;
+      box-shadow:0 0 0 .18rem rgba(138,180,248,.2);
+    }
+    html[data-theme="dark"] .form-select option{background:var(--surface);color:var(--text)}
+    html[data-theme="dark"] ::placeholder{color:#9aa0a6!important;opacity:1}
+    html[data-theme="dark"] .text-bg-secondary{background-color:#3c4043!important;color:#f1f3f4!important}
+    html[data-theme="dark"] .game-chat-message.me{
+      color:#eaf2ff;
+      background:#163d78;
+    }
+    html[data-theme="dark"] .game-chat-message.me .game-chat-meta,
+    html[data-theme="dark"] .game-chat-message.me .game-chat-meta strong,
+    html[data-theme="dark"] .game-chat-message.me .game-chat-text{color:#eaf2ff}
+    html[data-theme="dark"] .turn{color:#eaf2ff;background:#163d78}
+    html[data-theme="dark"] .winner-reward{color:#eaf2ff;background:#163d78}
+    html[data-theme="dark"] .winner-crown{background:#4d3900;color:#ffe08a;border-color:#8a6d19}
+    html[data-theme="dark"] .game-card,
+    html[data-theme="dark"] .panel-card,
+    html[data-theme="dark"] .game-area,
+    html[data-theme="dark"] .room-row{color:var(--text)}
+    html[data-theme="dark"] .small,
+    html[data-theme="dark"] .muted{color:#c9cccf!important}
+
     *{box-sizing:border-box}
     body{margin:0;min-height:100vh;background:var(--bg);color:var(--text);font-family:Roboto,Arial,sans-serif}
     button,input,select{font:inherit}button{cursor:pointer}.hidden{display:none!important}
