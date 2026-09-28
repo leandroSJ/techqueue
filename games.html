@@ -394,16 +394,62 @@
     .draw-hint{font-size:.82rem;color:var(--muted)}
     .draw-hint strong{color:var(--text)}
     .draw-actions{display:flex;gap:8px;flex-wrap:wrap}
-    .domino-board,.domino-hand{display:flex;gap:7px;flex-wrap:wrap;justify-content:center;align-items:center;margin:16px 0}
-    .tile{display:inline-grid;grid-template-columns:1fr 1fr;min-width:56px;min-height:42px;border:1px solid var(--border);border-radius:8px;overflow:hidden;background:var(--surface);color:var(--text)}
-    .tile span{padding:10px 8px;text-align:center;display:grid;place-items:center}
-    .tile span+span{border-left:1px solid var(--border)}
-    .tile.double{grid-template-columns:1fr;grid-template-rows:1fr 1fr;min-width:42px;min-height:72px}
-    .tile.double span{padding:7px 10px}
-    .tile.double span+span{border-left:0;border-top:1px solid var(--border)}
-    button.tile{padding:0}
-    .tile.playable{outline:2px solid var(--primary)}
-    .tile.selected{outline:3px solid #f9ab00}
+    .domino-board,.domino-hand{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;align-items:center;margin:16px 0}
+    .tile{
+      position:relative;
+      display:grid;
+      place-items:center;
+      width:82px;
+      height:46px;
+      min-width:82px;
+      min-height:46px;
+      padding:0;
+      border:1px solid transparent;
+      border-radius:9px;
+      background:transparent;
+      color:var(--text);
+      overflow:visible;
+    }
+    .tile.double{
+      width:46px;
+      height:82px;
+      min-width:46px;
+      min-height:82px;
+    }
+    .domino-piece-img{
+      display:block;
+      width:46px;
+      height:82px;
+      object-fit:contain;
+      user-select:none;
+      -webkit-user-drag:none;
+      filter:drop-shadow(0 2px 3px rgba(0,0,0,.18));
+    }
+    .tile:not(.double) .domino-piece-img{transform:rotate(90deg)}
+    .domino-fallback{
+      display:grid;
+      grid-template-columns:1fr 1fr;
+      width:78px;
+      height:42px;
+      border:1px solid var(--border);
+      border-radius:8px;
+      overflow:hidden;
+      background:var(--surface);
+    }
+    .domino-fallback[hidden]{display:none}
+    .domino-fallback span{display:grid;place-items:center;padding:8px}
+    .domino-fallback span+span{border-left:1px solid var(--border)}
+    .tile.double .domino-fallback{
+      grid-template-columns:1fr;
+      grid-template-rows:1fr 1fr;
+      width:42px;
+      height:78px;
+    }
+    .tile.double .domino-fallback span+span{border-left:0;border-top:1px solid var(--border)}
+    button.tile{cursor:pointer}
+    button.tile:disabled{cursor:default}
+    .tile.playable{outline:2px solid var(--primary);outline-offset:3px}
+    .tile.selected{outline:3px solid #f9ab00;outline-offset:3px}
     .domino-side-choice{display:flex;justify-content:center;gap:10px;flex-wrap:wrap;margin:10px 0 16px}
     .domino-side-choice .btn{min-width:150px}
     .ludo-stage{
@@ -5014,6 +5060,7 @@
         </div>
       `;
 
+      wireDominoImageFallbacks();
       document.querySelector("#drawDominoBtn")?.addEventListener("click",drawOrPassDomino);
 
       if(!s.winnerUid){
@@ -5108,8 +5155,50 @@
       });
     }
 
+    function dominoAssetPath(a,b){
+      return "./assets/domino/"+a+"-"+b+".png";
+    }
+
     function tileInner(tile){
-      return`<span>${tile.a}</span><span>${tile.b}</span>`;
+      const primary=dominoAssetPath(tile.a,tile.b);
+      const reverse=dominoAssetPath(tile.b,tile.a);
+      const alt=tile.a+"-"+tile.b;
+
+      return`
+        <img
+          class="domino-piece-img"
+          src="${primary}"
+          data-domino-primary="${primary}"
+          data-domino-reverse="${reverse}"
+          alt="Pedra de dominó ${alt}"
+          draggable="false"
+        >
+        <span class="domino-fallback" hidden aria-hidden="true">
+          <span>${tile.a}</span><span>${tile.b}</span>
+        </span>
+      `;
+    }
+
+    function wireDominoImageFallbacks(){
+      document.querySelectorAll("[data-domino-primary]").forEach(img=>{
+        if(img.dataset.fallbackReady==="1")return;
+        img.dataset.fallbackReady="1";
+
+        img.addEventListener("error",()=>{
+          const reverse=img.dataset.dominoReverse;
+          const primary=img.dataset.dominoPrimary;
+
+          if(img.dataset.triedReverse!=="1"&&reverse&&reverse!==primary){
+            img.dataset.triedReverse="1";
+            img.src=reverse;
+            return;
+          }
+
+          img.hidden=true;
+          const fallback=img.nextElementSibling;
+          if(fallback)fallback.hidden=false;
+        });
+      });
     }
 
     function tileHtml(tile){
