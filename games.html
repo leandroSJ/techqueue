@@ -529,9 +529,10 @@
             <div class="col-12 col-md-6 col-xl-4">
               <div class="card game-card shadow-sm">
                 <h3>Dominó</h3>
-                <p>Escolha uma partida para 2 ou 4 jogadores.</p>
-                <div class="game-card-actions two">
+                <p>Escolha uma partida para 2, 3 ou 4 jogadores.</p>
+                <div class="game-card-actions three">
                   <button class="btn btn-primary" data-create-game="domino" data-domino-players="2">2 jogadores</button>
+                  <button class="btn btn-primary" data-create-game="domino" data-domino-players="3">3 jogadores</button>
                   <button class="btn btn-primary" data-create-game="domino" data-domino-players="4">4 jogadores</button>
                 </div>
               </div>
@@ -2858,7 +2859,7 @@
     }
 
     function initDomino(order,requiredPlayers=2){
-      const target=Number(requiredPlayers)===4?4:2;
+      const target=Math.max(2,Math.min(4,Number(requiredPlayers)||2));
 
       if(order.length<target){
         return{
