@@ -3600,6 +3600,7 @@
           room.game!=="hangman" ||
           s.championUid ||
           s.turnUid!==expectedTurnUid ||
+          s.forceLetterTurn ||
           Number(s.answerDeadlineMs||0)!==Number(expectedDeadlineMs||0) ||
           hangmanRemainingLetters(s)>3 ||
           Date.now()<Number(s.answerDeadlineMs||0)
@@ -3935,8 +3936,31 @@
           return room;
         }
 
+        const finalMode=hangmanRemainingLetters(s)<=3&&!!s.answerDeadlineMs&&!s.forceLetterTurn;
         s.turnUid=nextUid;
-        s.answerDeadlineMs=hangmanRemainingLetters(s)<=3?Date.now()+10000:null;
+
+        if(finalMode){
+          const tried=[...new Set([...(s.finalAnswerTried||[]),user.uid])];
+          const everyoneTried=active.length>0&&active.every(uid=>tried.includes(uid));
+
+          if(everyoneTried){
+            s.finalAnswerTried=[];
+            s.forceLetterTurn=true;
+            s.answerDeadlineMs=null;
+            action.type="answer_cycle_failed";
+            action.message="Ninguém acertou a resposta final. "+(room.players?.[nextUid]||"O próximo jogador")+" deve escolher 1 letra.";
+            s.lastAction=action;
+          }else{
+            s.finalAnswerTried=tried;
+            s.forceLetterTurn=false;
+            s.answerDeadlineMs=Date.now()+10000;
+          }
+        }else{
+          s.finalAnswerTried=[];
+          s.forceLetterTurn=false;
+          s.answerDeadlineMs=null;
+        }
+
         room.state=s;
         room.status="playing";
         return room;
