@@ -271,7 +271,65 @@
     @media(max-width:900px){.shell{width:min(100% - 24px,1120px)}.grid{grid-template-columns:1fr}.status-control{grid-template-columns:1fr}.podium{grid-template-columns:repeat(3,minmax(0,1fr))}.shop-item{grid-template-columns:1fr}.shop-item>div:last-child{justify-self:start}}
     @media(max-width:720px){.app-header{display:block;padding-bottom:14px;margin-bottom:14px;border-bottom:1px solid var(--border)}.header-heading{display:flex;align-items:center;justify-content:space-between;gap:12px}.mobile-menu-btn{display:flex;flex:0 0 44px}.brand h1{font-size:1.45rem}.brand p{font-size:.9rem;margin-top:2px}.userbox{width:100%;display:grid;grid-template-columns:42px minmax(0,1fr);gap:10px;align-items:center;margin-top:14px}.avatar{width:42px;height:42px}.user-meta strong{font-size:1rem}.user-meta span{font-size:.82rem}.header-actions{grid-column:1/-1;width:100%;margin-left:0;display:none;grid-template-columns:1fr 1fr;gap:8px;padding-top:10px;animation:mobileMenuIn .16s ease}.header-actions.open{display:grid}.header-actions .btn,.header-actions .theme-btn{width:100%;justify-content:center;text-align:center;min-width:0;min-height:44px}@keyframes mobileMenuIn{from{opacity:0;transform:translateY(-4px)}to{opacity:1;transform:translateY(0)}}.notice{margin-bottom:12px;padding:12px 14px}.alert-permission-card{margin:0 0 14px;padding:12px;border-radius:14px}.alert-permission-card strong{font-size:.95rem}.alert-permission-card span{font-size:.82rem}.hero{padding:18px 14px;border-radius:16px}.hero .eyebrow{font-size:.78rem}.hero-actions,.open-ticket-actions,.dialog-actions{flex-wrap:wrap}.person{grid-template-columns:minmax(0,1fr) auto}.person-name{min-width:0;flex-wrap:wrap}.person-actions{flex-wrap:wrap;justify-content:flex-end}.queued-client{grid-template-columns:1fr}.queued-client .btn{width:100%}.history-title-row{align-items:flex-start;flex-direction:column}.history-state{white-space:normal}.rank-row{align-items:flex-start;flex-wrap:wrap}.nudge-toast{left:12px;right:12px;bottom:12px;max-width:none}#eventToast{bottom:72px!important}dialog{width:calc(100% - 20px);max-height:calc(100dvh - 20px);overflow:auto}.attention-modal-header{padding:18px}.attention-modal-body{padding:22px 18px}.attention-modal-footer{padding:0 18px 18px}#attentionModal .btn{width:100%}}
     @media(max-width:520px){.history{max-height:480px}.queue-chat-messages{height:240px}.queue-chat-soundbar,.queue-chat-form{grid-template-columns:1fr}.queue-chat-soundbar .btn,.queue-chat-form .btn{width:100%}.queue-chat-heading{align-items:flex-start}.shell{width:calc(100% - 16px);padding-top:10px}.login-wrap{padding:10px}.login-card{padding:18px}.brand h1{font-size:1.25rem}.userbox{grid-template-columns:36px minmax(0,1fr)}.avatar{width:36px;height:36px}.header-actions{grid-template-columns:1fr 1fr}.header-actions #logoutBtn{grid-column:1/-1}.hero-actions,.open-ticket-actions,.dialog-actions{display:grid;grid-template-columns:1fr;width:100%}.hero-actions .btn,.open-ticket-actions .btn,.dialog-actions .btn{width:100%}.podium{grid-template-columns:1fr}.card{padding:14px;border-radius:14px}.status-select,input,textarea{font-size:16px}.person{grid-template-columns:1fr}.person-actions{justify-content:flex-start}.attention-btn{min-height:38px}.complexity-badge{margin-left:0;margin-top:6px}.history-details{overflow-wrap:anywhere}.queue-text{overflow-wrap:anywhere}.next-name{font-size:clamp(1.8rem,12vw,2.7rem);overflow-wrap:anywhere}}
-  </style>
+  
+    .history-archive-dialog{
+      width:min(94vw,920px);
+      max-height:88vh;
+      border:0;
+      border-radius:20px;
+      padding:0;
+      background:var(--surface);
+      color:var(--text);
+      box-shadow:0 24px 70px rgba(0,0,0,.35);
+    }
+    .history-archive-dialog::backdrop{background:rgba(10,18,28,.68);backdrop-filter:blur(3px)}
+    .history-archive-dialog .dialog-body{max-height:88vh;overflow:auto}
+    .history-archive-toolbar{
+      display:grid;
+      grid-template-columns:1fr 1fr 1.4fr;
+      gap:10px;
+      margin:14px 0;
+    }
+    .history-archive-toolbar .field{margin:0}
+    .history-archive-summary{
+      display:grid;
+      grid-template-columns:repeat(4,minmax(0,1fr));
+      gap:10px;
+      margin:14px 0;
+    }
+    .history-summary-item{
+      padding:12px;
+      border:1px solid var(--border);
+      border-radius:12px;
+      background:var(--surface-2);
+      text-align:center;
+    }
+    .history-summary-item strong{display:block;font-size:1.25rem;margin-bottom:2px}
+    .history-summary-item span{font-size:.76rem;color:var(--muted)}
+    .history-archive-list{display:grid;gap:10px;margin-top:12px}
+    .history-archive-item{
+      padding:12px 14px;
+      border:1px solid var(--border);
+      border-radius:12px;
+      background:var(--surface);
+    }
+    .history-archive-item-head{
+      display:flex;
+      align-items:flex-start;
+      justify-content:space-between;
+      gap:12px;
+      margin-bottom:5px;
+    }
+    .history-archive-item-head strong{overflow-wrap:anywhere}
+    .history-archive-item-meta{font-size:.78rem;color:var(--muted);line-height:1.45}
+    .history-archive-item-details{margin-top:8px;font-size:.82rem;line-height:1.5;overflow-wrap:anywhere}
+    .history-archive-loading{padding:24px;text-align:center;color:var(--muted)}
+    @media(max-width:720px){
+      .history-archive-toolbar{grid-template-columns:1fr}
+      .history-archive-summary{grid-template-columns:repeat(2,minmax(0,1fr))}
+      .history-archive-dialog{width:96vw}
+    }
+</style>
 </head>
 <body>
   <section id="loginView" class="login-wrap">
@@ -290,14 +348,14 @@
   <main id="appView" class="shell hidden">
     <header class="app-header">
       <div class="header-heading"><div class="brand"><h1>TechQueue</h1><p>Rodízio interno de atendimento</p></div><button id="mobileMenuBtn" class="mobile-menu-btn" type="button" aria-label="Abrir menu" aria-expanded="false" aria-controls="mobileHeaderMenu"><span></span><span></span><span></span></button></div>
-      <div class="userbox"><div class="avatar" id="avatar">?</div><div class="user-meta"><strong id="loggedName">-</strong><span id="loggedShift">-</span></div><div id="mobileHeaderMenu" class="header-actions"><button id="shopBtn" class="btn btn-secondary" type="button">Lojinha <span id="walletXp">0 XP</span></button><a class="btn btn-secondary" href="./games.html" style="text-decoration:none;display:inline-flex;align-items:center">Sala da Descompressão</a><button class="theme-btn" type="button" data-theme-toggle>Modo escuro</button><button id="logoutBtn" class="btn btn-secondary">Sair</button></div></div>
+      <div class="userbox"><div class="avatar" id="avatar">?</div><div class="user-meta"><strong id="loggedName">-</strong><span id="loggedShift">-</span></div><div id="mobileHeaderMenu" class="header-actions"><button id="shopBtn" class="btn btn-secondary" type="button">Lojinha <span id="walletXp">0 XP</span></button><button id="historyArchiveBtn" class="btn btn-secondary" type="button">Histórico</button><a class="btn btn-secondary" href="./games.html" style="text-decoration:none;display:inline-flex;align-items:center">Sala da Descompressão</a><button class="theme-btn" type="button" data-theme-toggle>Modo escuro</button><button id="logoutBtn" class="btn btn-secondary">Sair</button></div></div>
     </header>
     <div id="systemNotice" class="notice">Carregando fila...</div>
     <div id="alertPermissionCard" class="alert-permission-card hidden"><div><strong>Ative os alertas do TechQueue</strong><span id="alertPermissionText">Permita notificações e som para receber chamadas mesmo quando esta aba estiver em segundo plano.</span></div><button id="enableAlertsBtn" class="btn btn-primary" type="button">Ativar notificações e som</button></div>
     <section class="hero"><div class="eyebrow">Próximo atendimento</div><div id="nextName" class="next-name">—</div><div id="queueText" class="queue-text">Aguardando técnicos entrarem na fila</div><div class="hero-actions"><button id="takeBtn" class="btn btn-primary" disabled>Atendi agora</button><button id="passTurnBtn" class="btn btn-secondary" disabled>Passar a vez</button><button id="adminPullBtn" class="btn btn-secondary" type="button" disabled>Puxar atendimento</button></div></section>
     <section class="grid"><div><div id="myOpenTicket" class="open-ticket hidden"><div class="eyebrow">Seu atendimento em andamento</div><h3 id="openClient">-</h3><p id="openStarted">-</p><div class="open-ticket-actions"><button id="finishBtn" class="btn btn-primary">Finalizei o atendimento</button><button id="queueClientBtn" class="btn btn-secondary">Enviar para fila</button></div></div><div class="card" style="margin-bottom:20px"><div class="status-control"><div><h2 style="margin-bottom:0">Meu status</h2><p>Ao sair como disponível, você é removido temporariamente do rodízio.</p></div><select id="statusSelect" class="status-select"><option value="available">Disponível</option><option value="offline">Offline</option><option value="lunch">Almoço</option><option value="smoke">Vou PITAR</option><option value="smoking">FUMANDO UM JA VOLTO</option><option value="bathroom">Segura aí na moral, vou no banheiro</option><option value="paid_bathroom">Cagada remunerada</option><option value="away">Vou ali e já volto</option></select></div></div><div class="card" style="margin-bottom:20px"><h2>Clientes encaminhados</h2><div id="queuedClientsList" class="queue-list"></div></div><div class="card"><div class="queue-card-heading"><h2>Fila da equipe</h2><button id="nudgeAllBtn" class="btn btn-secondary nudge-all-btn" type="button">Chamar atenção de todos</button></div><div id="queueList" class="queue-list"></div></div><div class="card queue-chat-card" style="margin-top:20px"><div class="queue-chat-heading"><div><h2>Chat da equipe</h2><p>Converse com todo mundo que está usando o TechQueue.</p></div><span id="queueChatCount" class="queue-chat-count">0</span></div><div id="queueChatMessages" class="queue-chat-messages"><div class="empty">Nenhuma mensagem ainda.</div></div><div class="queue-chat-quick"><button type="button" data-queue-chat-quick="Bom dia">Bom dia</button><button type="button" data-queue-chat-quick="Alguém pode ajudar?">Alguém pode ajudar?</button><button type="button" data-queue-chat-quick="Cliente aguardando">Cliente aguardando</button><button type="button" data-queue-chat-quick="Valeu!">Valeu!</button></div><div class="queue-chat-emojis" aria-label="Emojis rápidos"><button type="button" data-queue-emoji="👍">👍</button><button type="button" data-queue-emoji="😂">😂</button><button type="button" data-queue-emoji="🤣">🤣</button><button type="button" data-queue-emoji="👀">👀</button><button type="button" data-queue-emoji="🔥">🔥</button><button type="button" data-queue-emoji="😴">😴</button><button type="button" data-queue-emoji="🤡">🤡</button><button type="button" data-queue-emoji="🙏">🙏</button><button type="button" data-queue-emoji="✅">✅</button><button type="button" data-queue-emoji="🚨">🚨</button></div><div class="queue-chat-soundbar"><select id="queueChatSoundSelect" class="status-select" aria-label="Escolher áudio do chat"></select><button id="queueChatSoundBtn" class="btn btn-secondary" type="button">Enviar áudio</button></div><form id="queueChatForm" class="queue-chat-form"><input id="queueChatInput" type="text" maxlength="220" autocomplete="off" placeholder="Digite uma mensagem para a equipe..." required><button id="queueChatSendBtn" class="btn btn-primary" type="submit">Enviar</button></form></div></div><div class="card"><h2>Histórico de hoje</h2><div id="history" class="history"></div></div></section>
     <section class="card ranking-card"><h2>Ranking de atendimentos</h2><p class="ranking-note">Este ranking conta somente atendimentos registrados via chat no TechQueue. Ele não mede produtividade nem significa que um técnico trabalhou mais que outro: existem demandas, análises e atividades que não passam pelo chat.</p><div id="podium" class="podium"></div><div id="shameWall" class="shame-wall"></div></section>
-    <div id="adminRow" class="admin-row hidden"><button id="resetDayBtn" class="btn btn-danger">Limpar histórico</button></div>
+    <div id="adminRow" class="admin-row hidden"><button id="resetDayBtn" class="btn btn-danger">Reiniciar fila de hoje</button></div>
   </main>
 
   <div id="nudgeToast" class="nudge-toast hidden" role="status" aria-live="polite"></div>
@@ -306,6 +364,39 @@
   <div class="modal fade" id="attentionModal" tabindex="-1" aria-labelledby="attentionModalTitle" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
     <div class="modal-dialog modal-dialog-centered"><div class="modal-content attention-modal-content"><div class="attention-modal-header"><div class="attention-modal-icon" aria-hidden="true">🚨</div><div><h2 id="attentionModalTitle" class="attention-modal-title">Chamando sua atenção</h2><p id="attentionModalFrom" class="attention-modal-subtitle">Outro técnico chamou você.</p></div></div><div class="attention-modal-body"><div id="attentionModalMessage" class="attention-modal-message">Precisa da sua atenção no TechQueue.</div></div><div class="attention-modal-footer"><button id="attentionAcknowledgeBtn" type="button" class="btn btn-primary" data-bs-dismiss="modal">Entendi</button></div></div></div>
   </div>
+
+  <dialog id="historyArchiveDialog" class="history-archive-dialog">
+    <div class="dialog-body">
+      <h2>Histórico de atendimentos</h2>
+      <p class="muted">Os dias anteriores ficam preservados. A fila atual continua mostrando somente os dados de hoje.</p>
+
+      <div class="history-archive-toolbar">
+        <div class="field">
+          <label for="historyDateSelect">Data</label>
+          <select id="historyDateSelect" class="status-select"></select>
+        </div>
+        <div class="field">
+          <label for="historyTechSelect">Técnico</label>
+          <select id="historyTechSelect" class="status-select">
+            <option value="">Todos</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="historyClientFilter">Cliente</label>
+          <input id="historyClientFilter" type="search" placeholder="Buscar cliente..." autocomplete="off">
+        </div>
+      </div>
+
+      <div id="historyArchiveSummary" class="history-archive-summary"></div>
+      <div id="historyArchiveList" class="history-archive-list">
+        <div class="history-archive-loading">Carregando histórico...</div>
+      </div>
+
+      <div class="dialog-actions">
+        <button type="button" class="btn btn-secondary" data-close="historyArchiveDialog">Fechar</button>
+      </div>
+    </div>
+  </dialog>
 
   <dialog id="shopDialog"><div class="dialog-body"><h2>Lojinha do TechQueue</h2><p>Use o XP dos atendimentos para liberar sons e extras de zoeira. Compras ficam vinculadas à sua conta Google.</p><div id="shopBalance" class="shop-balance">Saldo: 0 XP</div><div id="shopItems" class="shop-grid"></div><div class="dialog-actions"><button type="button" class="btn btn-secondary" data-close="shopDialog">Fechar</button></div></div></dialog>
   <dialog id="nudgeDialog"><form id="nudgeForm" class="dialog-body"><h2>Chamar atenção</h2><p id="nudgeTargetText">Escolha como chamar a atenção.</p><div class="field"><label for="nudgeSound">Som</label><select id="nudgeSound" class="status-select"></select></div><div id="customMessageField" class="field hidden"><label for="nudgeMessage">Mensagem</label><input id="nudgeMessage" maxlength="90" placeholder="Ex.: Ô meu patrão, olha aqui" /></div><div id="reactionField" class="field hidden"><label for="nudgeReaction">Reação</label><select id="nudgeReaction" class="status-select"><option value="">Sem reação</option><option value="👍">👍</option><option value="😂">😂</option><option value="👀">👀</option><option value="🔥">🔥</option><option value="😴">😴</option><option value="🤡">🤡</option></select></div><div id="stickerField" class="field hidden"><label for="nudgeSticker">Figurinha</label><select id="nudgeSticker" class="status-select"><option value="">Sem figurinha</option><option value="BORA">BORA</option><option value="OLHA A FILAAAA">OLHA A FILAAAA</option><option value="CALMA AÍ">CALMA AÍ</option><option value="ACORDA">ACORDA</option><option value="LÁ ELE">LÁ ELE</option></select></div><div class="dialog-actions"><button type="button" class="btn btn-secondary" data-close="nudgeDialog">Cancelar</button><button type="submit" class="btn btn-primary">Enviar</button></div></form></dialog>
@@ -326,14 +417,14 @@
     applyTheme(localStorage.getItem(THEME_KEY)||"light");
     document.querySelectorAll("[data-theme-toggle]").forEach(button=>button.addEventListener("click",()=>{const current=document.documentElement.dataset.theme||"light";applyTheme(current==="dark"?"light":"dark")}));
 
-    const loginView=document.querySelector("#loginView"),appView=document.querySelector("#appView"),googleLoginBtn=document.querySelector("#googleLoginBtn"),loginError=document.querySelector("#loginError"),logoutBtn=document.querySelector("#logoutBtn"),mobileMenuBtn=document.querySelector("#mobileMenuBtn"),mobileHeaderMenu=document.querySelector("#mobileHeaderMenu"),loggedName=document.querySelector("#loggedName"),loggedShift=document.querySelector("#loggedShift"),avatar=document.querySelector("#avatar"),systemNotice=document.querySelector("#systemNotice"),nextName=document.querySelector("#nextName"),queueText=document.querySelector("#queueText"),queueList=document.querySelector("#queueList"),nudgeAllBtn=document.querySelector("#nudgeAllBtn"),queueChatMessages=document.querySelector("#queueChatMessages"),queueChatForm=document.querySelector("#queueChatForm"),queueChatInput=document.querySelector("#queueChatInput"),queueChatSendBtn=document.querySelector("#queueChatSendBtn"),queueChatCount=document.querySelector("#queueChatCount"),queueChatSoundSelect=document.querySelector("#queueChatSoundSelect"),queueChatSoundBtn=document.querySelector("#queueChatSoundBtn"),queuedClientsList=document.querySelector("#queuedClientsList"),historyEl=document.querySelector("#history"),takeBtn=document.querySelector("#takeBtn"),passTurnBtn=document.querySelector("#passTurnBtn"),finishBtn=document.querySelector("#finishBtn"),queueClientBtn=document.querySelector("#queueClientBtn"),myOpenTicket=document.querySelector("#myOpenTicket"),openClient=document.querySelector("#openClient"),openStarted=document.querySelector("#openStarted"),adminRow=document.querySelector("#adminRow"),resetDayBtn=document.querySelector("#resetDayBtn"),alertPermissionCard=document.querySelector("#alertPermissionCard"),alertPermissionText=document.querySelector("#alertPermissionText"),enableAlertsBtn=document.querySelector("#enableAlertsBtn"),shopBtn=document.querySelector("#shopBtn"),walletXp=document.querySelector("#walletXp"),shopDialog=document.querySelector("#shopDialog"),shopBalance=document.querySelector("#shopBalance"),shopItems=document.querySelector("#shopItems"),nudgeDialog=document.querySelector("#nudgeDialog"),nudgeForm=document.querySelector("#nudgeForm"),nudgeSound=document.querySelector("#nudgeSound"),nudgeMessage=document.querySelector("#nudgeMessage"),nudgeTargetText=document.querySelector("#nudgeTargetText"),customMessageField=document.querySelector("#customMessageField"),reactionField=document.querySelector("#reactionField"),nudgeReaction=document.querySelector("#nudgeReaction"),stickerField=document.querySelector("#stickerField"),nudgeSticker=document.querySelector("#nudgeSticker"),podium=document.querySelector("#podium"),shameWall=document.querySelector("#shameWall"),statusSelect=document.querySelector("#statusSelect"),nudgeToast=document.querySelector("#nudgeToast"),eventToast=document.querySelector("#eventToast"),attentionModal=document.querySelector("#attentionModal"),attentionModalFrom=document.querySelector("#attentionModalFrom"),attentionModalMessage=document.querySelector("#attentionModalMessage"),attentionAcknowledgeBtn=document.querySelector("#attentionAcknowledgeBtn"),takeDialog=document.querySelector("#takeDialog"),finishDialog=document.querySelector("#finishDialog"),takeForm=document.querySelector("#takeForm"),finishForm=document.querySelector("#finishForm"),clientNameInput=document.querySelector("#clientName"),problemInput=document.querySelector("#problem"),solutionInput=document.querySelector("#solution");
+    const loginView=document.querySelector("#loginView"),appView=document.querySelector("#appView"),googleLoginBtn=document.querySelector("#googleLoginBtn"),loginError=document.querySelector("#loginError"),logoutBtn=document.querySelector("#logoutBtn"),mobileMenuBtn=document.querySelector("#mobileMenuBtn"),mobileHeaderMenu=document.querySelector("#mobileHeaderMenu"),loggedName=document.querySelector("#loggedName"),loggedShift=document.querySelector("#loggedShift"),avatar=document.querySelector("#avatar"),systemNotice=document.querySelector("#systemNotice"),nextName=document.querySelector("#nextName"),queueText=document.querySelector("#queueText"),queueList=document.querySelector("#queueList"),nudgeAllBtn=document.querySelector("#nudgeAllBtn"),queueChatMessages=document.querySelector("#queueChatMessages"),queueChatForm=document.querySelector("#queueChatForm"),queueChatInput=document.querySelector("#queueChatInput"),queueChatSendBtn=document.querySelector("#queueChatSendBtn"),queueChatCount=document.querySelector("#queueChatCount"),queueChatSoundSelect=document.querySelector("#queueChatSoundSelect"),queueChatSoundBtn=document.querySelector("#queueChatSoundBtn"),queuedClientsList=document.querySelector("#queuedClientsList"),historyEl=document.querySelector("#history"),takeBtn=document.querySelector("#takeBtn"),passTurnBtn=document.querySelector("#passTurnBtn"),finishBtn=document.querySelector("#finishBtn"),queueClientBtn=document.querySelector("#queueClientBtn"),myOpenTicket=document.querySelector("#myOpenTicket"),openClient=document.querySelector("#openClient"),openStarted=document.querySelector("#openStarted"),adminRow=document.querySelector("#adminRow"),resetDayBtn=document.querySelector("#resetDayBtn"),alertPermissionCard=document.querySelector("#alertPermissionCard"),alertPermissionText=document.querySelector("#alertPermissionText"),enableAlertsBtn=document.querySelector("#enableAlertsBtn"),shopBtn=document.querySelector("#shopBtn"),walletXp=document.querySelector("#walletXp"),shopDialog=document.querySelector("#shopDialog"),shopBalance=document.querySelector("#shopBalance"),shopItems=document.querySelector("#shopItems"),nudgeDialog=document.querySelector("#nudgeDialog"),nudgeForm=document.querySelector("#nudgeForm"),nudgeSound=document.querySelector("#nudgeSound"),nudgeMessage=document.querySelector("#nudgeMessage"),nudgeTargetText=document.querySelector("#nudgeTargetText"),customMessageField=document.querySelector("#customMessageField"),reactionField=document.querySelector("#reactionField"),nudgeReaction=document.querySelector("#nudgeReaction"),stickerField=document.querySelector("#stickerField"),nudgeSticker=document.querySelector("#nudgeSticker"),podium=document.querySelector("#podium"),shameWall=document.querySelector("#shameWall"),statusSelect=document.querySelector("#statusSelect"),nudgeToast=document.querySelector("#nudgeToast"),eventToast=document.querySelector("#eventToast"),attentionModal=document.querySelector("#attentionModal"),attentionModalFrom=document.querySelector("#attentionModalFrom"),attentionModalMessage=document.querySelector("#attentionModalMessage"),attentionAcknowledgeBtn=document.querySelector("#attentionAcknowledgeBtn"),takeDialog=document.querySelector("#takeDialog"),finishDialog=document.querySelector("#finishDialog"),takeForm=document.querySelector("#takeForm"),finishForm=document.querySelector("#finishForm"),clientNameInput=document.querySelector("#clientName"),problemInput=document.querySelector("#problem"),solutionInput=document.querySelector("#solution"),historyArchiveBtn=document.querySelector("#historyArchiveBtn"),historyArchiveDialog=document.querySelector("#historyArchiveDialog"),historyDateSelect=document.querySelector("#historyDateSelect"),historyTechSelect=document.querySelector("#historyTechSelect"),historyClientFilter=document.querySelector("#historyClientFilter"),historyArchiveSummary=document.querySelector("#historyArchiveSummary"),historyArchiveList=document.querySelector("#historyArchiveList");
 
     function setMobileMenu(open){if(!mobileMenuBtn||!mobileHeaderMenu)return;mobileMenuBtn.classList.toggle("open",open);mobileHeaderMenu.classList.toggle("open",open);mobileMenuBtn.setAttribute("aria-expanded",String(open));mobileMenuBtn.setAttribute("aria-label",open?"Fechar menu":"Abrir menu")}
     mobileMenuBtn?.addEventListener("click",()=>setMobileMenu(!mobileHeaderMenu?.classList.contains("open")));
     mobileHeaderMenu?.addEventListener("click",event=>{if(event.target.closest("a,button")&&window.innerWidth<=720)setMobileMenu(false)});
     window.addEventListener("resize",()=>{if(window.innerWidth>720)setMobileMenu(false)});
 
-    let app,auth,db,authUser=null,profile=null,dayState=null,todayAttendances=[],queuedClients=[],unsubDay=null,unsubHistory=null,unsubNudges=null,unsubEvents=null,unsubQueuedClients=null,unsubBan=null,nudgesReady=false,lastSeenPassEventId=null,lastSeenPresenceEventId=null,lastSeenQueueChatId=null,queueChatReady=false,isSigningOut=false,openAttendance=null,userProfileDoc=null,unsubProfile=null,pendingNudgeTarget=null;
+    let app,auth,db,authUser=null,profile=null,dayState=null,todayAttendances=[],historyArchiveAttendances=[],queuedClients=[],unsubDay=null,unsubHistory=null,unsubNudges=null,unsubEvents=null,unsubQueuedClients=null,unsubBan=null,nudgesReady=false,lastSeenPassEventId=null,lastSeenPresenceEventId=null,lastSeenQueueChatId=null,queueChatReady=false,isSigningOut=false,openAttendance=null,userProfileDoc=null,unsubProfile=null,pendingNudgeTarget=null;
     let alertsActivated=localStorage.getItem("techqueue-alerts-activated")==="1",attentionFlashTimer=null,activeDayId=null,dayRolloverTimer=null,attentionFlashState=false;
     const seenQueueChatSoundIds=new Set();
     const normalDocumentTitle=document.title,alertPlayer=new Audio(),queueChatAudio=new Audio();
@@ -945,6 +1036,131 @@
     function renderQueuedClients(){if(!queuedClientsList)return;if(!queuedClients.length){queuedClientsList.innerHTML='<div class="empty">Nenhum cliente encaminhado no momento.</div>';return}const canAssume=dayState?.currentUid===authUser?.uid&&memberOf(authUser?.uid)?.status==="available"&&!openAttendance;queuedClientsList.innerHTML=queuedClients.map(item=>`<div class="queued-client"><div><strong>${escapeHtml(item.clientName)}</strong><span>Enviado por ${escapeHtml(item.fromName||"Técnico")} às ${formatTimestamp(item.createdAt)}</span></div><button class="btn btn-secondary" type="button" data-assume-client="${item.id}" ${canAssume?"":"disabled"}>Assumir</button></div>`).join("")}
     queuedClientsList.addEventListener("click",async event=>{const button=event.target.closest("[data-assume-client]");if(button)await assumeQueuedClient(button.dataset.assumeClient)});
     async function assumeQueuedClient(queueId){if(!authUser||!dayState)return;const now=bahiaParts(),dayRef=doc(db,"days",now.dateId),queuedRef=doc(db,"days",now.dateId,"queuedClients",queueId),attendanceRef=doc(collection(db,"days",now.dateId,"attendances"));try{await runTransaction(db,async tx=>{const daySnap=await tx.get(dayRef),queuedSnap=await tx.get(queuedRef);if(!daySnap.exists()||!queuedSnap.exists())throw new Error("Este cliente não está mais na fila.");const state=daySnap.data(),item=queuedSnap.data(),member=state.members?.[authUser.uid];if(state.currentUid!==authUser.uid||member?.status!=="available")throw new Error("Somente o próximo técnico disponível pode assumir este cliente.");const currentQueue=[...(state.queue||[])];const queue=currentQueue.filter(uid=>uid!==authUser.uid),members={...state.members};members[authUser.uid]={...member,status:"busy",currentAttendanceId:attendanceRef.id};tx.set(attendanceRef,{technicianUid:authUser.uid,technicianName:profile.name,clientName:item.clientName,status:"open",startedAt:serverTimestamp(),startedAtMs:Date.now(),problem:"",solution:"",source:"forwarded",forwardedByUid:item.fromUid||null,forwardedByName:item.fromName||"",finishedAt:null});tx.delete(queuedRef);tx.update(dayRef,{queue,members,currentUid:queue[0]||null,lastAttendanceUid:authUser.uid,passedSinceLastAttendance:[],updatedAt:serverTimestamp()})})}catch(err){console.error(err);alert(err.message||"Não foi possível assumir o cliente.")}}
+    function formatHistoryDateId(dateId){
+      const match=String(dateId||"").match(/^(\d{4})-(\d{2})-(\d{2})$/);
+      if(!match)return dateId||"";
+      return `${match[3]}/${match[2]}/${match[1]}`;
+    }
+
+    function attendanceTimeMs(attendance){
+      if(Number(attendance?.startedAtMs||0))return Number(attendance.startedAtMs);
+      if(attendance?.startedAt?.toMillis)return attendance.startedAt.toMillis();
+      return 0;
+    }
+
+    async function loadHistoryArchiveDays(){
+      if(!historyDateSelect||!historyArchiveList)return;
+      historyArchiveList.innerHTML='<div class="history-archive-loading">Carregando dias...</div>';
+      try{
+        const daysSnap=await getDocs(collection(db,"days"));
+        const todayId=bahiaParts().dateId;
+        const dayIds=daysSnap.docs.map(d=>d.id).filter(id=>/^\d{4}-\d{2}-\d{2}$/.test(id));
+        if(!dayIds.includes(todayId))dayIds.push(todayId);
+        dayIds.sort((a,b)=>b.localeCompare(a));
+
+        const previous=historyDateSelect.value;
+        historyDateSelect.innerHTML=dayIds.map(id=>`<option value="${id}">${formatHistoryDateId(id)}${id===todayId?" · hoje":""}</option>`).join("");
+        historyDateSelect.value=dayIds.includes(previous)?previous:todayId;
+
+        await loadHistoryArchiveDate(historyDateSelect.value);
+      }catch(err){
+        console.error("Falha ao carregar dias do histórico:",err);
+        historyArchiveList.innerHTML='<div class="empty">Não foi possível carregar o histórico.</div>';
+      }
+    }
+
+    async function loadHistoryArchiveDate(dateId){
+      if(!dateId||!historyArchiveList)return;
+      historyArchiveList.innerHTML='<div class="history-archive-loading">Carregando atendimentos...</div>';
+      try{
+        const snap=await getDocs(collection(db,"days",dateId,"attendances"));
+        historyArchiveAttendances=snap.docs
+          .map(d=>({id:d.id,...d.data()}))
+          .sort((a,b)=>attendanceTimeMs(b)-attendanceTimeMs(a));
+
+        const previousTech=historyTechSelect.value;
+        const techs=[...new Set(historyArchiveAttendances.map(a=>a.technicianName).filter(Boolean))]
+          .sort((a,b)=>a.localeCompare(b,"pt-BR"));
+
+        historyTechSelect.innerHTML='<option value="">Todos</option>'+techs
+          .map(name=>`<option value="${escapeHtml(name)}">${escapeHtml(name)}</option>`)
+          .join("");
+
+        if(techs.includes(previousTech))historyTechSelect.value=previousTech;
+        renderHistoryArchive();
+      }catch(err){
+        console.error("Falha ao carregar atendimentos antigos:",err);
+        historyArchiveAttendances=[];
+        historyArchiveSummary.innerHTML="";
+        historyArchiveList.innerHTML='<div class="empty">Não foi possível carregar os atendimentos desta data.</div>';
+      }
+    }
+
+    function renderHistoryArchive(){
+      if(!historyArchiveSummary||!historyArchiveList)return;
+
+      const tech=historyTechSelect?.value||"";
+      const client=(historyClientFilter?.value||"").trim().toLocaleLowerCase("pt-BR");
+
+      const items=historyArchiveAttendances.filter(item=>{
+        if(tech&&item.technicianName!==tech)return false;
+        if(client&&!String(item.clientName||"").toLocaleLowerCase("pt-BR").includes(client))return false;
+        return true;
+      });
+
+      const finished=items.filter(item=>item.status==="finished").length;
+      const queued=items.filter(item=>item.status==="queued").length;
+      const open=items.filter(item=>item.status==="open").length;
+      const xp=items
+        .filter(item=>item.status==="finished")
+        .reduce((sum,item)=>sum+Number(item.xpAwarded??xpForComplexity(item.complexity)),0);
+
+      historyArchiveSummary.innerHTML=`
+        <div class="history-summary-item"><strong>${items.length}</strong><span>atendimentos</span></div>
+        <div class="history-summary-item"><strong>${finished}</strong><span>concluídos</span></div>
+        <div class="history-summary-item"><strong>${queued+open}</strong><span>encaminhados / abertos</span></div>
+        <div class="history-summary-item"><strong>${xp}</strong><span>XP registrado</span></div>
+      `;
+
+      if(!items.length){
+        historyArchiveList.innerHTML='<div class="empty">Nenhum atendimento encontrado para estes filtros.</div>';
+        return;
+      }
+
+      historyArchiveList.innerHTML=items.map(item=>{
+        const done=item.status==="finished";
+        const queued=item.status==="queued";
+        const statusLabel=done?"Concluído":queued?"Enviado para fila":"Em atendimento";
+        const statusClass=done?"done":queued?"queued":"open";
+        const details=done
+          ? `<div class="history-archive-item-details"><strong>Problema:</strong> ${escapeHtml(item.problem||"-")}<br><strong>Solução:</strong> ${escapeHtml(item.solution||"-")}<br><strong>Complexidade:</strong> ${escapeHtml(item.complexity==="critical"?"Alta":item.complexity==="moderate"?"Moderada":"Padrão")} · <strong>XP:</strong> +${Number(item.xpAwarded??xpForComplexity(item.complexity))}</div>`
+          :"";
+
+        return `<article class="history-archive-item">
+          <div class="history-archive-item-head">
+            <strong>${escapeHtml(item.clientName||"Cliente")} — ${escapeHtml(item.technicianName||"Técnico")}</strong>
+            <span class="history-state ${statusClass}">${statusLabel}</span>
+          </div>
+          <div class="history-archive-item-meta">
+            Início ${formatTimestamp(item.startedAt)}
+            ${done?` · fim ${formatTimestamp(item.finishedAt)}`:queued?` · enviado ${formatTimestamp(item.queuedAt)}`:""}
+          </div>
+          ${details}
+        </article>`;
+      }).join("");
+    }
+
+    historyArchiveBtn?.addEventListener("click",async()=>{
+      historyClientFilter.value="";
+      historyTechSelect.value="";
+      historyArchiveDialog.showModal();
+      await loadHistoryArchiveDays();
+    });
+
+    historyDateSelect?.addEventListener("change",()=>loadHistoryArchiveDate(historyDateSelect.value));
+    historyTechSelect?.addEventListener("change",renderHistoryArchive);
+    historyClientFilter?.addEventListener("input",renderHistoryArchive);
+
     function renderHistory(){if(!historyEl)return;if(!todayAttendances.length){historyEl.innerHTML='<div class="empty">Nenhum atendimento registrado hoje.</div>';return}historyEl.innerHTML=todayAttendances.map(a=>{const done=a.status==="finished",queued=a.status==="queued",stateLabel=done?"Concluído":queued?"Enviado para fila":"Em atendimento",stateClass=done?"done":queued?"queued":"open";return `<article class="history-item"><div class="history-title-row"><div class="history-title">${escapeHtml(a.clientName)} — ${escapeHtml(a.technicianName)} ${done?complexityBadge(a.complexity):""}</div><span class="history-state ${stateClass}">${stateLabel}</span></div><div class="history-meta">Início ${formatTimestamp(a.startedAt)}${done?` • fim ${formatTimestamp(a.finishedAt)}`:queued?` • enviado para fila ${formatTimestamp(a.queuedAt)}`:" • em atendimento"}</div>${done?`<div class="history-details"><strong>Problema:</strong> ${escapeHtml(a.problem||"-")}<br><strong>Solução:</strong> ${escapeHtml(a.solution||"-")}<br><strong>XP:</strong> +${Number(a.xpAwarded??xpForComplexity(a.complexity))} XP</div>`:""}</article>`}).join("")}
     function xpForComplexity(value){if(value==="critical")return 35;if(value==="moderate")return 20;return 10}
     function renderRanking(){if(!podium||!shameWall)return;const stats=new Map();for(const attendance of todayAttendances){if(attendance.status!=="finished")continue;const uid=attendance.technicianUid||attendance.technicianName;if(!stats.has(uid))stats.set(uid,{name:attendance.technicianName||"Técnico",count:0,xp:0});const item=stats.get(uid);item.count+=1;item.xp+=Number(attendance.xpAwarded??xpForComplexity(attendance.complexity))}const ranking=[...stats.values()].sort((a,b)=>b.count-a.count||b.xp-a.xp||a.name.localeCompare(b.name));if(!ranking.length){podium.innerHTML='<div class="empty" style="grid-column:1/-1">O pódio ainda está vazio.</div>';shameWall.innerHTML="";return}const labels=["1º lugar","2º lugar","3º lugar"];podium.innerHTML=ranking.slice(0,3).map((item,index)=>`<div class="podium-place"><div class="podium-position">${labels[index]}</div><strong>${escapeHtml(item.name)}</strong><div class="podium-score">${item.count} atendimento${item.count===1?"":"s"}<span class="xp-badge">${item.xp} XP</span></div></div>`).join("");const rest=ranking.slice(3);shameWall.innerHTML=rest.length?`<div class="shame-wall-title">Mural da vergonha</div>${rest.map((item,index)=>`<div class="rank-row"><span>${index+4}º — ${escapeHtml(item.name)}</span><span>${item.count} atend. <span class="xp-badge">${item.xp} XP</span></span></div>`).join("")}`:""}
@@ -998,7 +1214,7 @@
       if(!authUser||isSigningOut||me?.status==="busy")return;
       leaveQueue().catch(()=>{});
     });
-    resetDayBtn.addEventListener("click",async()=>{const now=bahiaParts();if(profile?.role!=="admin")return;const ok=confirm("Limpar todos os atendimentos do dia e zerar a fila? Esta ação não pode ser desfeita.");if(!ok)return;try{const collectionsToClear=["attendances","queuedClients","nudges","events"];for(const collectionName of collectionsToClear){const snap=await getDocs(collection(db,"days",now.dateId,collectionName)),docs=snap.docs;for(let i=0;i<docs.length;i+=400){const batch=writeBatch(db);docs.slice(i,i+400).forEach(d=>batch.delete(d.ref));await batch.commit()}}await setDoc(doc(db,"days",now.dateId),{dateId:now.dateId,status:"open",queue:[],currentUid:null,members:{},lastAttendanceUid:null,passedSinceLastAttendance:[],clearedAt:serverTimestamp(),updatedAt:serverTimestamp()},{merge:true})}catch(err){console.error(err);if(err?.code==="permission-denied")alert("O Firebase bloqueou a limpeza. Publique a versão mais recente das regras do Firestore e confirme que você está logado como leandro3dejesus@gmail.com.");else alert(`Não foi possível limpar o dia. ${err?.code||err?.message||""}`.trim())}});
+    resetDayBtn.addEventListener("click",async()=>{const now=bahiaParts();if(profile?.role!=="admin")return;const ok=confirm("Reiniciar a fila de hoje? Os atendimentos já registrados serão preservados no histórico.");if(!ok)return;try{const collectionsToClear=["queuedClients","nudges","events"];for(const collectionName of collectionsToClear){const snap=await getDocs(collection(db,"days",now.dateId,collectionName)),docs=snap.docs;for(let i=0;i<docs.length;i+=400){const batch=writeBatch(db);docs.slice(i,i+400).forEach(d=>batch.delete(d.ref));await batch.commit()}}await setDoc(doc(db,"days",now.dateId),{dateId:now.dateId,status:"open",queue:[],currentUid:null,members:{},lastAttendanceUid:null,passedSinceLastAttendance:[],clearedAt:serverTimestamp(),updatedAt:serverTimestamp()},{merge:true})}catch(err){console.error(err);if(err?.code==="permission-denied")alert("O Firebase bloqueou a limpeza. Publique a versão mais recente das regras do Firestore e confirme que você está logado como leandro3dejesus@gmail.com.");else alert(`Não foi possível limpar o dia. ${err?.code||err?.message||""}`.trim())}});
     document.querySelectorAll("[data-close]").forEach(btn=>btn.addEventListener("click",()=>document.getElementById(btn.dataset.close).close()));
     function complexityBadge(value){const map={standard:["standard","Padrão"],moderate:["moderate","Moderado"],critical:["critical","Alta complexidade"]},item=map[value]||map.standard;return `<span class="complexity-badge ${item[0]}">${item[1]}</span>`}
     function escapeHtml(value){return String(value??"").replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;").replaceAll('"',"&quot;").replaceAll("'","&#039;")}
