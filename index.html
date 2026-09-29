@@ -215,6 +215,10 @@
     .open-ticket h3{margin:0 0 4px;font-weight:500}
     .open-ticket p{margin:0 0 12px;color:var(--muted)}
     .open-ticket-actions{display:flex;gap:10px;flex-wrap:wrap}
+    .open-tickets{display:grid;gap:12px;margin-bottom:18px}
+    .open-tickets:empty{display:none}
+    .open-tickets .open-ticket{margin-bottom:0}
+    .open-ticket-count{display:inline-flex;align-items:center;justify-content:center;min-width:26px;height:26px;padding:0 8px;border-radius:999px;background:var(--primary);color:#fff;font-size:.78rem;font-weight:700;margin-left:8px}
     .queued-client{display:grid;grid-template-columns:1fr auto;gap:12px;align-items:center;padding:12px 13px;border:1px solid var(--border);border-radius:10px;background:var(--surface)}
     .queued-client strong{display:block;font-weight:500}
     .queued-client span{display:block;color:var(--muted);font-size:.8rem;margin-top:3px}
@@ -353,7 +357,7 @@
     <div id="systemNotice" class="notice">Carregando fila...</div>
     <div id="alertPermissionCard" class="alert-permission-card hidden"><div><strong>Ative os alertas do TechQueue</strong><span id="alertPermissionText">Permita notificações e som para receber chamadas mesmo quando esta aba estiver em segundo plano.</span></div><button id="enableAlertsBtn" class="btn btn-primary" type="button">Ativar notificações e som</button></div>
     <section class="hero"><div class="eyebrow">Próximo atendimento</div><div id="nextName" class="next-name">—</div><div id="queueText" class="queue-text">Aguardando técnicos entrarem na fila</div><div class="hero-actions"><button id="takeBtn" class="btn btn-primary" disabled>Atendi agora</button><button id="passTurnBtn" class="btn btn-secondary" disabled>Passar a vez</button><button id="adminPullBtn" class="btn btn-secondary" type="button" disabled>Puxar atendimento</button></div></section>
-    <section class="grid"><div><div id="myOpenTicket" class="open-ticket hidden"><div class="eyebrow">Seu atendimento em andamento</div><h3 id="openClient">-</h3><p id="openStarted">-</p><div class="open-ticket-actions"><button id="finishBtn" class="btn btn-primary">Finalizei o atendimento</button><button id="queueClientBtn" class="btn btn-secondary">Enviar para fila</button></div></div><div class="card" style="margin-bottom:20px"><div class="status-control"><div><h2 style="margin-bottom:0">Meu status</h2><p>Ao sair como disponível, você é removido temporariamente do rodízio.</p></div><select id="statusSelect" class="status-select"><option value="available">Disponível</option><option value="offline">Offline</option><option value="lunch">Almoço</option><option value="smoke">Vou PITAR</option><option value="smoking">FUMANDO UM JA VOLTO</option><option value="bathroom">Segura aí na moral, vou no banheiro</option><option value="paid_bathroom">Cagada remunerada</option><option value="away">Vou ali e já volto</option></select></div></div><div class="card" style="margin-bottom:20px"><h2>Clientes encaminhados</h2><div id="queuedClientsList" class="queue-list"></div></div><div class="card"><div class="queue-card-heading"><h2>Fila da equipe</h2><button id="nudgeAllBtn" class="btn btn-secondary nudge-all-btn" type="button">Chamar atenção de todos</button></div><div id="queueList" class="queue-list"></div></div><div class="card queue-chat-card" style="margin-top:20px"><div class="queue-chat-heading"><div><h2>Chat da equipe</h2><p>Converse com todo mundo que está usando o TechQueue.</p></div><span id="queueChatCount" class="queue-chat-count">0</span></div><div id="queueChatMessages" class="queue-chat-messages"><div class="empty">Nenhuma mensagem ainda.</div></div><div class="queue-chat-quick"><button type="button" data-queue-chat-quick="Bom dia">Bom dia</button><button type="button" data-queue-chat-quick="Alguém pode ajudar?">Alguém pode ajudar?</button><button type="button" data-queue-chat-quick="Cliente aguardando">Cliente aguardando</button><button type="button" data-queue-chat-quick="Valeu!">Valeu!</button></div><div class="queue-chat-emojis" aria-label="Emojis rápidos"><button type="button" data-queue-emoji="👍">👍</button><button type="button" data-queue-emoji="😂">😂</button><button type="button" data-queue-emoji="🤣">🤣</button><button type="button" data-queue-emoji="👀">👀</button><button type="button" data-queue-emoji="🔥">🔥</button><button type="button" data-queue-emoji="😴">😴</button><button type="button" data-queue-emoji="🤡">🤡</button><button type="button" data-queue-emoji="🙏">🙏</button><button type="button" data-queue-emoji="✅">✅</button><button type="button" data-queue-emoji="🚨">🚨</button></div><div class="queue-chat-soundbar"><select id="queueChatSoundSelect" class="status-select" aria-label="Escolher áudio do chat"></select><button id="queueChatSoundBtn" class="btn btn-secondary" type="button">Enviar áudio</button></div><form id="queueChatForm" class="queue-chat-form"><input id="queueChatInput" type="text" maxlength="220" autocomplete="off" placeholder="Digite uma mensagem para a equipe..." required><button id="queueChatSendBtn" class="btn btn-primary" type="submit">Enviar</button></form></div></div><div class="card"><h2>Atendimentos do expediente</h2><div id="history" class="history"></div></div></section>
+    <section class="grid"><div><div id="myOpenTickets" class="open-tickets"></div><div class="card" style="margin-bottom:20px"><div class="status-control"><div><h2 style="margin-bottom:0">Meu status</h2><p>Ao sair como disponível, você é removido temporariamente do rodízio.</p></div><select id="statusSelect" class="status-select"><option value="available">Disponível</option><option value="offline">Offline</option><option value="lunch">Almoço</option><option value="smoke">Vou PITAR</option><option value="smoking">FUMANDO UM JA VOLTO</option><option value="bathroom">Segura aí na moral, vou no banheiro</option><option value="paid_bathroom">Cagada remunerada</option><option value="away">Vou ali e já volto</option></select></div></div><div class="card" style="margin-bottom:20px"><h2>Clientes encaminhados</h2><div id="queuedClientsList" class="queue-list"></div></div><div class="card"><div class="queue-card-heading"><h2>Fila da equipe</h2><button id="nudgeAllBtn" class="btn btn-secondary nudge-all-btn" type="button">Chamar atenção de todos</button></div><div id="queueList" class="queue-list"></div></div><div class="card queue-chat-card" style="margin-top:20px"><div class="queue-chat-heading"><div><h2>Chat da equipe</h2><p>Converse com todo mundo que está usando o TechQueue.</p></div><span id="queueChatCount" class="queue-chat-count">0</span></div><div id="queueChatMessages" class="queue-chat-messages"><div class="empty">Nenhuma mensagem ainda.</div></div><div class="queue-chat-quick"><button type="button" data-queue-chat-quick="Bom dia">Bom dia</button><button type="button" data-queue-chat-quick="Alguém pode ajudar?">Alguém pode ajudar?</button><button type="button" data-queue-chat-quick="Cliente aguardando">Cliente aguardando</button><button type="button" data-queue-chat-quick="Valeu!">Valeu!</button></div><div class="queue-chat-emojis" aria-label="Emojis rápidos"><button type="button" data-queue-emoji="👍">👍</button><button type="button" data-queue-emoji="😂">😂</button><button type="button" data-queue-emoji="🤣">🤣</button><button type="button" data-queue-emoji="👀">👀</button><button type="button" data-queue-emoji="🔥">🔥</button><button type="button" data-queue-emoji="😴">😴</button><button type="button" data-queue-emoji="🤡">🤡</button><button type="button" data-queue-emoji="🙏">🙏</button><button type="button" data-queue-emoji="✅">✅</button><button type="button" data-queue-emoji="🚨">🚨</button></div><div class="queue-chat-soundbar"><select id="queueChatSoundSelect" class="status-select" aria-label="Escolher áudio do chat"></select><button id="queueChatSoundBtn" class="btn btn-secondary" type="button">Enviar áudio</button></div><form id="queueChatForm" class="queue-chat-form"><input id="queueChatInput" type="text" maxlength="220" autocomplete="off" placeholder="Digite uma mensagem para a equipe..." required><button id="queueChatSendBtn" class="btn btn-primary" type="submit">Enviar</button></form></div></div><div class="card"><h2>Atendimentos do expediente</h2><div id="history" class="history"></div></div></section>
     <section class="card ranking-card"><h2>Pódio do expediente</h2><p class="ranking-note">Este ranking conta somente atendimentos registrados via chat no TechQueue. Ele não mede produtividade nem significa que um técnico trabalhou mais que outro: existem demandas, análises e atividades que não passam pelo chat.</p><div id="podium" class="podium"></div><div id="shameWall" class="shame-wall"></div></section>
     <div id="adminRow" class="admin-row hidden"><button id="resetDayBtn" class="btn btn-danger">Reiniciar fila de hoje</button></div>
   </main>
@@ -417,7 +421,7 @@
     applyTheme(localStorage.getItem(THEME_KEY)||"light");
     document.querySelectorAll("[data-theme-toggle]").forEach(button=>button.addEventListener("click",()=>{const current=document.documentElement.dataset.theme||"light";applyTheme(current==="dark"?"light":"dark")}));
 
-    const loginView=document.querySelector("#loginView"),appView=document.querySelector("#appView"),googleLoginBtn=document.querySelector("#googleLoginBtn"),loginError=document.querySelector("#loginError"),logoutBtn=document.querySelector("#logoutBtn"),mobileMenuBtn=document.querySelector("#mobileMenuBtn"),mobileHeaderMenu=document.querySelector("#mobileHeaderMenu"),loggedName=document.querySelector("#loggedName"),loggedShift=document.querySelector("#loggedShift"),avatar=document.querySelector("#avatar"),systemNotice=document.querySelector("#systemNotice"),nextName=document.querySelector("#nextName"),queueText=document.querySelector("#queueText"),queueList=document.querySelector("#queueList"),nudgeAllBtn=document.querySelector("#nudgeAllBtn"),queueChatMessages=document.querySelector("#queueChatMessages"),queueChatForm=document.querySelector("#queueChatForm"),queueChatInput=document.querySelector("#queueChatInput"),queueChatSendBtn=document.querySelector("#queueChatSendBtn"),queueChatCount=document.querySelector("#queueChatCount"),queueChatSoundSelect=document.querySelector("#queueChatSoundSelect"),queueChatSoundBtn=document.querySelector("#queueChatSoundBtn"),queuedClientsList=document.querySelector("#queuedClientsList"),historyEl=document.querySelector("#history"),takeBtn=document.querySelector("#takeBtn"),passTurnBtn=document.querySelector("#passTurnBtn"),finishBtn=document.querySelector("#finishBtn"),queueClientBtn=document.querySelector("#queueClientBtn"),myOpenTicket=document.querySelector("#myOpenTicket"),openClient=document.querySelector("#openClient"),openStarted=document.querySelector("#openStarted"),adminRow=document.querySelector("#adminRow"),resetDayBtn=document.querySelector("#resetDayBtn"),alertPermissionCard=document.querySelector("#alertPermissionCard"),alertPermissionText=document.querySelector("#alertPermissionText"),enableAlertsBtn=document.querySelector("#enableAlertsBtn"),shopBtn=document.querySelector("#shopBtn"),walletXp=document.querySelector("#walletXp"),shopDialog=document.querySelector("#shopDialog"),shopBalance=document.querySelector("#shopBalance"),shopItems=document.querySelector("#shopItems"),nudgeDialog=document.querySelector("#nudgeDialog"),nudgeForm=document.querySelector("#nudgeForm"),nudgeSound=document.querySelector("#nudgeSound"),nudgeMessage=document.querySelector("#nudgeMessage"),nudgeTargetText=document.querySelector("#nudgeTargetText"),customMessageField=document.querySelector("#customMessageField"),reactionField=document.querySelector("#reactionField"),nudgeReaction=document.querySelector("#nudgeReaction"),stickerField=document.querySelector("#stickerField"),nudgeSticker=document.querySelector("#nudgeSticker"),podium=document.querySelector("#podium"),shameWall=document.querySelector("#shameWall"),statusSelect=document.querySelector("#statusSelect"),nudgeToast=document.querySelector("#nudgeToast"),eventToast=document.querySelector("#eventToast"),attentionModal=document.querySelector("#attentionModal"),attentionModalFrom=document.querySelector("#attentionModalFrom"),attentionModalMessage=document.querySelector("#attentionModalMessage"),attentionAcknowledgeBtn=document.querySelector("#attentionAcknowledgeBtn"),takeDialog=document.querySelector("#takeDialog"),finishDialog=document.querySelector("#finishDialog"),takeForm=document.querySelector("#takeForm"),finishForm=document.querySelector("#finishForm"),clientNameInput=document.querySelector("#clientName"),problemInput=document.querySelector("#problem"),solutionInput=document.querySelector("#solution"),forwardOtherDepartmentBtn=document.querySelector("#forwardOtherDepartmentBtn"),historyArchiveBtn=document.querySelector("#historyArchiveBtn"),historyArchiveDialog=document.querySelector("#historyArchiveDialog"),historyDateSelect=document.querySelector("#historyDateSelect"),historyTechSelect=document.querySelector("#historyTechSelect"),historyClientFilter=document.querySelector("#historyClientFilter"),historyArchiveSummary=document.querySelector("#historyArchiveSummary"),historyArchiveList=document.querySelector("#historyArchiveList");
+    const loginView=document.querySelector("#loginView"),appView=document.querySelector("#appView"),googleLoginBtn=document.querySelector("#googleLoginBtn"),loginError=document.querySelector("#loginError"),logoutBtn=document.querySelector("#logoutBtn"),mobileMenuBtn=document.querySelector("#mobileMenuBtn"),mobileHeaderMenu=document.querySelector("#mobileHeaderMenu"),loggedName=document.querySelector("#loggedName"),loggedShift=document.querySelector("#loggedShift"),avatar=document.querySelector("#avatar"),systemNotice=document.querySelector("#systemNotice"),nextName=document.querySelector("#nextName"),queueText=document.querySelector("#queueText"),queueList=document.querySelector("#queueList"),nudgeAllBtn=document.querySelector("#nudgeAllBtn"),queueChatMessages=document.querySelector("#queueChatMessages"),queueChatForm=document.querySelector("#queueChatForm"),queueChatInput=document.querySelector("#queueChatInput"),queueChatSendBtn=document.querySelector("#queueChatSendBtn"),queueChatCount=document.querySelector("#queueChatCount"),queueChatSoundSelect=document.querySelector("#queueChatSoundSelect"),queueChatSoundBtn=document.querySelector("#queueChatSoundBtn"),queuedClientsList=document.querySelector("#queuedClientsList"),historyEl=document.querySelector("#history"),takeBtn=document.querySelector("#takeBtn"),passTurnBtn=document.querySelector("#passTurnBtn"),myOpenTickets=document.querySelector("#myOpenTickets"),adminRow=document.querySelector("#adminRow"),resetDayBtn=document.querySelector("#resetDayBtn"),alertPermissionCard=document.querySelector("#alertPermissionCard"),alertPermissionText=document.querySelector("#alertPermissionText"),enableAlertsBtn=document.querySelector("#enableAlertsBtn"),shopBtn=document.querySelector("#shopBtn"),walletXp=document.querySelector("#walletXp"),shopDialog=document.querySelector("#shopDialog"),shopBalance=document.querySelector("#shopBalance"),shopItems=document.querySelector("#shopItems"),nudgeDialog=document.querySelector("#nudgeDialog"),nudgeForm=document.querySelector("#nudgeForm"),nudgeSound=document.querySelector("#nudgeSound"),nudgeMessage=document.querySelector("#nudgeMessage"),nudgeTargetText=document.querySelector("#nudgeTargetText"),customMessageField=document.querySelector("#customMessageField"),reactionField=document.querySelector("#reactionField"),nudgeReaction=document.querySelector("#nudgeReaction"),stickerField=document.querySelector("#stickerField"),nudgeSticker=document.querySelector("#nudgeSticker"),podium=document.querySelector("#podium"),shameWall=document.querySelector("#shameWall"),statusSelect=document.querySelector("#statusSelect"),nudgeToast=document.querySelector("#nudgeToast"),eventToast=document.querySelector("#eventToast"),attentionModal=document.querySelector("#attentionModal"),attentionModalFrom=document.querySelector("#attentionModalFrom"),attentionModalMessage=document.querySelector("#attentionModalMessage"),attentionAcknowledgeBtn=document.querySelector("#attentionAcknowledgeBtn"),takeDialog=document.querySelector("#takeDialog"),finishDialog=document.querySelector("#finishDialog"),takeForm=document.querySelector("#takeForm"),finishForm=document.querySelector("#finishForm"),clientNameInput=document.querySelector("#clientName"),problemInput=document.querySelector("#problem"),solutionInput=document.querySelector("#solution"),forwardOtherDepartmentBtn=document.querySelector("#forwardOtherDepartmentBtn"),historyArchiveBtn=document.querySelector("#historyArchiveBtn"),historyArchiveDialog=document.querySelector("#historyArchiveDialog"),historyDateSelect=document.querySelector("#historyDateSelect"),historyTechSelect=document.querySelector("#historyTechSelect"),historyClientFilter=document.querySelector("#historyClientFilter"),historyArchiveSummary=document.querySelector("#historyArchiveSummary"),historyArchiveList=document.querySelector("#historyArchiveList");
 
     function setMobileMenu(open){if(!mobileMenuBtn||!mobileHeaderMenu)return;mobileMenuBtn.classList.toggle("open",open);mobileHeaderMenu.classList.toggle("open",open);mobileMenuBtn.setAttribute("aria-expanded",String(open));mobileMenuBtn.setAttribute("aria-label",open?"Fechar menu":"Abrir menu")}
     mobileMenuBtn?.addEventListener("click",()=>setMobileMenu(!mobileHeaderMenu?.classList.contains("open")));
@@ -588,11 +592,17 @@
         const isNewPresence=!existingMember;
 
         if(existingMember){
+          const legacyIds=Array.isArray(existingMember.currentAttendanceIds)
+            ? existingMember.currentAttendanceIds.filter(Boolean)
+            : (existingMember.currentAttendanceId?[existingMember.currentAttendanceId]:[]);
           members[authUser.uid]={
             ...existingMember,
             name:profile.name,
             email:profile.email,
-            lastSeenAtMs:Date.now()
+            status:existingMember.status==="busy"?"available":existingMember.status,
+            lastSeenAtMs:Date.now(),
+            currentAttendanceId:null,
+            currentAttendanceIds:[...new Set(legacyIds)]
           };
         }else{
           members[authUser.uid]={
@@ -601,7 +611,8 @@
             status:"available",
             joinedAtMs:Date.now(),
             lastSeenAtMs:Date.now(),
-            currentAttendanceId:null
+            currentAttendanceId:null,
+            currentAttendanceIds:[]
           };
         }
 
@@ -709,9 +720,9 @@
       const nextDayId=bahiaParts().dateId;
       if(nextDayId===activeDayId)return;
 
-      const me=memberOf(authUser.uid);
-      if(me?.status==="busy"){
-        systemNotice.textContent="Virada das 18:00 pendente. Finalize o atendimento atual; depois você será removido da fila automaticamente.";
+      const activeAttendances=myOpenAttendances();
+      if(activeAttendances.length){
+        systemNotice.textContent=`Virada das 18:00 pendente. Finalize ${activeAttendances.length===1?"o atendimento atual":activeAttendances.length+" atendimentos atuais"}; depois você será removido da fila automaticamente.`;
         return;
       }
 
@@ -785,8 +796,13 @@
       const dayRef=doc(db,"days",dayId),
         attendanceCol=collection(db,"days",dayId,"attendances"),
         nudgesCol=collection(db,"days",dayId,"nudges"),
-        queuedClientsCol=collection(db,"days",dayId,"queuedClients");unsubDay=onSnapshot(dayRef,async snap=>{const nextState=snap.exists()?snap.data():null,passEvent=nextState?.lastPassEvent||null,presenceEvent=nextState?.lastPresenceEvent||null;if(passEvent?.id&&passEvent.id!==lastSeenPassEventId){const shouldNotify=lastSeenPassEventId!==null&&passEvent.fromUid!==authUser?.uid;lastSeenPassEventId=passEvent.id;if(shouldNotify){eventToast.textContent=`${passEvent.fromName||"Alguém"} passou a vez. Agora é a vez de ${passEvent.nextName||"outro técnico"}.`;eventToast.classList.remove("hidden");setTimeout(()=>eventToast.classList.add("hidden"),4000)}}if(presenceEvent?.id&&presenceEvent.id!==lastSeenPresenceEventId){const shouldNotify=lastSeenPresenceEventId!==null&&presenceEvent.uid!==authUser?.uid;lastSeenPresenceEventId=presenceEvent.id;if(shouldNotify){const actionText=presenceEvent.type==="leave"?"saiu do TechQueue":"entrou no TechQueue",message=`${presenceEvent.name||"Usuário"} ${actionText}.`;eventToast.textContent=message;eventToast.classList.remove("hidden");setTimeout(()=>eventToast.classList.add("hidden"),8000);if(document.hidden&&"Notification" in window&&Notification.permission==="granted")try{new Notification("TechQueue",{body:message,tag:"techqueue-presence",renotify:true,silent:true})}catch(err){console.warn("Falha ao mostrar notificação de presença:",err)}}}dayState=nextState;await loadMyOpenAttendance();render();renderHistory();renderRanking()},err=>{console.error("Erro ao sincronizar fila:",err);systemNotice.textContent=err?.code==="permission-denied"?"O Firebase bloqueou a sincronização da fila. Atualize as regras do Firestore.":"Não foi possível sincronizar a fila agora."});unsubHistory=onSnapshot(attendanceCol,snap=>{todayAttendances=snap.docs.map(d=>({id:d.id,...d.data()})).sort((a,b)=>(b.startedAtMs||0)-(a.startedAtMs||0));renderHistory();renderRanking()},err=>console.error("Erro ao carregar histórico:",err));unsubQueuedClients=onSnapshot(queuedClientsCol,snap=>{queuedClients=snap.docs.map(d=>({id:d.id,...d.data()})).sort((a,b)=>(a.createdAtMs||0)-(b.createdAtMs||0));renderQueuedClients()},err=>console.error("Erro ao carregar clientes encaminhados:",err));unsubNudges=onSnapshot(nudgesCol,snap=>{if(!nudgesReady){nudgesReady=true;return}for(const change of snap.docChanges()){if(change.type!=="added")continue;const nudge=change.doc.data();if(nudge.fromUid!==authUser?.uid&&(nudge.targetUid===authUser?.uid||nudge.targetUid==="all"))showNudge(nudge)}})}
-    async function loadMyOpenAttendance(){openAttendance=null;const member=memberOf(authUser?.uid),attendanceId=member?.currentAttendanceId;if(!attendanceId)return;const attendanceDayId=currentDayId(),ref=doc(db,"days",attendanceDayId,"attendances",attendanceId),snap=await getDoc(ref);if(snap.exists()&&snap.data().status==="open")openAttendance={id:snap.id,dayId:attendanceDayId,...snap.data()}}
+        queuedClientsCol=collection(db,"days",dayId,"queuedClients");unsubDay=onSnapshot(dayRef,async snap=>{const nextState=snap.exists()?snap.data():null,passEvent=nextState?.lastPassEvent||null,presenceEvent=nextState?.lastPresenceEvent||null;if(passEvent?.id&&passEvent.id!==lastSeenPassEventId){const shouldNotify=lastSeenPassEventId!==null&&passEvent.fromUid!==authUser?.uid;lastSeenPassEventId=passEvent.id;if(shouldNotify){eventToast.textContent=`${passEvent.fromName||"Alguém"} passou a vez. Agora é a vez de ${passEvent.nextName||"outro técnico"}.`;eventToast.classList.remove("hidden");setTimeout(()=>eventToast.classList.add("hidden"),4000)}}if(presenceEvent?.id&&presenceEvent.id!==lastSeenPresenceEventId){const shouldNotify=lastSeenPresenceEventId!==null&&presenceEvent.uid!==authUser?.uid;lastSeenPresenceEventId=presenceEvent.id;if(shouldNotify){const actionText=presenceEvent.type==="leave"?"saiu do TechQueue":"entrou no TechQueue",message=`${presenceEvent.name||"Usuário"} ${actionText}.`;eventToast.textContent=message;eventToast.classList.remove("hidden");setTimeout(()=>eventToast.classList.add("hidden"),8000);if(document.hidden&&"Notification" in window&&Notification.permission==="granted")try{new Notification("TechQueue",{body:message,tag:"techqueue-presence",renotify:true,silent:true})}catch(err){console.warn("Falha ao mostrar notificação de presença:",err)}}}dayState=nextState;await loadMyOpenAttendance();render();renderHistory();renderRanking()},err=>{console.error("Erro ao sincronizar fila:",err);systemNotice.textContent=err?.code==="permission-denied"?"O Firebase bloqueou a sincronização da fila. Atualize as regras do Firestore.":"Não foi possível sincronizar a fila agora."});unsubHistory=onSnapshot(attendanceCol,snap=>{todayAttendances=snap.docs.map(d=>({id:d.id,...d.data()})).sort((a,b)=>(b.startedAtMs||0)-(a.startedAtMs||0));renderHistory();renderRanking();renderMyOpenAttendances();renderQueuedClients()},err=>console.error("Erro ao carregar histórico:",err));unsubQueuedClients=onSnapshot(queuedClientsCol,snap=>{queuedClients=snap.docs.map(d=>({id:d.id,...d.data()})).sort((a,b)=>(a.createdAtMs||0)-(b.createdAtMs||0));renderQueuedClients()},err=>console.error("Erro ao carregar clientes encaminhados:",err));unsubNudges=onSnapshot(nudgesCol,snap=>{if(!nudgesReady){nudgesReady=true;return}for(const change of snap.docChanges()){if(change.type!=="added")continue;const nudge=change.doc.data();if(nudge.fromUid!==authUser?.uid&&(nudge.targetUid===authUser?.uid||nudge.targetUid==="all"))showNudge(nudge)}})}
+    async function loadMyOpenAttendance(){
+      if(!openAttendance)return;
+      const stillOpen=myOpenAttendances().find(item=>item.id===openAttendance.id);
+      openAttendance=stillOpen||null;
+    }
+
     function formatQueueChatTime(ms){
       if(!ms)return"";
       try{
@@ -969,7 +985,92 @@
       queueChatInput.setSelectionRange(cursor,cursor);
     });
 
-    function render(){if(!profile||!dayState)return;const current=dayState.currentUid?dayState.members?.[dayState.currentUid]:null,me=memberOf(authUser.uid);nextName.textContent=current?.name||"—";systemNotice.textContent=me?.status==="busy"?"Você está em atendimento. Finalize para voltar ao final da fila.":dayState.currentUid===authUser.uid?"É a sua vez de assumir o próximo cliente.":"A fila está liberada e sincronizada em tempo real, a qualquer hora.";const names=(dayState.queue||[]).map(uid=>dayState.members?.[uid]?.name).filter(Boolean);queueText.textContent=names.length?names.join(" → "):"Nenhum técnico disponível na fila";takeBtn.disabled=dayState.currentUid!==authUser.uid||me?.status!=="available";passTurnBtn.disabled=dayState.currentUid!==authUser.uid||me?.status!=="available"||(dayState.queue||[]).length<=1;if(adminPullBtn){const canPull=me?.status==="available"&&dayState.currentUid!==authUser.uid;adminPullBtn.classList.remove("hidden");adminPullBtn.disabled=!canPull;adminPullBtn.title=me?.status!=="available"?"Fique Disponível para puxar um atendimento.":dayState.currentUid===authUser.uid?"Você já está como próximo da fila.":"Colocar você como próximo atendimento.";}if(statusSelect){const editableStatus=["available","offline","lunch","smoke","smoking","bathroom","paid_bathroom","away"].includes(me?.status)?me.status:"offline";statusSelect.value=editableStatus;statusSelect.disabled=me?.status==="busy"}renderQueue();renderQueueChat();if(openAttendance){myOpenTicket.classList.remove("hidden");openClient.textContent=openAttendance.clientName;openStarted.textContent=`Iniciado às ${formatTimestamp(openAttendance.startedAt)}`}else myOpenTicket.classList.add("hidden");const canReset=profile.role==="admin";resetDayBtn.disabled=!canReset;resetDayBtn.title=canReset?"":"Disponível somente para o administrador"}
+    function myOpenAttendances(){
+      if(!authUser)return[];
+      return todayAttendances
+        .filter(item=>item.technicianUid===authUser.uid&&item.status==="open")
+        .sort((a,b)=>attendanceTimeMs(a)-attendanceTimeMs(b));
+    }
+
+    function openAttendanceCountFor(uid){
+      if(!uid)return 0;
+      return todayAttendances.filter(item=>item.technicianUid===uid&&item.status==="open").length;
+    }
+
+    function renderMyOpenAttendances(){
+      if(!myOpenTickets)return;
+      const items=myOpenAttendances();
+      if(!items.length){
+        myOpenTickets.innerHTML="";
+        return;
+      }
+
+      myOpenTickets.innerHTML=items.map((item,index)=>`
+        <div class="open-ticket">
+          <div class="eyebrow">Seu atendimento em andamento <span class="open-ticket-count">${index+1}/${items.length}</span></div>
+          <h3>${escapeHtml(item.clientName||"Cliente")}</h3>
+          <p>Iniciado às ${formatTimestamp(item.startedAt)}</p>
+          <div class="open-ticket-actions">
+            <button type="button" class="btn btn-primary" data-finish-attendance="${item.id}">Finalizei o atendimento</button>
+            <button type="button" class="btn btn-secondary" data-queue-attendance="${item.id}">Enviar para fila</button>
+          </div>
+        </div>
+      `).join("");
+    }
+
+    function render(){
+      if(!profile||!dayState)return;
+      const current=dayState.currentUid?dayState.members?.[dayState.currentUid]:null;
+      const me=memberOf(authUser.uid);
+      const activeCount=myOpenAttendances().length;
+      const rolloverPending=bahiaParts().dateId!==activeDayId;
+
+      nextName.textContent=current?.name||"—";
+
+      if(rolloverPending&&activeCount){
+        systemNotice.textContent=`Virada das 18:00 pendente. Você tem ${activeCount} atendimento${activeCount===1?"":"s"} para finalizar antes de entrar no novo expediente.`;
+      }else if(activeCount){
+        systemNotice.textContent=`Você está com ${activeCount} atendimento${activeCount===1?"":"s"} em andamento e pode puxar outros clientes.`;
+      }else if(dayState.currentUid===authUser.uid){
+        systemNotice.textContent="É a sua vez de assumir o próximo cliente.";
+      }else{
+        systemNotice.textContent="A fila está liberada e sincronizada em tempo real, a qualquer hora.";
+      }
+
+      const names=(dayState.queue||[]).map(uid=>dayState.members?.[uid]?.name).filter(Boolean);
+      queueText.textContent=names.length?names.join(" → "):"Nenhum técnico disponível na fila";
+
+      takeBtn.disabled=rolloverPending||dayState.currentUid!==authUser.uid||me?.status!=="available";
+      passTurnBtn.disabled=rolloverPending||dayState.currentUid!==authUser.uid||me?.status!=="available"||(dayState.queue||[]).length<=1;
+
+      if(adminPullBtn){
+        const canPull=!rolloverPending&&me?.status==="available"&&dayState.currentUid!==authUser.uid;
+        adminPullBtn.classList.remove("hidden");
+        adminPullBtn.disabled=!canPull;
+        adminPullBtn.title=rolloverPending
+          ?"Finalize os atendimentos do expediente anterior primeiro."
+          :me?.status!=="available"
+            ?"Fique Disponível para puxar um atendimento."
+            :dayState.currentUid===authUser.uid
+              ?"Você já está como próximo da fila."
+              :"Colocar você como próximo atendimento.";
+      }
+
+      if(statusSelect){
+        const editableStatus=["available","offline","lunch","smoke","smoking","bathroom","paid_bathroom","away"].includes(me?.status)?me.status:"offline";
+        statusSelect.value=editableStatus;
+        statusSelect.disabled=false;
+      }
+
+      renderQueue();
+      renderQueueChat();
+      renderMyOpenAttendances();
+
+      const canReset=profile.role==="admin";
+      resetDayBtn.disabled=!canReset;
+      resetDayBtn.title=canReset?"":"Disponível somente para o administrador";
+    }
+
     function renderQueue(){
       const members=dayState?.members||{},queue=dayState?.queue||[],seen=new Set(),ordered=[];
 
@@ -999,7 +1100,7 @@
         return `<div class="person ${current?"current":""}">
           <div>
             <div class="person-name">${escapeHtml(m.name)}${current?'<span class="current-label">Próximo</span>':""}</div>
-            <div class="person-sub">${uid===authUser.uid?"Você":status==="available"?"Na fila":"Em atendimento"}</div>
+            <div class="person-sub">${uid===authUser.uid?(openAttendanceCountFor(uid)?`Você · ${openAttendanceCountFor(uid)} atend. em andamento`:"Você"):status==="available"?(openAttendanceCountFor(uid)?`Na fila · ${openAttendanceCountFor(uid)} atend. em andamento`:"Na fila"):"Em atendimento"}</div>
           </div>
           <div class="person-actions">
             ${uid!==authUser.uid?`<button class="attention-btn" type="button" data-nudge-uid="${uid}" data-nudge-name="${escapeHtml(m.name)}">Chamar atenção</button>`:""}
@@ -1089,7 +1190,7 @@
           if(!member)return;
           if(member.status==="busy")throw new Error("Este técnico está em atendimento e não pode ser retirado agora.");
           const queue=(state.queue||[]).filter(item=>item!==uid);
-          members[uid]={...member,status:"offline",currentAttendanceId:null};
+          members[uid]={...member,status:"offline"};
           const passed=(state.passedSinceLastAttendance||[]).filter(item=>item!==uid);
           const currentUid=state.currentUid===uid?(queue[0]||null):(queue.includes(state.currentUid)?state.currentUid:(queue[0]||null));
           tx.update(dayRef,{members,queue,currentUid,passedSinceLastAttendance:passed,lastAdminQueueAction:{id:Date.now()+"-"+authUser.uid+"-remove-"+uid,type:"admin_remove",adminUid:authUser.uid,adminName:profile.name,targetUid:uid,targetName:safeName,createdAtMs:Date.now()},updatedAt:serverTimestamp()});
@@ -1167,9 +1268,62 @@
     function showNudge(nudge){const fromName=nudge.fromName||"Outro técnico";document.body.classList.remove("nudged");void document.body.offsetWidth;document.body.classList.add("nudged");const extras=[nudge.reaction,nudge.sticker?"["+nudge.sticker+"]":"",nudge.message].filter(Boolean).join(" ");const message=extras||"Precisa da sua atenção no TechQueue.";if(attentionModal&&window.bootstrap?.Modal){attentionModalFrom.textContent=`${fromName} chamou sua atenção.`;attentionModalMessage.textContent=message;window.bootstrap.Modal.getOrCreateInstance(attentionModal,{backdrop:"static",keyboard:false}).show()}else{nudgeToast.textContent=extras?`${fromName}: ${extras}`:`${fromName} está chamando sua atenção.`;nudgeToast.classList.remove("hidden");setTimeout(()=>nudgeToast.classList.add("hidden"),4500)}const isInBackground=document.hidden||!document.hasFocus();if(isInBackground){startAttentionFlash(fromName);showSystemNotification(nudge);if(navigator.vibrate)try{navigator.vibrate([180,80,180])}catch(_){}}const sound=SOUND_CATALOG.find(item=>item.id===(nudge.sound||"msn"))||SOUND_CATALOG[0];alertPlayer.pause();alertPlayer.src=sound.file;alertPlayer.currentTime=0;alertPlayer.volume=.9;alertPlayer.play().catch(()=>playFallbackNudge())}
     function playFallbackNudge(){try{const AudioCtx=window.AudioContext||window.webkitAudioContext;if(!AudioCtx)return;const ctx=new AudioCtx(),oscillator=ctx.createOscillator(),gain=ctx.createGain();oscillator.frequency.value=660;gain.gain.value=.05;oscillator.connect(gain);gain.connect(ctx.destination);oscillator.start();oscillator.stop(ctx.currentTime+.12)}catch(_){}}
 
-    function renderQueuedClients(){if(!queuedClientsList)return;if(!queuedClients.length){queuedClientsList.innerHTML='<div class="empty">Nenhum cliente encaminhado no momento.</div>';return}const canAssume=dayState?.currentUid===authUser?.uid&&memberOf(authUser?.uid)?.status==="available"&&!openAttendance;queuedClientsList.innerHTML=queuedClients.map(item=>`<div class="queued-client"><div><strong>${escapeHtml(item.clientName)}</strong><span>Enviado por ${escapeHtml(item.fromName||"Técnico")} às ${formatTimestamp(item.createdAt)}</span></div><button class="btn btn-secondary" type="button" data-assume-client="${item.id}" ${canAssume?"":"disabled"}>Assumir</button></div>`).join("")}
+    function renderQueuedClients(){if(!queuedClientsList)return;if(!queuedClients.length){queuedClientsList.innerHTML='<div class="empty">Nenhum cliente encaminhado no momento.</div>';return}const canAssume=bahiaParts().dateId===activeDayId&&dayState?.currentUid===authUser?.uid&&memberOf(authUser?.uid)?.status==="available";queuedClientsList.innerHTML=queuedClients.map(item=>`<div class="queued-client"><div><strong>${escapeHtml(item.clientName)}</strong><span>Enviado por ${escapeHtml(item.fromName||"Técnico")} às ${formatTimestamp(item.createdAt)}</span></div><button class="btn btn-secondary" type="button" data-assume-client="${item.id}" ${canAssume?"":"disabled"}>Assumir</button></div>`).join("")}
     queuedClientsList.addEventListener("click",async event=>{const button=event.target.closest("[data-assume-client]");if(button)await assumeQueuedClient(button.dataset.assumeClient)});
-    async function assumeQueuedClient(queueId){if(!authUser||!dayState)return;const dayId=currentDayId(),dayRef=doc(db,"days",dayId),queuedRef=doc(db,"days",dayId,"queuedClients",queueId),attendanceRef=doc(collection(db,"days",dayId,"attendances"));try{await runTransaction(db,async tx=>{const daySnap=await tx.get(dayRef),queuedSnap=await tx.get(queuedRef);if(!daySnap.exists()||!queuedSnap.exists())throw new Error("Este cliente não está mais na fila.");const state=daySnap.data(),item=queuedSnap.data(),member=state.members?.[authUser.uid];if(state.currentUid!==authUser.uid||member?.status!=="available")throw new Error("Somente o próximo técnico disponível pode assumir este cliente.");const currentQueue=[...(state.queue||[])];const queue=currentQueue.filter(uid=>uid!==authUser.uid),members={...state.members};members[authUser.uid]={...member,status:"busy",currentAttendanceId:attendanceRef.id};tx.set(attendanceRef,{technicianUid:authUser.uid,technicianName:profile.name,clientName:item.clientName,status:"open",startedAt:serverTimestamp(),startedAtMs:Date.now(),problem:"",solution:"",source:"forwarded",forwardedByUid:item.fromUid||null,forwardedByName:item.fromName||"",finishedAt:null});tx.delete(queuedRef);tx.update(dayRef,{queue,members,currentUid:queue[0]||null,lastAttendanceUid:authUser.uid,passedSinceLastAttendance:[],updatedAt:serverTimestamp()})})}catch(err){console.error(err);alert(err.message||"Não foi possível assumir o cliente.")}}
+    async function assumeQueuedClient(queueId){
+      if(!authUser||!dayState)return;
+      const dayId=currentDayId(),dayRef=doc(db,"days",dayId),queuedRef=doc(db,"days",dayId,"queuedClients",queueId),attendanceRef=doc(collection(db,"days",dayId,"attendances"));
+      try{
+        await runTransaction(db,async tx=>{
+          const daySnap=await tx.get(dayRef),queuedSnap=await tx.get(queuedRef);
+          if(!daySnap.exists()||!queuedSnap.exists())throw new Error("Este cliente não está mais na fila.");
+
+          const state=daySnap.data(),item=queuedSnap.data(),member=state.members?.[authUser.uid];
+          if(state.currentUid!==authUser.uid||member?.status!=="available")throw new Error("Somente o próximo técnico disponível pode assumir este cliente.");
+
+          const currentQueue=[...(state.queue||[])];
+          const nextQueue=currentQueue.filter(uid=>uid!==authUser.uid);
+          nextQueue.push(authUser.uid);
+
+          const members={...state.members};
+          const currentIds=Array.isArray(member.currentAttendanceIds)?member.currentAttendanceIds.filter(Boolean):[];
+          members[authUser.uid]={
+            ...member,
+            status:"available",
+            currentAttendanceId:null,
+            currentAttendanceIds:[...new Set([...currentIds,attendanceRef.id])]
+          };
+
+          tx.set(attendanceRef,{
+            technicianUid:authUser.uid,
+            technicianName:profile.name,
+            clientName:item.clientName,
+            status:"open",
+            startedAt:serverTimestamp(),
+            startedAtMs:Date.now(),
+            problem:"",
+            solution:"",
+            source:"forwarded",
+            forwardedByUid:item.fromUid||null,
+            forwardedByName:item.fromName||"",
+            finishedAt:null
+          });
+          tx.delete(queuedRef);
+          tx.update(dayRef,{
+            queue:nextQueue,
+            members,
+            currentUid:nextQueue[0]||null,
+            lastAttendanceUid:authUser.uid,
+            passedSinceLastAttendance:[],
+            updatedAt:serverTimestamp()
+          });
+        });
+      }catch(err){
+        console.error(err);
+        alert(err.message||"Não foi possível assumir o cliente.");
+      }
+    }
+
     function formatHistoryDateId(dateId){
       const match=String(dateId||"").match(/^(\d{4})-(\d{2})-(\d{2})$/);
       if(!match)return dateId||"";
@@ -1324,13 +1478,12 @@
           };
           const members={...(state.members||{})};
           const member=members[authUser.uid];
-          if(member?.status==="busy")throw new Error("Finalize seu atendimento antes de alterar o status.");
-
           const baseMember=member||{
             name:profile.name,
             email:profile.email,
             joinedAtMs:Date.now(),
-            currentAttendanceId:null
+            currentAttendanceId:null,
+            currentAttendanceIds:[]
           };
 
           let queue=[...(state.queue||[])];
@@ -1357,16 +1510,149 @@
       }
     });
     passTurnBtn.addEventListener("click",async()=>{if(!authUser||!dayState)return;const dayId=currentDayId(),dayRef=doc(db,"days",dayId);try{await runTransaction(db,async tx=>{const snap=await tx.get(dayRef);if(!snap.exists())throw new Error("Fila indisponível. Recarregue a página.");const state=snap.data(),member=state.members?.[authUser.uid],queue=[...(state.queue||[])];if(state.currentUid!==authUser.uid||member?.status!=="available")throw new Error("A vez já passou para outro técnico.");if(queue.length<=1)throw new Error("Você está sozinho na fila. Não há para quem passar a vez.");const nextQueue=queue.filter(uid=>uid!==authUser.uid);nextQueue.push(authUser.uid);const passed=new Set(state.passedSinceLastAttendance||[]);passed.add(authUser.uid);const nextUid=nextQueue[0]||null,nextName=nextUid?(state.members?.[nextUid]?.name||"outro técnico"):"ninguém";tx.update(dayRef,{queue:nextQueue,currentUid:nextUid,passedSinceLastAttendance:[...passed],lastPassEvent:{id:Date.now()+"-"+authUser.uid,type:"turn_pass",fromUid:authUser.uid,fromName:profile.name,nextUid,nextName,createdAtMs:Date.now()},updatedAt:serverTimestamp()})})}catch(err){console.error(err);alert(err.message||"Não foi possível passar a vez.")}});
-    takeBtn.addEventListener("click",()=>{clientNameInput.value="";takeDialog.showModal();setTimeout(()=>clientNameInput.focus(),30)});
-    takeForm.addEventListener("submit",async e=>{e.preventDefault();const clientName=clientNameInput.value.trim();if(!clientName)return;const dayId=currentDayId(),dayRef=doc(db,"days",dayId),attendanceRef=doc(collection(db,"days",dayId,"attendances"));try{await runTransaction(db,async tx=>{const daySnap=await tx.get(dayRef);if(!daySnap.exists())throw new Error("Fila indisponível. Recarregue a página.");const state=daySnap.data(),member=state.members?.[authUser.uid];if(state.currentUid!==authUser.uid)throw new Error("A vez já passou para outro técnico.");if(member?.status!=="available")throw new Error("Você não está disponível na fila.");const currentQueue=[...(state.queue||[])];const queue=currentQueue.filter(uid=>uid!==authUser.uid),members={...state.members};members[authUser.uid]={...member,status:"busy",currentAttendanceId:attendanceRef.id};tx.set(attendanceRef,{technicianUid:authUser.uid,technicianName:profile.name,clientName,status:"open",startedAt:serverTimestamp(),startedAtMs:Date.now(),problem:"",solution:"",finishedAt:null});tx.update(dayRef,{queue,members,currentUid:queue[0]||null,lastAttendanceUid:authUser.uid,passedSinceLastAttendance:[],updatedAt:serverTimestamp()})});takeDialog.close()}catch(err){console.error(err);alert(err.message||"Não foi possível registrar o atendimento.")}});
-    queueClientBtn.addEventListener("click",async()=>{if(!openAttendance||!authUser)return;const ok=confirm(`Enviar ${openAttendance.clientName} para a fila e voltar a ficar disponível?`);if(!ok)return;const dayId=currentDayId(),dayRef=doc(db,"days",dayId),attendanceRef=doc(db,"days",dayId,"attendances",openAttendance.id),queuedRef=doc(collection(db,"days",dayId,"queuedClients"));try{await runTransaction(db,async tx=>{const [daySnap,attSnap]=await Promise.all([tx.get(dayRef),tx.get(attendanceRef)]);if(!daySnap.exists()||!attSnap.exists())throw new Error("Atendimento não encontrado.");const state=daySnap.data(),attendance=attSnap.data();if(attendance.technicianUid!==authUser.uid||attendance.status!=="open")throw new Error("Este atendimento não pode mais ser encaminhado.");const members={...state.members},member=members[authUser.uid];members[authUser.uid]={...member,status:"available",currentAttendanceId:null};const queue=[...(state.queue||[])];if(!queue.includes(authUser.uid))queue.push(authUser.uid);tx.update(attendanceRef,{status:"queued",queuedAt:serverTimestamp()});tx.set(queuedRef,{clientName:attendance.clientName,fromUid:authUser.uid,fromName:profile.name,createdAt:serverTimestamp(),createdAtMs:Date.now()});tx.update(dayRef,{members,queue,currentUid:state.currentUid||queue[0]||null,updatedAt:serverTimestamp()})})}catch(err){console.error(err);alert(err.message||"Não foi possível enviar o cliente para a fila.")}});
-    finishBtn.addEventListener("click",()=>{problemInput.value=solutionInput.value="";const defaultComplexity=finishForm.querySelector('input[name="complexity"][value="standard"]');if(defaultComplexity)defaultComplexity.checked=true;finishDialog.showModal();setTimeout(()=>problemInput.focus(),30)});
-    forwardOtherDepartmentBtn?.addEventListener("click",async()=>{
-      if(!openAttendance||!authUser)return;
+    takeBtn.addEventListener("click",()=>{
+      clientNameInput.value="";
+      takeDialog.showModal();
+      setTimeout(()=>clientNameInput.focus(),30);
+    });
+
+    takeForm.addEventListener("submit",async e=>{
+      e.preventDefault();
+      const clientName=clientNameInput.value.trim();
+      if(!clientName)return;
+
+      const dayId=currentDayId(),dayRef=doc(db,"days",dayId),attendanceRef=doc(collection(db,"days",dayId,"attendances"));
+
+      try{
+        await runTransaction(db,async tx=>{
+          const daySnap=await tx.get(dayRef);
+          if(!daySnap.exists())throw new Error("Fila indisponível. Recarregue a página.");
+
+          const state=daySnap.data(),member=state.members?.[authUser.uid];
+          if(state.currentUid!==authUser.uid)throw new Error("A vez já passou para outro técnico.");
+          if(member?.status!=="available")throw new Error("Você não está disponível na fila.");
+
+          const currentQueue=[...(state.queue||[])];
+          const nextQueue=currentQueue.filter(uid=>uid!==authUser.uid);
+          nextQueue.push(authUser.uid);
+
+          const members={...state.members};
+          const currentIds=Array.isArray(member.currentAttendanceIds)?member.currentAttendanceIds.filter(Boolean):[];
+          members[authUser.uid]={
+            ...member,
+            status:"available",
+            currentAttendanceId:null,
+            currentAttendanceIds:[...new Set([...currentIds,attendanceRef.id])]
+          };
+
+          tx.set(attendanceRef,{
+            technicianUid:authUser.uid,
+            technicianName:profile.name,
+            clientName,
+            status:"open",
+            startedAt:serverTimestamp(),
+            startedAtMs:Date.now(),
+            problem:"",
+            solution:"",
+            finishedAt:null
+          });
+
+          tx.update(dayRef,{
+            queue:nextQueue,
+            members,
+            currentUid:nextQueue[0]||null,
+            lastAttendanceUid:authUser.uid,
+            passedSinceLastAttendance:[],
+            updatedAt:serverTimestamp()
+          });
+        });
+
+        takeDialog.close();
+      }catch(err){
+        console.error(err);
+        alert(err.message||"Não foi possível registrar o atendimento.");
+      }
+    });
+
+    function selectOpenAttendance(attendanceId){
+      const attendance=myOpenAttendances().find(item=>item.id===attendanceId);
+      openAttendance=attendance||null;
+      return openAttendance;
+    }
+
+    myOpenTickets?.addEventListener("click",async event=>{
+      const finishButton=event.target.closest("[data-finish-attendance]");
+      if(finishButton){
+        const attendance=selectOpenAttendance(finishButton.dataset.finishAttendance);
+        if(!attendance)return;
+        problemInput.value=solutionInput.value="";
+        const defaultComplexity=finishForm.querySelector('input[name="complexity"][value="standard"]');
+        if(defaultComplexity)defaultComplexity.checked=true;
+        finishDialog.showModal();
+        setTimeout(()=>problemInput.focus(),30);
+        return;
+      }
+
+      const queueButton=event.target.closest("[data-queue-attendance]");
+      if(queueButton)await queueOpenAttendance(queueButton.dataset.queueAttendance);
+    });
+
+    async function queueOpenAttendance(attendanceId){
+      const attendance=myOpenAttendances().find(item=>item.id===attendanceId);
+      if(!attendance||!authUser)return;
+
+      const ok=confirm(`Enviar ${attendance.clientName} para a fila de clientes?`);
+      if(!ok)return;
 
       const dayId=currentDayId(),
         dayRef=doc(db,"days",dayId),
-        attendanceRef=doc(db,"days",dayId,"attendances",openAttendance.id),
+        attendanceRef=doc(db,"days",dayId,"attendances",attendance.id),
+        queuedRef=doc(collection(db,"days",dayId,"queuedClients"));
+
+      try{
+        await runTransaction(db,async tx=>{
+          const [daySnap,attSnap]=await Promise.all([tx.get(dayRef),tx.get(attendanceRef)]);
+          if(!daySnap.exists()||!attSnap.exists())throw new Error("Atendimento não encontrado.");
+
+          const state=daySnap.data(),stored=attSnap.data();
+          if(stored.technicianUid!==authUser.uid||stored.status!=="open")throw new Error("Este atendimento não pode mais ser encaminhado.");
+
+          const members={...state.members},member=members[authUser.uid];
+          const currentIds=Array.isArray(member?.currentAttendanceIds)?member.currentAttendanceIds.filter(Boolean):[];
+          if(member){
+            members[authUser.uid]={
+              ...member,
+              currentAttendanceId:null,
+              currentAttendanceIds:currentIds.filter(id=>id!==attendance.id)
+            };
+          }
+
+          tx.update(attendanceRef,{status:"queued",queuedAt:serverTimestamp()});
+          tx.set(queuedRef,{
+            clientName:stored.clientName,
+            fromUid:authUser.uid,
+            fromName:profile.name,
+            createdAt:serverTimestamp(),
+            createdAtMs:Date.now()
+          });
+          tx.update(dayRef,{members,updatedAt:serverTimestamp()});
+        });
+
+        if(openAttendance?.id===attendance.id)openAttendance=null;
+        if(bahiaParts().dateId!==activeDayId)await handleOperationalDayRollover();
+      }catch(err){
+        console.error(err);
+        alert(err.message||"Não foi possível enviar o cliente para a fila.");
+      }
+    }
+
+    forwardOtherDepartmentBtn?.addEventListener("click",async()=>{
+      if(!openAttendance||!authUser)return;
+
+      const selected={...openAttendance};
+      const dayId=currentDayId(),
+        dayRef=doc(db,"days",dayId),
+        attendanceRef=doc(db,"days",dayId,"attendances",selected.id),
         profileRef=walletRef(),
         xpAwarded=10;
 
@@ -1383,15 +1669,18 @@
           if(!daySnap.exists()||!attSnap.exists())throw new Error("Atendimento não encontrado.");
 
           const state=daySnap.data(),attendance=attSnap.data();
-
           if(attendance.technicianUid!==authUser.uid)throw new Error("Este atendimento pertence a outro técnico.");
           if(attendance.status!=="open")throw new Error("Este atendimento já foi finalizado.");
 
           const members={...state.members},member=members[authUser.uid];
-          members[authUser.uid]={...member,status:"available",currentAttendanceId:null};
-
-          const queue=[...(state.queue||[])];
-          if(!queue.includes(authUser.uid))queue.push(authUser.uid);
+          const currentIds=Array.isArray(member?.currentAttendanceIds)?member.currentAttendanceIds.filter(Boolean):[];
+          if(member){
+            members[authUser.uid]={
+              ...member,
+              currentAttendanceId:null,
+              currentAttendanceIds:currentIds.filter(id=>id!==selected.id)
+            };
+          }
 
           tx.update(attendanceRef,{
             status:"finished",
@@ -1404,12 +1693,7 @@
             finishedAt:serverTimestamp()
           });
 
-          tx.update(dayRef,{
-            members,
-            queue,
-            currentUid:state.currentUid||queue[0]||null,
-            updatedAt:serverTimestamp()
-          });
+          tx.update(dayRef,{members,updatedAt:serverTimestamp()});
 
           const walletDoc=profileSnap.exists()?profileSnap.data():{},
             wallets={...(walletDoc.wallets||{})},
@@ -1422,6 +1706,7 @@
           tx.set(profileRef,{wallets,updatedAt:serverTimestamp()},{merge:true});
         });
 
+        openAttendance=null;
         finishDialog.close();
 
         if(bahiaParts().dateId!==activeDayId)await handleOperationalDayRollover();
@@ -1433,8 +1718,79 @@
       }
     });
 
-    finishForm.addEventListener("submit",async e=>{e.preventDefault();if(!openAttendance)return;const problem=problemInput.value.trim(),solution=solutionInput.value.trim(),complexity=finishForm.querySelector('input[name="complexity"]:checked')?.value||"standard",xpAwarded=xpForComplexity(complexity);if(!problem||!solution)return;const dayId=currentDayId(),dayRef=doc(db,"days",dayId),attendanceRef=doc(db,"days",dayId,"attendances",openAttendance.id),profileRef=walletRef();try{await runTransaction(db,async tx=>{const [daySnap,attSnap,profileSnap]=await Promise.all([tx.get(dayRef),tx.get(attendanceRef),tx.get(profileRef)]);if(!daySnap.exists()||!attSnap.exists())throw new Error("Atendimento não encontrado.");const state=daySnap.data(),attendance=attSnap.data();if(attendance.technicianUid!==authUser.uid)throw new Error("Este atendimento pertence a outro técnico.");if(attendance.status!=="open")throw new Error("Este atendimento já foi finalizado.");const members={...state.members},member=members[authUser.uid];members[authUser.uid]={...member,status:"available",currentAttendanceId:null};let queue=[...(state.queue||[])];if(!queue.includes(authUser.uid))queue.push(authUser.uid);tx.update(attendanceRef,{status:"finished",problem,solution,complexity,xpAwarded,finishedAt:serverTimestamp()});tx.update(dayRef,{members,queue,currentUid:state.currentUid||queue[0]||null,updatedAt:serverTimestamp()});const walletDoc=profileSnap.exists()?profileSnap.data():{},wallets={...(walletDoc.wallets||{})},wallet={...(wallets[authUser.uid]||defaultWallet())};wallet.xpBalance=Number(wallet.xpBalance||0)+xpAwarded;wallet.updatedAtMs=Date.now();wallets[authUser.uid]=wallet;tx.set(profileRef,{wallets,updatedAt:serverTimestamp()},{merge:true})});finishDialog.close();if(bahiaParts().dateId!==activeDayId)await handleOperationalDayRollover()}catch(err){console.error(err);alert(err.message||"Não foi possível finalizar.")}});
-    logoutBtn.addEventListener("click",async()=>{const me=memberOf(authUser?.uid);if(me?.status==="busy"){alert("Finalize seu atendimento antes de sair.");return}isSigningOut=true;logoutBtn.disabled=true;try{await leaveQueue();await signOut(auth)}catch(err){console.error(err);isSigningOut=false;logoutBtn.disabled=false;alert("Não foi possível sair agora. Tente novamente.")}});
+    finishForm.addEventListener("submit",async e=>{
+      e.preventDefault();
+      if(!openAttendance)return;
+
+      const selected={...openAttendance};
+      const problem=problemInput.value.trim(),
+        solution=solutionInput.value.trim(),
+        complexity=finishForm.querySelector('input[name="complexity"]:checked')?.value||"standard",
+        xpAwarded=xpForComplexity(complexity);
+
+      if(!problem||!solution)return;
+
+      const dayId=currentDayId(),
+        dayRef=doc(db,"days",dayId),
+        attendanceRef=doc(db,"days",dayId,"attendances",selected.id),
+        profileRef=walletRef();
+
+      try{
+        await runTransaction(db,async tx=>{
+          const [daySnap,attSnap,profileSnap]=await Promise.all([
+            tx.get(dayRef),
+            tx.get(attendanceRef),
+            tx.get(profileRef)
+          ]);
+
+          if(!daySnap.exists()||!attSnap.exists())throw new Error("Atendimento não encontrado.");
+
+          const state=daySnap.data(),attendance=attSnap.data();
+          if(attendance.technicianUid!==authUser.uid)throw new Error("Este atendimento pertence a outro técnico.");
+          if(attendance.status!=="open")throw new Error("Este atendimento já foi finalizado.");
+
+          const members={...state.members},member=members[authUser.uid];
+          const currentIds=Array.isArray(member?.currentAttendanceIds)?member.currentAttendanceIds.filter(Boolean):[];
+          if(member){
+            members[authUser.uid]={
+              ...member,
+              currentAttendanceId:null,
+              currentAttendanceIds:currentIds.filter(id=>id!==selected.id)
+            };
+          }
+
+          tx.update(attendanceRef,{
+            status:"finished",
+            problem,
+            solution,
+            complexity,
+            xpAwarded,
+            finishedAt:serverTimestamp()
+          });
+
+          tx.update(dayRef,{members,updatedAt:serverTimestamp()});
+
+          const walletDoc=profileSnap.exists()?profileSnap.data():{},
+            wallets={...(walletDoc.wallets||{})},
+            wallet={...(wallets[authUser.uid]||defaultWallet())};
+
+          wallet.xpBalance=Number(wallet.xpBalance||0)+xpAwarded;
+          wallet.updatedAtMs=Date.now();
+          wallets[authUser.uid]=wallet;
+          tx.set(profileRef,{wallets,updatedAt:serverTimestamp()},{merge:true});
+        });
+
+        openAttendance=null;
+        finishDialog.close();
+
+        if(bahiaParts().dateId!==activeDayId)await handleOperationalDayRollover();
+      }catch(err){
+        console.error(err);
+        alert(err.message||"Não foi possível finalizar.");
+      }
+    });
+
+    logoutBtn.addEventListener("click",async()=>{const active=myOpenAttendances();if(active.length){alert(`Finalize ${active.length===1?"seu atendimento":"seus "+active.length+" atendimentos"} antes de sair.`);return}isSigningOut=true;logoutBtn.disabled=true;try{await leaveQueue();await signOut(auth)}catch(err){console.error(err);isSigningOut=false;logoutBtn.disabled=false;alert("Não foi possível sair agora. Tente novamente.")}});
     async function leaveQueue(){
       if(!authUser)return;
       const dayId=currentDayId(),dayRef=doc(db,"days",dayId),leavingUid=authUser.uid,leavingName=profile?.name||authUser.displayName||"Usuário";
@@ -1443,7 +1799,7 @@
         if(!snap.exists())return;
         const state=snap.data(),member=state.members?.[leavingUid];
         if(!member)return;
-        if(member.status==="busy")throw new Error("Finalize seu atendimento antes de sair.");
+        if((member.currentAttendanceIds||[]).length||member.currentAttendanceId)throw new Error("Finalize seus atendimentos antes de sair.");
 
         const queue=(state.queue||[]).filter(uid=>uid!==leavingUid);
         const members={...(state.members||{})};
@@ -1472,8 +1828,7 @@
     }
 
     window.addEventListener("pagehide",()=>{
-      const me=memberOf(authUser?.uid);
-      if(!authUser||isSigningOut||me?.status==="busy")return;
+      if(!authUser||isSigningOut||myOpenAttendances().length)return;
       leaveQueue().catch(()=>{});
     });
     resetDayBtn.addEventListener("click",async()=>{const dayId=currentDayId();if(profile?.role!=="admin")return;const ok=confirm("Reiniciar a fila de hoje? Os atendimentos já registrados serão preservados no histórico.");if(!ok)return;try{const collectionsToClear=["queuedClients","nudges","events"];for(const collectionName of collectionsToClear){const snap=await getDocs(collection(db,"days",dayId,collectionName)),docs=snap.docs;for(let i=0;i<docs.length;i+=400){const batch=writeBatch(db);docs.slice(i,i+400).forEach(d=>batch.delete(d.ref));await batch.commit()}}await setDoc(doc(db,"days",dayId),{dateId:dayId,status:"open",queue:[],currentUid:null,members:{},lastAttendanceUid:null,passedSinceLastAttendance:[],queueChatMessages:[],liveHistoryStartedAtMs:Date.now(),clearedAt:serverTimestamp(),updatedAt:serverTimestamp()},{merge:true})}catch(err){console.error(err);if(err?.code==="permission-denied")alert("O Firebase bloqueou a limpeza. Publique a versão mais recente das regras do Firestore e confirme que você está logado como leandro3dejesus@gmail.com.");else alert(`Não foi possível limpar o dia. ${err?.code||err?.message||""}`.trim())}});
