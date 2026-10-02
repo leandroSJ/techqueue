@@ -28,6 +28,11 @@ service cloud.firestore {
       allow create, update, delete: if adminUser();
     }
 
+    match /shoppingLists/{userId} {
+      allow read, create, update: if activeGoogleUser() && request.auth.uid == userId;
+      allow delete: if false;
+    }
+
     match /profiles/{userId} {
       allow read, create, update: if activeGoogleUser() && request.auth.uid == userId;
       allow delete: if false;
