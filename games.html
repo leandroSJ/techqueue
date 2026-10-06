@@ -370,6 +370,12 @@
       text-align:center;
       font-weight:700;
     }
+    .invite-player-list{display:grid;gap:8px;max-height:280px;overflow:auto;margin:12px 0}
+    .invite-player-row{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:9px 10px;border:1px solid var(--border);border-radius:10px;background:var(--surface-2)}
+    .invite-player-row .invite-player-info{min-width:0;text-align:left}
+    .invite-player-row strong,.invite-player-row span{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+    .invite-player-row span{font-size:.72rem;color:var(--muted);margin-top:2px}
+    .invite-link-box{font-size:.76rem;overflow-wrap:anywhere;padding:9px 10px;border:1px dashed var(--border);border-radius:10px;background:var(--surface-2);margin:10px 0}
     .challenge-actions{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:14px}
     .challenge-actions .btn{width:100%}
     @media(max-width:480px){.challenge-actions{grid-template-columns:1fr}}
@@ -1147,6 +1153,7 @@
             <div id="players" class="players"></div>
           </div>
           <div class="actions">
+            <button id="invitePlayerBtn" class="btn btn-outline-success" type="button">Chamar jogador</button>
             <button id="restartBtn" class="btn btn-outline-primary hidden" type="button">Revanche</button>
             <button id="closeRoomBtn" class="btn btn-outline-warning hidden" type="button">Encerrar sala</button>
             <button id="leaveBtn" class="btn btn-outline-danger" type="button">Sair da sala</button>
@@ -1232,6 +1239,23 @@
         <button id="bestOf3Decline" class="btn btn-outline-danger" type="button">Recusar</button>
         <button id="bestOf3Accept" class="btn btn-primary" type="button">Aceitar desafio</button>
       </div>
+    </div>
+  </dialog>
+
+  <dialog id="inviteDialog" class="winner-dialog">
+    <div class="winner-dialog-body">
+      <div class="winner-crown" aria-hidden="true">📨</div>
+      <div class="winner-kicker">Convite para jogar</div>
+      <h2>Chamar jogador</h2>
+      <p class="muted">Envie o link da sala. Quem abrir e entrar com o Google será levado direto para a partida.</p>
+      <div id="inviteLinkBox" class="invite-link-box"></div>
+      <div class="challenge-actions">
+        <button id="inviteWhatsAppBtn" class="btn btn-success" type="button">WhatsApp</button>
+        <button id="inviteShareBtn" class="btn btn-primary" type="button">Compartilhar</button>
+      </div>
+      <div class="small muted mt-3">Ou convide alguém que já entrou no TechQueue por e-mail:</div>
+      <div id="invitePlayerList" class="invite-player-list"></div>
+      <button id="inviteDialogClose" class="btn btn-outline-secondary w-100" type="button">Fechar</button>
     </div>
   </dialog>
 
@@ -2282,7 +2306,7 @@
 
     const loginView=document.querySelector("#loginView"),appView=document.querySelector("#appView"),lobbyView=document.querySelector("#lobbyView"),roomView=document.querySelector("#roomView");
     const roomsList=document.querySelector("#roomsList"),roomTitle=document.querySelector("#roomTitle"),roomCode=document.querySelector("#roomCode"),playersEl=document.querySelector("#players"),gameRoot=document.querySelector("#gameRoot"),gameChatMessages=document.querySelector("#gameChatMessages"),gameChatForm=document.querySelector("#gameChatForm"),gameChatInput=document.querySelector("#gameChatInput"),gameChatSendBtn=document.querySelector("#gameChatSendBtn"),gameChatSoundSelect=document.querySelector("#gameChatSoundSelect"),gameChatSoundBtn=document.querySelector("#gameChatSoundBtn"),chatCount=document.querySelector("#chatCount"),lobbyGameChatMessages=document.querySelector("#lobbyGameChatMessages"),lobbyChatForm=document.querySelector("#lobbyChatForm"),lobbyChatInput=document.querySelector("#lobbyChatInput"),lobbyChatSendBtn=document.querySelector("#lobbyChatSendBtn"),lobbyChatSoundSelect=document.querySelector("#lobbyChatSoundSelect"),lobbyChatSoundBtn=document.querySelector("#lobbyChatSoundBtn"),lobbyChatCount=document.querySelector("#lobbyChatCount");
-    const restartBtn=document.querySelector("#restartBtn"),closeRoomBtn=document.querySelector("#closeRoomBtn"),leaveBtn=document.querySelector("#leaveBtn"),googleBtn=document.querySelector("#googleBtn"),loginError=document.querySelector("#loginError"),logoutBtn=document.querySelector("#logoutBtn"),themeBtn=document.querySelector("#themeBtn"),gameError=document.querySelector("#gameError"),gameToast=document.querySelector("#gameToast");
+    const invitePlayerBtn=document.querySelector("#invitePlayerBtn"),inviteDialog=document.querySelector("#inviteDialog"),inviteLinkBox=document.querySelector("#inviteLinkBox"),inviteWhatsAppBtn=document.querySelector("#inviteWhatsAppBtn"),inviteShareBtn=document.querySelector("#inviteShareBtn"),invitePlayerList=document.querySelector("#invitePlayerList"),inviteDialogClose=document.querySelector("#inviteDialogClose"),restartBtn=document.querySelector("#restartBtn"),closeRoomBtn=document.querySelector("#closeRoomBtn"),leaveBtn=document.querySelector("#leaveBtn"),googleBtn=document.querySelector("#googleBtn"),loginError=document.querySelector("#loginError"),logoutBtn=document.querySelector("#logoutBtn"),themeBtn=document.querySelector("#themeBtn"),gameError=document.querySelector("#gameError"),gameToast=document.querySelector("#gameToast");
     const gamesMenuBtn=document.querySelector("#gamesMenuBtn"),gamesHeaderMenu=document.querySelector("#gamesHeaderMenu"),gameWalletXp=document.querySelector("#gameWalletXp"),betSelect=document.querySelector("#betSelect"),shameWallList=document.querySelector("#shameWallList"),rivalryList=document.querySelector("#rivalryList"),winnerDialog=document.querySelector("#winnerDialog"),winnerDialogTitle=document.querySelector("#winnerDialogTitle"),winnerDialogText=document.querySelector("#winnerDialogText"),winnerDialogReward=document.querySelector("#winnerDialogReward"),winnerBestOf3=document.querySelector("#winnerBestOf3"),winnerDialogClose=document.querySelector("#winnerDialogClose"),bestOf3Dialog=document.querySelector("#bestOf3Dialog"),bestOf3DialogTitle=document.querySelector("#bestOf3DialogTitle"),bestOf3DialogText=document.querySelector("#bestOf3DialogText"),bestOf3DialogScore=document.querySelector("#bestOf3DialogScore"),bestOf3Accept=document.querySelector("#bestOf3Accept"),bestOf3Decline=document.querySelector("#bestOf3Decline"),hangmanWordDialog=document.querySelector("#hangmanWordDialog"),hangmanWordDialogTitle=document.querySelector("#hangmanWordDialogTitle"),hangmanWordDialogText=document.querySelector("#hangmanWordDialogText"),hangmanWordMasked=document.querySelector("#hangmanWordMasked"),hangmanWordTimer=document.querySelector("#hangmanWordTimer"),hangmanWordDialogForm=document.querySelector("#hangmanWordDialogForm"),hangmanWordDialogInput=document.querySelector("#hangmanWordDialogInput"),hangmanWordWaiting=document.querySelector("#hangmanWordWaiting");
 
     let user=null,dayState=null,rooms=[],currentRoomId=null,currentRoom=null,unsubDay=null,unsubBan=null,unsubWallet=null,walletBalance=null,selectedChecker=null,selectedDominoIndex=null,drawing=false,activeStroke=[];
@@ -2295,6 +2319,8 @@
     let shameWallCache=[];
     let rivalriesCache={};
     let activeBestOf3Challenge=null;
+    let pendingInviteRoomId=new URLSearchParams(window.location.search).get("room")||null;
+    let inviteJoinAttempted=false;
     const seenBestOf3ChallengeIds=new Set();
     const seenGameChatSoundIds=new Set();
     const gameChatAudio=new Audio();
@@ -2524,6 +2550,90 @@
       return Date.now()+"-"+Math.random().toString(36).slice(2,7);
     }
 
+    function roomInviteUrl(roomIdValue=currentRoomId){
+      const url=new URL(window.location.href);
+      url.searchParams.set("room",roomIdValue||"");
+      return url.toString();
+    }
+
+    function inviteMessage(room=currentRoom){
+      const gameName=GAME_NAMES[room?.game]||"uma partida";
+      const code=room?.id?.slice(0,6)?.toUpperCase()||"";
+      return `🎮 ${displayName()} te chamou para jogar ${gameName} no TechQueue!\nSala: ${code}\nEntre aqui: ${roomInviteUrl(room?.id)}`;
+    }
+
+    function renderInvitePlayers(){
+      if(!invitePlayerList)return;
+      const players=Object.entries(walletsCache||{})
+        .filter(([uid,wallet])=>uid!==user?.uid&&wallet?.email)
+        .sort((a,b)=>String(a[1]?.name||"").localeCompare(String(b[1]?.name||""),"pt-BR"));
+
+      invitePlayerList.innerHTML=players.length
+        ? players.map(([uid,wallet])=>`
+            <div class="invite-player-row">
+              <div class="invite-player-info">
+                <strong>${escapeHtml(wallet.name||"Jogador")}</strong>
+                <span>${escapeHtml(wallet.email||"")}</span>
+              </div>
+              <button class="btn btn-outline-primary btn-sm" type="button" data-invite-email="${escapeHtml(wallet.email||"")}" data-invite-name="${escapeHtml(wallet.name||"Jogador")}">E-mail</button>
+            </div>
+          `).join("")
+        : '<div class="muted small">Ainda não há outros jogadores com e-mail cadastrado.</div>';
+    }
+
+    function openInviteDialog(){
+      if(!currentRoom||!inviteDialog)return;
+      const link=roomInviteUrl(currentRoom.id);
+      inviteLinkBox.textContent=link;
+      renderInvitePlayers();
+      if(inviteDialog.open)inviteDialog.close();
+      inviteDialog.showModal();
+    }
+
+    async function shareRoomNative(){
+      if(!currentRoom)return;
+      const textValue=inviteMessage(currentRoom);
+      const url=roomInviteUrl(currentRoom.id);
+      if(navigator.share){
+        try{
+          await navigator.share({title:"Convite TechQueue",text:textValue,url});
+          return;
+        }catch(err){
+          if(err?.name==="AbortError")return;
+        }
+      }
+      try{
+        await navigator.clipboard.writeText(textValue);
+        showGameToastMessage("Convite copiado. Agora é só enviar para o jogador.");
+      }catch(_){
+        showGameToastMessage("Não foi possível abrir o compartilhamento neste navegador.");
+      }
+    }
+
+    function shareRoomWhatsApp(){
+      if(!currentRoom)return;
+      const textValue=encodeURIComponent(inviteMessage(currentRoom));
+      window.open("https://wa.me/?text="+textValue,"_blank","noopener,noreferrer");
+    }
+
+    function shareRoomEmail(email,name){
+      if(!currentRoom)return;
+      const subject=encodeURIComponent("Convite para jogar no TechQueue");
+      const greeting=name?`Fala, ${name}!\n\n`:"";
+      const body=encodeURIComponent(greeting+inviteMessage(currentRoom));
+      window.location.href=`mailto:${encodeURIComponent(email||"")}?subject=${subject}&body=${body}`;
+    }
+
+    invitePlayerBtn?.addEventListener("click",openInviteDialog);
+    inviteDialogClose?.addEventListener("click",()=>inviteDialog?.close());
+    inviteWhatsAppBtn?.addEventListener("click",shareRoomWhatsApp);
+    inviteShareBtn?.addEventListener("click",shareRoomNative);
+    inviteDialog?.addEventListener("cancel",()=>inviteDialog?.close());
+    invitePlayerList?.addEventListener("click",event=>{
+      const button=event.target.closest("[data-invite-email]");
+      if(button)shareRoomEmail(button.dataset.inviteEmail,button.dataset.inviteName);
+    });
+
     const gameSoundOptions=GAME_CHAT_SOUNDS
       .map(sound=>`<option value="${sound.id}">${escapeHtml(sound.label)}</option>`)
       .join("");
@@ -2600,6 +2710,19 @@
         const map=dayState.gameRooms||{};
         rooms=Object.entries(map).map(([id,value])=>({id,...value})).sort((a,b)=>(b.createdAtMs||0)-(a.createdAtMs||0));
         renderRooms();
+
+        if(pendingInviteRoomId&&!inviteJoinAttempted&&map[pendingInviteRoomId]){
+          inviteJoinAttempted=true;
+          const invitedRoomId=pendingInviteRoomId;
+          pendingInviteRoomId=null;
+          joinRoom(invitedRoomId).catch(err=>{
+            console.error("Falha ao entrar pela URL de convite:",err);
+            gameError.textContent=err?.message||"Não foi possível entrar na sala do convite.";
+            const url=new URL(window.location.href);
+            url.searchParams.delete("room");
+            history.replaceState(null,"",url);
+          });
+        }
         renderGameChat();
         handleWinnerEvent(dayState.lastGameWinnerEvent||null);
         handleBestOf3Challenges(dayState.bestOfThreeChallenges||{});
@@ -3429,6 +3552,11 @@
 
     function openRoom(id,roomSnapshot=null){
       currentRoomId=id;
+      if(id){
+        const url=new URL(window.location.href);
+        url.searchParams.set("room",id);
+        history.replaceState(null,"",url);
+      }
       seenHangmanActionId=null;
       lobbyView.classList.add("hidden");
       roomView.classList.remove("hidden");
@@ -3450,6 +3578,9 @@
       ludoAnimationQueue=Promise.resolve();
       currentRoomId=null;
       currentRoom=null;
+      const lobbyUrl=new URL(window.location.href);
+      lobbyUrl.searchParams.delete("room");
+      history.replaceState(null,"",lobbyUrl);
       selectedChecker=null;
       roomView.classList.add("hidden");
       lobbyView.classList.remove("hidden");
