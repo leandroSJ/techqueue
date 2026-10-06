@@ -492,13 +492,81 @@
     .draw-hint{font-size:.82rem;color:var(--muted)}
     .draw-hint strong{color:var(--text)}
     .draw-actions{display:flex;gap:8px;flex-wrap:wrap}
-    .domino-board,.domino-hand{
+    .domino-table{
+      position:relative;
+      margin:16px 0 20px;
+      padding:12px 10px 10px;
+      border:1px solid var(--border);
+      border-radius:16px;
+      background:
+        radial-gradient(circle at 50% 35%,rgba(255,255,255,.08),transparent 45%),
+        color-mix(in srgb,var(--success) 18%,var(--surface));
+      overflow:hidden;
+    }
+    .domino-table-head{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+      margin:0 4px 8px;
+      font-size:.72rem;
+      color:var(--muted);
+    }
+    .domino-edge{
+      display:inline-flex;
+      align-items:center;
+      gap:5px;
+      padding:3px 7px;
+      border-radius:999px;
+      background:var(--surface);
+      border:1px solid var(--border);
+      font-weight:700;
+      color:var(--text);
+      white-space:nowrap;
+    }
+    .domino-board{
+      display:flex;
+      gap:8px;
+      flex-wrap:nowrap;
+      align-items:center;
+      min-height:102px;
+      width:100%;
+      padding:8px 14px 12px;
+      overflow-x:auto;
+      overflow-y:hidden;
+      scroll-behavior:smooth;
+      overscroll-behavior-x:contain;
+      scrollbar-width:thin;
+      scrollbar-color:var(--border) transparent;
+    }
+    .domino-board::-webkit-scrollbar{height:8px}
+    .domino-board::-webkit-scrollbar-thumb{background:var(--border);border-radius:999px}
+    .domino-board .tile{flex:0 0 auto}
+    .domino-board-empty{
+      width:100%;
+      text-align:center;
+      color:var(--muted);
+      padding:22px 10px;
+    }
+    .domino-scroll-hint{
+      text-align:center;
+      margin-top:-4px;
+      font-size:.7rem;
+      color:var(--muted);
+    }
+    .domino-hand{
       display:flex;
       gap:12px;
       flex-wrap:wrap;
       justify-content:center;
       align-items:center;
       margin:16px 0;
+    }
+    @media(max-width:720px){
+      .domino-table{padding-inline:6px}
+      .domino-board{padding-inline:8px}
+      .domino-table-head{font-size:.66rem}
+      .domino-edge{padding:3px 6px}
     }
     .tile{
       position:relative;
@@ -5725,6 +5793,8 @@
           turnUid:order[0]||null,
           turnStartedAtMs:null,
           winnerUid:null,
+          lastPlacedSide:null,
+          lastPlayedByUid:null,
           requiredPlayers:target
         };
       }
@@ -5753,6 +5823,8 @@
         turnUid:order[0]||null,
         turnStartedAtMs:Date.now(),
         winnerUid:null,
+        lastPlacedSide:null,
+        lastPlayedByUid:null,
         requiredPlayers:target
       };
     }
@@ -5793,8 +5865,16 @@
           Pontas: ${board.length?`${board[0].a} na esquerda · ${board[board.length-1].b} na direita`:"mesa vazia"}
         </div>
 
-        <div class="domino-board">
-          ${board.length?board.map(tileHtml).join(""):'<span class="muted">Mesa vazia</span>'}
+        <div class="domino-table">
+          <div class="domino-table-head">
+            <span class="domino-edge">← Esquerda: ${board.length?board[0].a:"—"}</span>
+            <span>${board.length} peça${board.length===1?"":"s"} na mesa</span>
+            <span class="domino-edge">Direita: ${board.length?board[board.length-1].b:"—"} →</span>
+          </div>
+          <div id="dominoBoard" class="domino-board" tabindex="0" aria-label="Mesa de dominó. Role horizontalmente para ver todas as peças.">
+            ${board.length?board.map(tileHtml).join(""):'<div class="domino-board-empty">Mesa vazia</div>'}
+          </div>
+          ${board.length>8?'<div class="domino-scroll-hint">↔ Arraste ou use a roda do mouse para acompanhar a mesa</div>':""}
         </div>
 
         <div class="small muted" style="text-align:center">Seu jogo</div>
@@ -5832,6 +5912,23 @@
       `;
 
       document.querySelector("#drawDominoBtn")?.addEventListener("click",drawOrPassDomino);
+
+      const dominoBoard=document.querySelector("#dominoBoard");
+      if(dominoBoard){
+        dominoBoard.addEventListener("wheel",event=>{
+          if(Math.abs(event.deltaY)>Math.abs(event.deltaX)){
+            event.preventDefault();
+            dominoBoard.scrollLeft+=event.deltaY;
+          }
+        },{passive:false});
+
+        requestAnimationFrame(()=>{
+          if(!dominoBoard)return;
+          if(s.lastPlacedSide==="left")dominoBoard.scrollLeft=0;
+          else if(s.lastPlacedSide==="right")dominoBoard.scrollLeft=dominoBoard.scrollWidth;
+          else dominoBoard.scrollLeft=Math.max(0,(dominoBoard.scrollWidth-dominoBoard.clientWidth)/2);
+        });
+      }
 
       if(!s.winnerUid){
         if(!s.turnStartedAtMs)ensureDominoTurnClock();
@@ -6052,6 +6149,8 @@
         if(side==="right")board.push(placedTile);
         else board.unshift(placedTile);
 
+        s.lastPlacedSide=side;
+        s.lastPlayedByUid=user.uid;
         hand.splice(index,1);
         s.hands[user.uid]=hand;
         s.board=board;
