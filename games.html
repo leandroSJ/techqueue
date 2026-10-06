@@ -302,6 +302,45 @@
       border-color:#8a6d19;
     }
     .shame-wall-list{display:grid;gap:8px}
+    .rivalry-list{display:grid;gap:8px}
+    .rivalry-entry{
+      display:grid;
+      grid-template-columns:minmax(0,1fr) auto;
+      gap:10px;
+      align-items:center;
+      padding:10px 12px;
+      border:1px solid var(--border);
+      border-radius:12px;
+      background:var(--surface-2);
+    }
+    .rivalry-entry strong{overflow-wrap:anywhere}
+    .rivalry-score{
+      min-width:64px;
+      text-align:center;
+      padding:5px 9px;
+      border-radius:999px;
+      background:var(--primary-container);
+      font-size:.78rem;
+      font-weight:800;
+    }
+    .streak-badge{
+      display:inline-flex;
+      align-items:center;
+      margin-left:5px;
+      padding:2px 6px;
+      border-radius:999px;
+      background:#fff0e3;
+      color:#9a3412;
+      border:1px solid #fdba74;
+      font-size:.68rem;
+      font-weight:800;
+      white-space:nowrap;
+    }
+    html[data-theme="dark"] .streak-badge{
+      background:#4b2512;
+      color:#fed7aa;
+      border-color:#9a5b31;
+    }
     .shame-entry{
       display:flex;
       justify-content:space-between;
@@ -1072,18 +1111,33 @@
         </div>
       </section>
 
-      <section class="card panel-card shadow-sm mt-3" id="shameWallCard">
-        <div class="d-flex justify-content-between align-items-start gap-2 mb-2">
-          <div>
-            <h2 class="h5 fw-semibold mb-1">Mural da Vergonha</h2>
-            <p class="muted small mb-0">Quem perder um desafio Melhor de 3 fica registrado aqui.</p>
-          </div>
-          <span class="shame-badge">Sem perdão 😈</span>
+      <div class="row g-3 mt-0">
+        <div class="col-12 col-lg-6">
+          <section class="card panel-card shadow-sm h-100" id="shameWallCard">
+            <div class="d-flex justify-content-between align-items-start gap-2 mb-2">
+              <div>
+                <h2 class="h5 fw-semibold mb-1">Mural da Vergonha</h2>
+                <p class="muted small mb-0">Quem perder um desafio Melhor de 3 fica registrado aqui.</p>
+              </div>
+              <span class="shame-badge">Sem perdão 😈</span>
+            </div>
+            <div id="shameWallList" class="shame-wall-list">
+              <div class="muted small">Ninguém passou vergonha ainda.</div>
+            </div>
+          </section>
         </div>
-        <div id="shameWallList" class="shame-wall-list">
-          <div class="muted small">Ninguém passou vergonha ainda.</div>
+        <div class="col-12 col-lg-6">
+          <section class="card panel-card shadow-sm h-100" id="rivalryCard">
+            <div class="mb-2">
+              <h2 class="h5 fw-semibold mb-1">🔥 Rivalidades</h2>
+              <p class="muted small mb-0">Histórico dos confrontos Melhor de 3. Aqui a resenha fica registrada.</p>
+            </div>
+            <div id="rivalryList" class="rivalry-list">
+              <div class="muted small">Nenhuma rivalidade registrada ainda.</div>
+            </div>
+          </section>
         </div>
-      </section>
+      </div>
 
       <section id="roomView" class="card game-area shadow-sm hidden">
         <div class="game-top">
@@ -2229,7 +2283,7 @@
     const loginView=document.querySelector("#loginView"),appView=document.querySelector("#appView"),lobbyView=document.querySelector("#lobbyView"),roomView=document.querySelector("#roomView");
     const roomsList=document.querySelector("#roomsList"),roomTitle=document.querySelector("#roomTitle"),roomCode=document.querySelector("#roomCode"),playersEl=document.querySelector("#players"),gameRoot=document.querySelector("#gameRoot"),gameChatMessages=document.querySelector("#gameChatMessages"),gameChatForm=document.querySelector("#gameChatForm"),gameChatInput=document.querySelector("#gameChatInput"),gameChatSendBtn=document.querySelector("#gameChatSendBtn"),gameChatSoundSelect=document.querySelector("#gameChatSoundSelect"),gameChatSoundBtn=document.querySelector("#gameChatSoundBtn"),chatCount=document.querySelector("#chatCount"),lobbyGameChatMessages=document.querySelector("#lobbyGameChatMessages"),lobbyChatForm=document.querySelector("#lobbyChatForm"),lobbyChatInput=document.querySelector("#lobbyChatInput"),lobbyChatSendBtn=document.querySelector("#lobbyChatSendBtn"),lobbyChatSoundSelect=document.querySelector("#lobbyChatSoundSelect"),lobbyChatSoundBtn=document.querySelector("#lobbyChatSoundBtn"),lobbyChatCount=document.querySelector("#lobbyChatCount");
     const restartBtn=document.querySelector("#restartBtn"),closeRoomBtn=document.querySelector("#closeRoomBtn"),leaveBtn=document.querySelector("#leaveBtn"),googleBtn=document.querySelector("#googleBtn"),loginError=document.querySelector("#loginError"),logoutBtn=document.querySelector("#logoutBtn"),themeBtn=document.querySelector("#themeBtn"),gameError=document.querySelector("#gameError"),gameToast=document.querySelector("#gameToast");
-    const gamesMenuBtn=document.querySelector("#gamesMenuBtn"),gamesHeaderMenu=document.querySelector("#gamesHeaderMenu"),gameWalletXp=document.querySelector("#gameWalletXp"),betSelect=document.querySelector("#betSelect"),shameWallList=document.querySelector("#shameWallList"),winnerDialog=document.querySelector("#winnerDialog"),winnerDialogTitle=document.querySelector("#winnerDialogTitle"),winnerDialogText=document.querySelector("#winnerDialogText"),winnerDialogReward=document.querySelector("#winnerDialogReward"),winnerBestOf3=document.querySelector("#winnerBestOf3"),winnerDialogClose=document.querySelector("#winnerDialogClose"),bestOf3Dialog=document.querySelector("#bestOf3Dialog"),bestOf3DialogTitle=document.querySelector("#bestOf3DialogTitle"),bestOf3DialogText=document.querySelector("#bestOf3DialogText"),bestOf3DialogScore=document.querySelector("#bestOf3DialogScore"),bestOf3Accept=document.querySelector("#bestOf3Accept"),bestOf3Decline=document.querySelector("#bestOf3Decline"),hangmanWordDialog=document.querySelector("#hangmanWordDialog"),hangmanWordDialogTitle=document.querySelector("#hangmanWordDialogTitle"),hangmanWordDialogText=document.querySelector("#hangmanWordDialogText"),hangmanWordMasked=document.querySelector("#hangmanWordMasked"),hangmanWordTimer=document.querySelector("#hangmanWordTimer"),hangmanWordDialogForm=document.querySelector("#hangmanWordDialogForm"),hangmanWordDialogInput=document.querySelector("#hangmanWordDialogInput"),hangmanWordWaiting=document.querySelector("#hangmanWordWaiting");
+    const gamesMenuBtn=document.querySelector("#gamesMenuBtn"),gamesHeaderMenu=document.querySelector("#gamesHeaderMenu"),gameWalletXp=document.querySelector("#gameWalletXp"),betSelect=document.querySelector("#betSelect"),shameWallList=document.querySelector("#shameWallList"),rivalryList=document.querySelector("#rivalryList"),winnerDialog=document.querySelector("#winnerDialog"),winnerDialogTitle=document.querySelector("#winnerDialogTitle"),winnerDialogText=document.querySelector("#winnerDialogText"),winnerDialogReward=document.querySelector("#winnerDialogReward"),winnerBestOf3=document.querySelector("#winnerBestOf3"),winnerDialogClose=document.querySelector("#winnerDialogClose"),bestOf3Dialog=document.querySelector("#bestOf3Dialog"),bestOf3DialogTitle=document.querySelector("#bestOf3DialogTitle"),bestOf3DialogText=document.querySelector("#bestOf3DialogText"),bestOf3DialogScore=document.querySelector("#bestOf3DialogScore"),bestOf3Accept=document.querySelector("#bestOf3Accept"),bestOf3Decline=document.querySelector("#bestOf3Decline"),hangmanWordDialog=document.querySelector("#hangmanWordDialog"),hangmanWordDialogTitle=document.querySelector("#hangmanWordDialogTitle"),hangmanWordDialogText=document.querySelector("#hangmanWordDialogText"),hangmanWordMasked=document.querySelector("#hangmanWordMasked"),hangmanWordTimer=document.querySelector("#hangmanWordTimer"),hangmanWordDialogForm=document.querySelector("#hangmanWordDialogForm"),hangmanWordDialogInput=document.querySelector("#hangmanWordDialogInput"),hangmanWordWaiting=document.querySelector("#hangmanWordWaiting");
 
     let user=null,dayState=null,rooms=[],currentRoomId=null,currentRoom=null,unsubDay=null,unsubBan=null,unsubWallet=null,walletBalance=null,selectedChecker=null,selectedDominoIndex=null,drawing=false,activeStroke=[];
     let dominoTimerInterval=null,dominoTimeoutKey=null;
@@ -2239,6 +2293,7 @@
     let activeWinnerEvent=null;
     let walletsCache={};
     let shameWallCache=[];
+    let rivalriesCache={};
     let activeBestOf3Challenge=null;
     const seenBestOf3ChallengeIds=new Set();
     const seenGameChatSoundIds=new Set();
@@ -2340,16 +2395,19 @@
         const wallets=data.wallets||{};
         walletsCache=wallets;
         shameWallCache=Array.isArray(data.shameWall)?data.shameWall:[];
+        rivalriesCache=data.rivalries||{};
         walletBalance=Number(wallets[user?.uid]?.xpBalance||0);
         if(gameWalletXp)gameWalletXp.textContent=`Saldo: ${walletBalance} XP`;
         renderRooms();
         renderShameWall();
+        renderRivalries();
         if(currentRoom)renderRoom();
       },err=>{
         console.error("Falha ao ler saldo de XP:",err);
         walletBalance=null;
         walletsCache={};
         shameWallCache=[];
+        rivalriesCache={};
         if(gameWalletXp)gameWalletXp.textContent="Saldo indisponível";
       });
     }
@@ -2360,8 +2418,15 @@
         : "";
     }
 
+    function streakBadgeHtml(uid){
+      const streak=Number(walletsCache?.[uid]?.currentWinStreak||0);
+      return streak>=2
+        ? '<span class="streak-badge" title="Sequência atual de vitórias">🔥 '+streak+' vitórias</span>'
+        : "";
+    }
+
     function playerLabelHtml(uid,name){
-      return escapeHtml(name||"Jogador")+supremeTitleHtml(uid);
+      return escapeHtml(name||"Jogador")+supremeTitleHtml(uid)+streakBadgeHtml(uid);
     }
 
     function renderShameWall(){
@@ -2377,12 +2442,48 @@
           <div>
             <strong>😳 ${escapeHtml(entry.loserName||"Jogador")}</strong>
             <div class="muted small">
-              perdeu para ${escapeHtml(entry.winnerName||"Jogador")} · ${escapeHtml(entry.gameName||"Jogo")}
+              perdeu para ${escapeHtml(entry.winnerName||"Jogador")} · ${escapeHtml(entry.gameName||"Jogo")} · placar ${escapeHtml(entry.score||"2x?")}
             </div>
           </div>
-          <span class="shame-badge">Mural da Vergonha</span>
+          <span class="shame-badge">${Number(walletsCache?.[entry.loserUid]?.shameCount||1)}x no mural</span>
         </div>
       `).join("");
+    }
+
+    function rivalryKey(uidA,uidB){
+      return [uidA,uidB].sort().join("__");
+    }
+
+    function renderRivalries(){
+      if(!rivalryList)return;
+      const entries=Object.values(rivalriesCache||{})
+        .sort((a,b)=>Number(b.lastPlayedAtMs||0)-Number(a.lastPlayedAtMs||0))
+        .slice(0,10);
+
+      if(!entries.length){
+        rivalryList.innerHTML='<div class="muted small">Nenhuma rivalidade registrada ainda.</div>';
+        return;
+      }
+
+      rivalryList.innerHTML=entries.map(item=>{
+        const uidA=item.uidA,uidB=item.uidB;
+        const winsA=Number(item.seriesWins?.[uidA]||0);
+        const winsB=Number(item.seriesWins?.[uidB]||0);
+        const leader=winsA===winsB
+          ? "Empate na rivalidade"
+          : (winsA>winsB?item.nameA:item.nameB)+" está na frente";
+        return `
+          <div class="rivalry-entry">
+            <div>
+              <strong>⚔️ ${escapeHtml(item.nameA||"Jogador")} x ${escapeHtml(item.nameB||"Jogador")}</strong>
+              <div class="muted small">
+                ${escapeHtml(leader)} · ${Number(item.totalSeries||0)} confronto${Number(item.totalSeries||0)===1?"":"s"} · último: ${escapeHtml(item.lastGameName||"Jogo")}
+              </div>
+            </div>
+            <span class="rivalry-score">${winsA} x ${winsB}</span>
+          </div>
+        `;
+      }).join("");
     }
     function setTheme(theme){
       document.documentElement.dataset.theme=theme;
@@ -2488,7 +2589,7 @@
       if(unsubDay)unsubDay();
       if(unsubBan)unsubBan();
       if(unsubWallet)unsubWallet();
-      unsubDay=null;unsubBan=null;unsubWallet=null;walletBalance=null;walletsCache={};shameWallCache=[];dayState=null;rooms=[];currentRoomId=null;currentRoom=null;globalChatReady=false;winnerEventsReady=false;lastSeenWinnerEventId=null;activeWinnerEvent=null;activeBestOf3Challenge=null;seenBestOf3ChallengeIds.clear();seenGameChatSoundIds.clear();
+      unsubDay=null;unsubBan=null;unsubWallet=null;walletBalance=null;walletsCache={};shameWallCache=[];rivalriesCache={};dayState=null;rooms=[];currentRoomId=null;currentRoom=null;globalChatReady=false;winnerEventsReady=false;lastSeenWinnerEventId=null;activeWinnerEvent=null;activeBestOf3Challenge=null;seenBestOf3ChallengeIds.clear();seenGameChatSoundIds.clear();
     }
 
     function subscribeDay(){
@@ -2865,6 +2966,15 @@
             if(uid===winnerUid)reward+=GAME_WINNER_BONUS_XP;
 
             wallet.xpBalance=Number(wallet.xpBalance||0)+reward;
+            if(winnerUid){
+              if(uid===winnerUid){
+                wallet.currentWinStreak=Number(wallet.currentWinStreak||0)+1;
+                wallet.bestWinStreak=Math.max(Number(wallet.bestWinStreak||0),wallet.currentWinStreak);
+                wallet.totalGameWins=Number(wallet.totalGameWins||0)+1;
+              }else{
+                wallet.currentWinStreak=0;
+              }
+            }
             wallet.updatedAtMs=Date.now();
             wallets[uid]=wallet;
           }
@@ -2964,6 +3074,17 @@
             winnerWallet.updatedAtMs=Date.now();
             wallets[winnerUid]=winnerWallet;
 
+            const loserWallet={
+              name:room.players?.[loserUid]||"Jogador",
+              email:"",
+              audioCredits:{},
+              unlockedItems:[],
+              ...(wallets[loserUid]||{})
+            };
+            loserWallet.shameCount=Number(loserWallet.shameCount||0)+1;
+            loserWallet.updatedAtMs=Date.now();
+            wallets[loserUid]=loserWallet;
+
             const shameWall=Array.isArray(walletData.shameWall)?[...walletData.shameWall]:[];
             shameWall.unshift({
               id:actionId(),
@@ -2976,6 +3097,31 @@
               score:`${Number(wins[winnerUid]||0)}x${Number(wins[loserUid]||0)}`,
               createdAtMs:Date.now()
             });
+
+            const rivalries={...(walletData.rivalries||{})};
+            const rKey=rivalryKey(challengerUid,targetUid);
+            const uidA=[challengerUid,targetUid].sort()[0];
+            const uidB=uidA===challengerUid?targetUid:challengerUid;
+            const rivalry={
+              uidA,
+              uidB,
+              nameA:room.players?.[uidA]||"Jogador",
+              nameB:room.players?.[uidB]||"Jogador",
+              seriesWins:{},
+              totalSeries:0,
+              ...(rivalries[rKey]||{})
+            };
+            rivalry.seriesWins={...(rivalry.seriesWins||{})};
+            rivalry.seriesWins[winnerUid]=Number(rivalry.seriesWins[winnerUid]||0)+1;
+            rivalry.seriesWins[loserUid]=Number(rivalry.seriesWins[loserUid]||0);
+            rivalry.totalSeries=Number(rivalry.totalSeries||0)+1;
+            rivalry.lastWinnerUid=winnerUid;
+            rivalry.lastWinnerName=room.players?.[winnerUid]||"Jogador";
+            rivalry.lastGame=room.game;
+            rivalry.lastGameName=GAME_NAMES[room.game]||"Jogo";
+            rivalry.lastScore=`${Number(wins[winnerUid]||0)}x${Number(wins[loserUid]||0)}`;
+            rivalry.lastPlayedAtMs=Date.now();
+            rivalries[rKey]=rivalry;
 
             room.bestOfThree={
               ...series,
@@ -2998,6 +3144,7 @@
               type:"techqueue_wallets",
               wallets,
               shameWall:shameWall.slice(0,30),
+              rivalries,
               updatedAt:serverTimestamp()
             },{merge:true});
             tx.update(dRef,{gameRooms,bestOfThreeChallenges:challenges,updatedAt:serverTimestamp()});
