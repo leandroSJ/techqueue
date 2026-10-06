@@ -281,6 +281,59 @@
       margin:16px 0;padding:12px;border-radius:14px;
       background:var(--primary-container);font-weight:700;
     }
+    .supreme-title{
+      display:inline-flex;
+      align-items:center;
+      gap:4px;
+      margin-left:5px;
+      padding:2px 7px;
+      border-radius:999px;
+      background:#fff3cd;
+      color:#805800;
+      border:1px solid #efd36b;
+      font-size:.68rem;
+      font-weight:800;
+      vertical-align:middle;
+      white-space:nowrap;
+    }
+    html[data-theme="dark"] .supreme-title{
+      background:#4d3900;
+      color:#ffe08a;
+      border-color:#8a6d19;
+    }
+    .shame-wall-list{display:grid;gap:8px}
+    .shame-entry{
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      gap:12px;
+      padding:10px 12px;
+      border:1px solid var(--border);
+      border-radius:12px;
+      background:var(--surface-2);
+    }
+    .shame-entry strong{overflow-wrap:anywhere}
+    .shame-entry .shame-badge{
+      flex:0 0 auto;
+      padding:4px 8px;
+      border-radius:999px;
+      background:color-mix(in srgb,var(--danger) 13%,var(--surface));
+      color:var(--danger);
+      font-size:.72rem;
+      font-weight:800;
+    }
+    .bestof3-score{
+      margin:10px 0 0;
+      padding:9px 12px;
+      border:1px solid var(--border);
+      border-radius:10px;
+      background:var(--surface-2);
+      text-align:center;
+      font-weight:700;
+    }
+    .challenge-actions{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:14px}
+    .challenge-actions .btn{width:100%}
+    @media(max-width:480px){.challenge-actions{grid-template-columns:1fr}}
     .hangman-word-dialog{width:min(94vw,520px)}
     .hangman-modal-icon{font-size:1.6rem}
     .hangman-modal-word{
@@ -1019,6 +1072,19 @@
         </div>
       </section>
 
+      <section class="card panel-card shadow-sm mt-3" id="shameWallCard">
+        <div class="d-flex justify-content-between align-items-start gap-2 mb-2">
+          <div>
+            <h2 class="h5 fw-semibold mb-1">Mural da Vergonha</h2>
+            <p class="muted small mb-0">Quem perder um desafio Melhor de 3 fica registrado aqui.</p>
+          </div>
+          <span class="shame-badge">Sem perdão 😈</span>
+        </div>
+        <div id="shameWallList" class="shame-wall-list">
+          <div class="muted small">Ninguém passou vergonha ainda.</div>
+        </div>
+      </section>
+
       <section id="roomView" class="card game-area shadow-sm hidden">
         <div class="game-top">
           <div>
@@ -1096,7 +1162,22 @@
       <h2 id="winnerDialogTitle">Temos um vencedor!</h2>
       <p id="winnerDialogText" class="muted"></p>
       <div id="winnerDialogReward" class="winner-reward"></div>
+      <button id="winnerBestOf3" class="btn btn-warning w-100 mb-2 hidden" type="button">Melhor de 3</button>
       <button id="winnerDialogClose" class="btn btn-primary w-100" type="button">Fechar</button>
+    </div>
+  </dialog>
+
+  <dialog id="bestOf3Dialog" class="winner-dialog">
+    <div class="winner-dialog-body">
+      <div class="winner-crown" aria-hidden="true">⚔</div>
+      <div class="winner-kicker">Desafio Melhor de 3</div>
+      <h2 id="bestOf3DialogTitle">Você foi desafiado!</h2>
+      <p id="bestOf3DialogText" class="muted"></p>
+      <div id="bestOf3DialogScore" class="bestof3-score"></div>
+      <div class="challenge-actions">
+        <button id="bestOf3Decline" class="btn btn-outline-danger" type="button">Recusar</button>
+        <button id="bestOf3Accept" class="btn btn-primary" type="button">Aceitar desafio</button>
+      </div>
     </div>
   </dialog>
 
@@ -2148,13 +2229,18 @@
     const loginView=document.querySelector("#loginView"),appView=document.querySelector("#appView"),lobbyView=document.querySelector("#lobbyView"),roomView=document.querySelector("#roomView");
     const roomsList=document.querySelector("#roomsList"),roomTitle=document.querySelector("#roomTitle"),roomCode=document.querySelector("#roomCode"),playersEl=document.querySelector("#players"),gameRoot=document.querySelector("#gameRoot"),gameChatMessages=document.querySelector("#gameChatMessages"),gameChatForm=document.querySelector("#gameChatForm"),gameChatInput=document.querySelector("#gameChatInput"),gameChatSendBtn=document.querySelector("#gameChatSendBtn"),gameChatSoundSelect=document.querySelector("#gameChatSoundSelect"),gameChatSoundBtn=document.querySelector("#gameChatSoundBtn"),chatCount=document.querySelector("#chatCount"),lobbyGameChatMessages=document.querySelector("#lobbyGameChatMessages"),lobbyChatForm=document.querySelector("#lobbyChatForm"),lobbyChatInput=document.querySelector("#lobbyChatInput"),lobbyChatSendBtn=document.querySelector("#lobbyChatSendBtn"),lobbyChatSoundSelect=document.querySelector("#lobbyChatSoundSelect"),lobbyChatSoundBtn=document.querySelector("#lobbyChatSoundBtn"),lobbyChatCount=document.querySelector("#lobbyChatCount");
     const restartBtn=document.querySelector("#restartBtn"),closeRoomBtn=document.querySelector("#closeRoomBtn"),leaveBtn=document.querySelector("#leaveBtn"),googleBtn=document.querySelector("#googleBtn"),loginError=document.querySelector("#loginError"),logoutBtn=document.querySelector("#logoutBtn"),themeBtn=document.querySelector("#themeBtn"),gameError=document.querySelector("#gameError"),gameToast=document.querySelector("#gameToast");
-    const gamesMenuBtn=document.querySelector("#gamesMenuBtn"),gamesHeaderMenu=document.querySelector("#gamesHeaderMenu"),gameWalletXp=document.querySelector("#gameWalletXp"),betSelect=document.querySelector("#betSelect"),winnerDialog=document.querySelector("#winnerDialog"),winnerDialogTitle=document.querySelector("#winnerDialogTitle"),winnerDialogText=document.querySelector("#winnerDialogText"),winnerDialogReward=document.querySelector("#winnerDialogReward"),winnerDialogClose=document.querySelector("#winnerDialogClose"),hangmanWordDialog=document.querySelector("#hangmanWordDialog"),hangmanWordDialogTitle=document.querySelector("#hangmanWordDialogTitle"),hangmanWordDialogText=document.querySelector("#hangmanWordDialogText"),hangmanWordMasked=document.querySelector("#hangmanWordMasked"),hangmanWordTimer=document.querySelector("#hangmanWordTimer"),hangmanWordDialogForm=document.querySelector("#hangmanWordDialogForm"),hangmanWordDialogInput=document.querySelector("#hangmanWordDialogInput"),hangmanWordWaiting=document.querySelector("#hangmanWordWaiting");
+    const gamesMenuBtn=document.querySelector("#gamesMenuBtn"),gamesHeaderMenu=document.querySelector("#gamesHeaderMenu"),gameWalletXp=document.querySelector("#gameWalletXp"),betSelect=document.querySelector("#betSelect"),shameWallList=document.querySelector("#shameWallList"),winnerDialog=document.querySelector("#winnerDialog"),winnerDialogTitle=document.querySelector("#winnerDialogTitle"),winnerDialogText=document.querySelector("#winnerDialogText"),winnerDialogReward=document.querySelector("#winnerDialogReward"),winnerBestOf3=document.querySelector("#winnerBestOf3"),winnerDialogClose=document.querySelector("#winnerDialogClose"),bestOf3Dialog=document.querySelector("#bestOf3Dialog"),bestOf3DialogTitle=document.querySelector("#bestOf3DialogTitle"),bestOf3DialogText=document.querySelector("#bestOf3DialogText"),bestOf3DialogScore=document.querySelector("#bestOf3DialogScore"),bestOf3Accept=document.querySelector("#bestOf3Accept"),bestOf3Decline=document.querySelector("#bestOf3Decline"),hangmanWordDialog=document.querySelector("#hangmanWordDialog"),hangmanWordDialogTitle=document.querySelector("#hangmanWordDialogTitle"),hangmanWordDialogText=document.querySelector("#hangmanWordDialogText"),hangmanWordMasked=document.querySelector("#hangmanWordMasked"),hangmanWordTimer=document.querySelector("#hangmanWordTimer"),hangmanWordDialogForm=document.querySelector("#hangmanWordDialogForm"),hangmanWordDialogInput=document.querySelector("#hangmanWordDialogInput"),hangmanWordWaiting=document.querySelector("#hangmanWordWaiting");
 
     let user=null,dayState=null,rooms=[],currentRoomId=null,currentRoom=null,unsubDay=null,unsubBan=null,unsubWallet=null,walletBalance=null,selectedChecker=null,selectedDominoIndex=null,drawing=false,activeStroke=[];
     let dominoTimerInterval=null,dominoTimeoutKey=null;
     let globalChatReady=false;
     let winnerEventsReady=false;
     let lastSeenWinnerEventId=null;
+    let activeWinnerEvent=null;
+    let walletsCache={};
+    let shameWallCache=[];
+    let activeBestOf3Challenge=null;
+    const seenBestOf3ChallengeIds=new Set();
     const seenGameChatSoundIds=new Set();
     const gameChatAudio=new Audio();
     let seenHangmanActionId=null;
@@ -2171,6 +2257,7 @@
     let gameToastTimer=null;
     const settlingBetRooms=new Set();
     const settlingRewardRooms=new Set();
+    const settlingBestOf3Rooms=new Set();
     const BET_VALUES=[0,5,10,20,50,100,150,200];
     const DOMINO_TURN_MS=120000;
     const GAME_PARTICIPATION_XP=10;
@@ -2249,15 +2336,53 @@
     function subscribeGameWallet(){
       if(unsubWallet)unsubWallet();
       unsubWallet=onSnapshot(walletRef(),snap=>{
-        const wallets=snap.exists()?(snap.data().wallets||{}):{};
+        const data=snap.exists()?snap.data():{};
+        const wallets=data.wallets||{};
+        walletsCache=wallets;
+        shameWallCache=Array.isArray(data.shameWall)?data.shameWall:[];
         walletBalance=Number(wallets[user?.uid]?.xpBalance||0);
         if(gameWalletXp)gameWalletXp.textContent=`Saldo: ${walletBalance} XP`;
         renderRooms();
+        renderShameWall();
+        if(currentRoom)renderRoom();
       },err=>{
         console.error("Falha ao ler saldo de XP:",err);
         walletBalance=null;
+        walletsCache={};
+        shameWallCache=[];
         if(gameWalletXp)gameWalletXp.textContent="Saldo indisponível";
       });
+    }
+
+    function supremeTitleHtml(uid){
+      return walletsCache?.[uid]?.gameTitle==="Jogador Supremo"
+        ? '<span class="supreme-title" title="Venceu um desafio Melhor de 3">👑 Jogador Supremo</span>'
+        : "";
+    }
+
+    function playerLabelHtml(uid,name){
+      return escapeHtml(name||"Jogador")+supremeTitleHtml(uid);
+    }
+
+    function renderShameWall(){
+      if(!shameWallList)return;
+      const entries=(shameWallCache||[]).slice(0,12);
+      if(!entries.length){
+        shameWallList.innerHTML='<div class="muted small">Ninguém passou vergonha ainda.</div>';
+        return;
+      }
+
+      shameWallList.innerHTML=entries.map(entry=>`
+        <div class="shame-entry">
+          <div>
+            <strong>😳 ${escapeHtml(entry.loserName||"Jogador")}</strong>
+            <div class="muted small">
+              perdeu para ${escapeHtml(entry.winnerName||"Jogador")} · ${escapeHtml(entry.gameName||"Jogo")}
+            </div>
+          </div>
+          <span class="shame-badge">Mural da Vergonha</span>
+        </div>
+      `).join("");
     }
     function setTheme(theme){
       document.documentElement.dataset.theme=theme;
@@ -2363,7 +2488,7 @@
       if(unsubDay)unsubDay();
       if(unsubBan)unsubBan();
       if(unsubWallet)unsubWallet();
-      unsubDay=null;unsubBan=null;unsubWallet=null;walletBalance=null;dayState=null;rooms=[];currentRoomId=null;currentRoom=null;globalChatReady=false;winnerEventsReady=false;lastSeenWinnerEventId=null;seenGameChatSoundIds.clear();
+      unsubDay=null;unsubBan=null;unsubWallet=null;walletBalance=null;walletsCache={};shameWallCache=[];dayState=null;rooms=[];currentRoomId=null;currentRoom=null;globalChatReady=false;winnerEventsReady=false;lastSeenWinnerEventId=null;activeWinnerEvent=null;activeBestOf3Challenge=null;seenBestOf3ChallengeIds.clear();seenGameChatSoundIds.clear();
     }
 
     function subscribeDay(){
@@ -2376,10 +2501,13 @@
         renderRooms();
         renderGameChat();
         handleWinnerEvent(dayState.lastGameWinnerEvent||null);
+        handleBestOf3Challenges(dayState.bestOfThreeChallenges||{});
 
         for(const [roomId,room] of Object.entries(map)){
           if(room?.status==="finished"&&room.xpRewardEligible===true&&!room.xpRewardSettled){
             settleGameRewards(roomId).catch(err=>console.error("Falha ao pagar recompensa do jogo:",err));
+          }else if(room?.status==="finished"&&room.xpRewardSettled&&room.bestOfThree?.active){
+            settleBestOfThree(roomId).catch(err=>console.error("Falha ao avançar Melhor de 3:",err));
           }
         }
 
@@ -2514,14 +2642,162 @@
     function showWinnerPopup(event){
       if(!event?.winnerName||!winnerDialog)return;
 
+      activeWinnerEvent=event;
       winnerDialogTitle.textContent=event.winnerName+" venceu!";
       winnerDialogText.textContent=(event.gameName||"Partida")+" terminou. Todos os participantes receberam XP.";
       winnerDialogReward.textContent=
         "Participação: +"+GAME_PARTICIPATION_XP+" XP · Vencedor: +"+GAME_WINNER_BONUS_XP+" XP adicional";
 
+      const room=dayState?.gameRooms?.[event.roomId];
+      const canChallenge=
+        event.winnerUid===user?.uid &&
+        room?.status==="finished" &&
+        (room.playerOrder||[]).length===2 &&
+        Number(room.betAmount||0)===0 &&
+        !room.bestOfThree?.active;
+
+      winnerBestOf3?.classList.toggle("hidden",!canChallenge);
+
       if(winnerDialog.open)winnerDialog.close();
       winnerDialog.showModal();
     }
+
+    function orderedWithStarter(order,starterUid){
+      const base=[...(order||[])];
+      if(!starterUid||!base.includes(starterUid))return base;
+      return [starterUid,...base.filter(uid=>uid!==starterUid)];
+    }
+
+    function freshStateForRoom(room,starterUid){
+      const order=orderedWithStarter(room.playerOrder||[],starterUid);
+      const requiredPlayers=Number(room.requiredPlayers||MIN_PLAYERS[room.game]||2);
+
+      if(room.game==="domino")return{order,state:initDomino(order,requiredPlayers)};
+      if(room.game==="ludo")return{order,state:initLudo(order,requiredPlayers,room.state)};
+      if(room.game==="draw")return{order,state:initialState("draw",order,null)};
+      return{order,state:initialState(room.game,order,null)};
+    }
+
+    async function createBestOfThreeChallenge(){
+      const event=activeWinnerEvent;
+      if(!event||event.winnerUid!==user?.uid)return;
+
+      try{
+        await mutateDay(data=>{
+          const gameRooms={...(data.gameRooms||{})};
+          const room=gameRooms[event.roomId];
+          if(!room)throw new Error("A sala desta partida não existe mais.");
+          if(room.status!=="finished")throw new Error("A partida precisa estar encerrada.");
+          if((room.playerOrder||[]).length!==2)throw new Error("O Melhor de 3 está disponível apenas para partidas com 2 jogadores.");
+          if(Number(room.betAmount||0)>0)throw new Error("O Melhor de 3 não está disponível em salas com aposta.");
+
+          const targetUid=(room.playerOrder||[]).find(uid=>uid!==user.uid);
+          if(!targetUid)throw new Error("Adversário não encontrado.");
+
+          const challenges={...(data.bestOfThreeChallenges||{})};
+          const id=actionId();
+          challenges[id]={
+            id,
+            roomId:event.roomId,
+            game:room.game,
+            gameName:GAME_NAMES[room.game]||"Jogo",
+            challengerUid:user.uid,
+            challengerName:room.players?.[user.uid]||displayName(),
+            targetUid,
+            targetName:room.players?.[targetUid]||"Jogador",
+            status:"pending",
+            wins:{[user.uid]:1,[targetUid]:0},
+            currentWinnerUid:user.uid,
+            createdAtMs:Date.now()
+          };
+          return{bestOfThreeChallenges:challenges};
+        });
+
+        winnerDialog?.close();
+        showGameToastMessage("Desafio Melhor de 3 enviado. O placar começa 1 x 0 para você.");
+      }catch(err){
+        console.error("Falha ao criar Melhor de 3:",err);
+        showGameToastMessage(err?.message||"Não foi possível enviar o desafio.");
+      }
+    }
+
+    function handleBestOf3Challenges(challenges){
+      if(!user||!bestOf3Dialog)return;
+      const pending=Object.values(challenges||{})
+        .filter(item=>item?.status==="pending"&&item.targetUid===user.uid)
+        .sort((a,b)=>Number(b.createdAtMs||0)-Number(a.createdAtMs||0))[0];
+
+      if(!pending||seenBestOf3ChallengeIds.has(pending.id))return;
+      seenBestOf3ChallengeIds.add(pending.id);
+      activeBestOf3Challenge=pending;
+
+      bestOf3DialogTitle.textContent=pending.challengerName+" te desafia!";
+      bestOf3DialogText.textContent=
+        "Melhor de 3 em "+(pending.gameName||"Jogo")+". Se você vencer, recebe o título Jogador Supremo. Quem perder vai para o Mural da Vergonha.";
+      bestOf3DialogScore.textContent=
+        "Placar atual: "+pending.challengerName+" "+Number(pending.wins?.[pending.challengerUid]||0)+" x "+Number(pending.wins?.[pending.targetUid]||0)+" "+pending.targetName;
+
+      if(bestOf3Dialog.open)bestOf3Dialog.close();
+      bestOf3Dialog.showModal();
+    }
+
+    async function answerBestOfThreeChallenge(accept){
+      const challenge=activeBestOf3Challenge;
+      if(!challenge||challenge.targetUid!==user?.uid)return;
+
+      try{
+        await mutateDay(data=>{
+          const challenges={...(data.bestOfThreeChallenges||{})};
+          const live=structuredClone(challenges[challenge.id]);
+          if(!live||live.status!=="pending")return data;
+          if(live.targetUid!==user.uid)throw new Error("Este desafio não pertence a você.");
+
+          live.status=accept?"accepted":"declined";
+          live.respondedAtMs=Date.now();
+          challenges[live.id]=live;
+
+          if(!accept)return{bestOfThreeChallenges:challenges};
+
+          const gameRooms={...(data.gameRooms||{})};
+          const room=structuredClone(gameRooms[live.roomId]);
+          if(!room)throw new Error("A sala do desafio não existe mais.");
+          if(room.status!=="finished")throw new Error("A sala já foi reiniciada.");
+          if((room.playerOrder||[]).length!==2)throw new Error("O desafio exige exatamente 2 jogadores.");
+
+          const prepared=freshStateForRoom(room,live.currentWinnerUid||live.challengerUid);
+          room.playerOrder=prepared.order;
+          room.state=prepared.state;
+          room.status="playing";
+          room.xpRewardSettled=false;
+          room.xpRewardEligible=true;
+          room.bestOfThree={
+            id:live.id,
+            active:true,
+            round:2,
+            wins:{...(live.wins||{})},
+            challengerUid:live.challengerUid,
+            targetUid:live.targetUid,
+            championUid:null,
+            lastWinnerUid:live.currentWinnerUid||live.challengerUid
+          };
+          gameRooms[live.roomId]=room;
+
+          return{bestOfThreeChallenges:challenges,gameRooms};
+        });
+
+        bestOf3Dialog.close();
+        activeBestOf3Challenge=null;
+        showGameToastMessage(accept?"Desafio aceito. Valendo Jogador Supremo!":"Desafio recusado.");
+      }catch(err){
+        console.error("Falha ao responder Melhor de 3:",err);
+        showGameToastMessage(err?.message||"Não foi possível responder ao desafio.");
+      }
+    }
+
+    winnerBestOf3?.addEventListener("click",createBestOfThreeChallenge);
+    bestOf3Accept?.addEventListener("click",()=>answerBestOfThreeChallenge(true));
+    bestOf3Decline?.addEventListener("click",()=>answerBestOfThreeChallenge(false));
+    bestOf3Dialog?.addEventListener("cancel",event=>event.preventDefault());
 
     function handleWinnerEvent(event){
       if(!winnerEventsReady){
@@ -2632,6 +2908,128 @@
 
     function roomWinnerUid(room){
       return room?.state?.championUid||room?.state?.winnerUid||null;
+    }
+
+    async function settleBestOfThree(id){
+      if(!id||settlingBestOf3Rooms.has(id))return;
+      settlingBestOf3Rooms.add(id);
+
+      const dRef=dayRef();
+      const wRef=walletRef();
+
+      try{
+        await runTransaction(db,async tx=>{
+          const daySnap=await tx.get(dRef);
+          const walletSnap=await tx.get(wRef);
+          if(!daySnap.exists()||!walletSnap.exists())return;
+
+          const dayData=daySnap.data();
+          const gameRooms={...(dayData.gameRooms||{})};
+          const room=structuredClone(gameRooms[id]);
+          const series=room?.bestOfThree;
+
+          if(
+            !room ||
+            room.status!=="finished" ||
+            room.xpRewardSettled!==true ||
+            !series?.active
+          )return;
+
+          const winnerUid=roomWinnerUid(room);
+          if(!winnerUid)return;
+
+          const wins={...(series.wins||{})};
+          wins[winnerUid]=Number(wins[winnerUid]||0)+1;
+          const challengerUid=series.challengerUid;
+          const targetUid=series.targetUid;
+          const loserUid=winnerUid===challengerUid?targetUid:challengerUid;
+          const champion=Number(wins[winnerUid]||0)>=2;
+
+          const challenges={...(dayData.bestOfThreeChallenges||{})};
+          const challenge=structuredClone(challenges[series.id]||{});
+
+          if(champion){
+            const walletData=walletSnap.data();
+            const wallets={...(walletData.wallets||{})};
+            const winnerWallet={
+              name:room.players?.[winnerUid]||"Jogador",
+              email:"",
+              audioCredits:{},
+              unlockedItems:[],
+              ...(wallets[winnerUid]||{})
+            };
+
+            winnerWallet.gameTitle="Jogador Supremo";
+            winnerWallet.supremeWins=Number(winnerWallet.supremeWins||0)+1;
+            winnerWallet.updatedAtMs=Date.now();
+            wallets[winnerUid]=winnerWallet;
+
+            const shameWall=Array.isArray(walletData.shameWall)?[...walletData.shameWall]:[];
+            shameWall.unshift({
+              id:actionId(),
+              loserUid,
+              loserName:room.players?.[loserUid]||"Jogador",
+              winnerUid,
+              winnerName:room.players?.[winnerUid]||"Jogador",
+              game:room.game,
+              gameName:GAME_NAMES[room.game]||"Jogo",
+              score:`${Number(wins[winnerUid]||0)}x${Number(wins[loserUid]||0)}`,
+              createdAtMs:Date.now()
+            });
+
+            room.bestOfThree={
+              ...series,
+              active:false,
+              wins,
+              championUid:winnerUid,
+              loserUid,
+              completedAtMs:Date.now()
+            };
+
+            challenge.status="completed";
+            challenge.wins=wins;
+            challenge.championUid=winnerUid;
+            challenge.loserUid=loserUid;
+            challenge.completedAtMs=Date.now();
+            challenges[series.id]=challenge;
+            gameRooms[id]=room;
+
+            tx.set(wRef,{
+              type:"techqueue_wallets",
+              wallets,
+              shameWall:shameWall.slice(0,30),
+              updatedAt:serverTimestamp()
+            },{merge:true});
+            tx.update(dRef,{gameRooms,bestOfThreeChallenges:challenges,updatedAt:serverTimestamp()});
+            return;
+          }
+
+          const prepared=freshStateForRoom(room,winnerUid);
+          room.playerOrder=prepared.order;
+          room.state=prepared.state;
+          room.status="playing";
+          room.xpRewardSettled=false;
+          room.xpRewardEligible=true;
+          room.bestOfThree={
+            ...series,
+            active:true,
+            wins,
+            round:Number(series.round||1)+1,
+            lastWinnerUid:winnerUid
+          };
+
+          challenge.status="accepted";
+          challenge.wins=wins;
+          challenge.currentWinnerUid=winnerUid;
+          challenge.round=room.bestOfThree.round;
+          challenges[series.id]=challenge;
+          gameRooms[id]=room;
+
+          tx.update(dRef,{gameRooms,bestOfThreeChallenges:challenges,updatedAt:serverTimestamp()});
+        });
+      }finally{
+        settlingBestOf3Rooms.delete(id);
+      }
     }
 
     async function settleRoomBet(id){
@@ -3150,14 +3548,14 @@
       if(!currentRoomId||!currentRoom)return;
       await mutateRoom(currentRoomId,room=>{
         const requiredPlayers=Number(room.requiredPlayers||MIN_PLAYERS[room.game]||2);
-        room.state=room.game==="domino"
-          ? initDomino(room.playerOrder||[],requiredPlayers)
-          : room.game==="ludo"
-            ? initLudo(room.playerOrder||[],requiredPlayers,room.state)
-            : initialState(room.game,room.playerOrder||[],room.state);
+        const lastWinner=roomWinnerUid(room);
+        const prepared=freshStateForRoom(room,lastWinner);
+        room.playerOrder=prepared.order;
+        room.state=prepared.state;
         room.status=(room.playerOrder||[]).length>=requiredPlayers?"playing":"waiting";
         room.xpRewardSettled=false;
         room.xpRewardEligible=true;
+        room.bestOfThree=null;
         return room;
       });
     });
@@ -3319,8 +3717,12 @@
       const betInfo=bet>0
         ? ` · aposta ${bet} XP · pote ${pot} XP${room.betSettled?" · encerrada":""}`
         : " · sem aposta";
-      roomCode.textContent=`Sala ${room.id.slice(0,6).toUpperCase()}${betInfo}`;
-      playersEl.innerHTML=(room.playerOrder||[]).map(uid=>`<span class="player-chip">${escapeHtml(room.players?.[uid]||"Jogador")}${uid===user.uid?" · você":""}</span>`).join("");
+      const series=room.bestOfThree;
+      const seriesInfo=series?.active
+        ? ` · Melhor de 3: ${Number(series.wins?.[series.challengerUid]||0)} x ${Number(series.wins?.[series.targetUid]||0)} · rodada ${Number(series.round||1)}`
+        : "";
+      roomCode.textContent=`Sala ${room.id.slice(0,6).toUpperCase()}${betInfo}${seriesInfo}`;
+      playersEl.innerHTML=(room.playerOrder||[]).map(uid=>`<span class="player-chip">${playerLabelHtml(uid,room.players?.[uid]||"Jogador")}${uid===user.uid?" · você":""}</span>`).join("");
       restartBtn.classList.toggle("hidden",room.status!=="finished"||bet>0);
       closeRoomBtn.classList.toggle("hidden",!(room.hostUid===user?.uid||isGamesAdmin()));
       renderGameChat();
@@ -5103,7 +5505,7 @@
         <div class="players" style="justify-content:center;margin:0 0 10px">
           ${(currentRoom.playerOrder||[]).map(uid=>`
             <span class="player-chip">
-              ${escapeHtml(currentRoom.players?.[uid]||"Jogador")}: ${Number(s.hands?.[uid]?.length||0)} pedras
+              ${playerLabelHtml(uid,currentRoom.players?.[uid]||"Jogador")}: ${Number(s.hands?.[uid]?.length||0)} pedras
             </span>
           `).join("")}
         </div>
@@ -5146,7 +5548,7 @@
 
         <div style="text-align:center;margin-top:12px">
           <button id="drawDominoBtn" class="btn" ${!myTurn?"disabled":""}>
-            ${(s.boneyard||[]).length?"Comprar peça":"Passar"}
+            ${(s.boneyard||[]).length?"Cavar peça":"Passar"}
           </button>
         </div>
       `;
@@ -5547,7 +5949,7 @@
             : `Vez de ${escapeHtml(currentRoom.players?.[s.turnUid]||"jogador")} · suas peças: ${myColor==="r"?"vermelhas":"pretas"}${mandatory?" · captura obrigatória":""}`}
         </div>
         <div class="players">
-          ${order.map(uid=>`<span class="player-chip">${escapeHtml(currentRoom.players?.[uid]||"Jogador")}: ${Number(scores[uid]||0)} peça${Number(scores[uid]||0)===1?"":"s"} eliminada${Number(scores[uid]||0)===1?"":"s"}</span>`).join("")}
+          ${order.map(uid=>`<span class="player-chip">${playerLabelHtml(uid,currentRoom.players?.[uid]||"Jogador")}: ${Number(scores[uid]||0)} peça${Number(scores[uid]||0)===1?"":"s"} eliminada${Number(scores[uid]||0)===1?"":"s"}</span>`).join("")}
         </div>
         <p class="muted small" style="text-align:center">
           Peças com captura obrigatória ficam marcadas. A dama pode percorrer toda a diagonal livre.
