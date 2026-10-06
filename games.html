@@ -2942,7 +2942,8 @@
 
       const room=dayState?.gameRooms?.[event.roomId];
       const canChallenge=
-        event.winnerUid===user?.uid &&
+        event.winnerUid!==user?.uid &&
+        (room?.playerOrder||[]).includes(user?.uid) &&
         room?.status==="finished" &&
         (room.playerOrder||[]).length===2 &&
         Number(room.betAmount||0)===0 &&
@@ -2972,7 +2973,7 @@
 
     async function createBestOfThreeChallenge(){
       const event=activeWinnerEvent;
-      if(!event||event.winnerUid!==user?.uid)return;
+      if(!event||event.winnerUid===user?.uid)return;
 
       try{
         await mutateDay(data=>{
@@ -2983,8 +2984,9 @@
           if((room.playerOrder||[]).length!==2)throw new Error("O Melhor de 3 está disponível apenas para partidas com 2 jogadores.");
           if(Number(room.betAmount||0)>0)throw new Error("O Melhor de 3 não está disponível em salas com aposta.");
 
-          const targetUid=(room.playerOrder||[]).find(uid=>uid!==user.uid);
-          if(!targetUid)throw new Error("Adversário não encontrado.");
+          if(!(room.playerOrder||[]).includes(user.uid))throw new Error("Você não participou desta partida.");
+          const targetUid=event.winnerUid;
+          if(!targetUid||targetUid===user.uid)throw new Error("O desafio deve ser enviado pelo jogador que perdeu.");
 
           const challenges={...(data.bestOfThreeChallenges||{})};
           const id=actionId();
@@ -2998,15 +3000,15 @@
             targetUid,
             targetName:room.players?.[targetUid]||"Jogador",
             status:"pending",
-            wins:{[user.uid]:1,[targetUid]:0},
-            currentWinnerUid:user.uid,
+            wins:{[user.uid]:0,[targetUid]:1},
+            currentWinnerUid:targetUid,
             createdAtMs:Date.now()
           };
           return{bestOfThreeChallenges:challenges};
         });
 
         winnerDialog?.close();
-        showGameToastMessage("Desafio Melhor de 3 enviado. O placar começa 1 x 0 para você.");
+        showGameToastMessage("Revanche enviada. O vencedor atual começa o Melhor de 3 vencendo por 1 x 0.");
       }catch(err){
         console.error("Falha ao criar Melhor de 3:",err);
         showGameToastMessage(err?.message||"Não foi possível enviar o desafio.");
@@ -3025,7 +3027,7 @@
 
       bestOf3DialogTitle.textContent=pending.challengerName+" te desafia!";
       bestOf3DialogText.textContent=
-        "Melhor de 3 em "+(pending.gameName||"Jogo")+". Se você vencer, recebe o título Jogador Supremo. Quem perder vai para o Mural da Vergonha.";
+        pending.challengerName+" perdeu a última partida e pediu revanche em Melhor de 3 de "+(pending.gameName||"Jogo")+". Se você aceitar, a vitória anterior já vale 1 ponto. O campeão recebe Jogador Supremo e o derrotado vai para o Mural da Vergonha.";
       bestOf3DialogScore.textContent=
         "Placar atual: "+pending.challengerName+" "+Number(pending.wins?.[pending.challengerUid]||0)+" x "+Number(pending.wins?.[pending.targetUid]||0)+" "+pending.targetName;
 
